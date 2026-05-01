@@ -373,7 +373,8 @@ export default function Tracker({ session }) {
           ].map(t => (
             <button key={t.id} onClick={() => { setTab(t.id); setSelTeam(null) }}
               className={`${s.navBtn} ${tab === t.id ? s.navBtnActive : ''}`}>
-              {t.i} {t.l}
+              <span className={s.navIcon}>{t.i}</span>
+              <span className={s.navLabel}>{t.l}</span>
               {t.b > 0 && <span className={s.navBadge}>{t.b}</span>}
             </button>
           ))}

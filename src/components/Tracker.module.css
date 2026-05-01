@@ -214,6 +214,9 @@
   font-weight: 800;
 }
 
+.navIcon { font-size: 14px; line-height: 1; }
+.navLabel { font-size: 12px; line-height: 1; }
+
 /* ==========================================================================
    Main
    ========================================================================== */
@@ -940,24 +943,143 @@
 .fabLabel { font-size: 13px; letter-spacing: 1px; }
 
 /* ==========================================================================
-   Responsive
+   Responsive — Phone-native layout under 768px
    ========================================================================== */
 @media (max-width: 768px) {
-  .nav { top: var(--header-h); }
-  .dashboardCols { grid-template-columns: 1fr; }
+  /* App shell: leave room for fixed bottom nav (~62px + iPhone safe-area) */
+  .app {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+
+  /* Header compact: smaller logo, tighter spacing, hide email */
+  .header {
+    padding: 10px var(--sp-3);
+  }
+  .brandTitle {
+    font-size: 18px;
+    letter-spacing: 2px;
+  }
+  .brandSub {
+    font-size: 9px;
+    max-width: 55vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pctValue { font-size: 28px; }
+  .pctLabel { font-size: 9px; }
+  .summaryRow { gap: 10px; font-size: 11px; }
+  .iconBtn {
+    padding: 6px 10px;
+    min-width: 38px;
+    min-height: 36px;
+  }
+
+  /* Nav: detach from top, anchor to bottom of viewport */
+  .nav {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    padding: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgba(9, 16, 31, 0.96);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+  .navInner {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    overflow: visible;
+    padding: 0;
+  }
+  .navBtn {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 9px 4px 7px;
+    border-bottom: none;
+    border-top: 2px solid transparent;
+    position: relative;
+    min-height: 56px;
+  }
+  .navBtnActive {
+    border-bottom-color: transparent;
+    border-top-color: var(--accent);
+  }
+  .navIcon {
+    font-size: 20px;
+  }
+  .navLabel {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .navBadge {
+    position: absolute;
+    top: 4px;
+    right: calc(50% - 24px);
+    padding: 0 5px;
+    font-size: 9px;
+    line-height: 14px;
+    min-width: 14px;
+    text-align: center;
+  }
+
+  /* Layouts: stack columns, tighter grids */
+  .main { padding: var(--sp-3); }
+  .dashboardCols { grid-template-columns: 1fr; gap: 10px; }
   .pillGrid { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); }
   .cardsGrid { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); }
   .teamsGrid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
   .missingTeamsGrid { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); }
-  .pctValue { font-size: 28px; }
-  .header { padding: 10px var(--sp-3); }
-  .main { padding: var(--sp-3); }
-  .brandTitle { font-size: 18px; letter-spacing: 2px; }
-  .brandSub { font-size: 9px; max-width: 60vw; }
   .teamHeaderFlag { font-size: 44px; }
   .teamHeaderName { font-size: 22px; }
-  .fab { bottom: 16px; right: 16px; min-width: 52px; height: 52px; padding: 0 16px; }
-  .fabLabel { font-size: 12px; }
+
+  /* FAB sits above the bottom nav; collapse to a circle (icon only) */
+  .fab {
+    bottom: calc(80px + env(safe-area-inset-bottom));
+    right: 16px;
+    min-width: 56px;
+    height: 56px;
+    padding: 0;
+    justify-content: center;
+  }
+  .fabLabel { display: none; }
+
+  /* Modals → bottom sheets */
+  .modalBackdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modalCard {
+    border-radius: 22px 22px 0 0;
+    max-width: 100%;
+    width: 100%;
+    max-height: 88vh;
+    padding: var(--sp-4) var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom));
+    animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .modalCardDanger {
+    max-width: 100%;
+  }
+
+  /* Save banner: avoid colliding with the iOS notch */
+  .saveBanner {
+    top: calc(8px + env(safe-area-inset-top));
+    right: 8px;
+  }
+
+  /* Toast: lift above bottom nav so it doesn't get hidden */
+  .toast {
+    bottom: calc(80px + env(safe-area-inset-bottom));
+  }
 }
 
 @media (max-width: 480px) {
@@ -969,7 +1091,16 @@
   .teamFlag { font-size: 28px; }
   .quickCta { padding: 12px 14px; }
   .quickCtaTitle { font-size: 16px; }
-  .modalCard { padding: 16px; border-radius: 14px; }
   .modalTitle { font-size: 20px; }
   .actionGrid { grid-template-columns: 1fr; }
+
+  /* Tighter header at very small widths */
+  .brandTitle { font-size: 16px; letter-spacing: 1.5px; }
+  .brandSub { font-size: 8px; max-width: 50vw; }
+  .pctValue { font-size: 24px; }
+  .iconBtn { padding: 5px 8px; font-size: 10px; }
+
+  /* Smaller nav labels on tiny phones */
+  .navLabel { font-size: 9px; }
+  .navIcon { font-size: 19px; }
 }
