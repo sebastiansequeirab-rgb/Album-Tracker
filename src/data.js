@@ -116,11 +116,8 @@ export function buildCards() {
 }
 
 export function buildInitialState() {
-  const missing = new Set(INITIAL_MISSING)
   const state = {}
-  buildCards().forEach(card => {
-    state[card.id] = typeof card.num === 'number' && missing.has(card.num) ? 'missing' : 'have'
-  })
+  buildCards().forEach(card => { state[card.id] = 'missing' })
   return state
 }
 

@@ -61,7 +61,7 @@ export default function Tracker({ session }) {
         setCol(init)
         const { error: seedErr } = await supabase
           .from('adrenalyn_collections')
-          .upsert({ user_id: session.user.id, data: init })
+          .upsert({ user_id: session.user.id, data: init }, { onConflict: 'user_id' })
         if (seedErr) {
           console.error('Initial seed error:', seedErr)
           if (await handleAuthError(seedErr)) return
@@ -88,7 +88,7 @@ export default function Tracker({ session }) {
 
     const { error } = await supabase
       .from('adrenalyn_collections')
-      .upsert({ user_id: session.user.id, data: newCol })
+      .upsert({ user_id: session.user.id, data: newCol }, { onConflict: 'user_id' })
 
     saveRef.current.inFlight = false
 
