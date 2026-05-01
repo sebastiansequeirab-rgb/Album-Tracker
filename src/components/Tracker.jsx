@@ -20,6 +20,19 @@ export default function Tracker({ session }) {
   const [quickAction,setQuickAction]=useState('have')
   const [showReset, setShowReset] = useState(false)
 
+  // Auth errors (JWT expired/invalid) — try refresh, else sign out so user re-logins
+  const handleAuthError = async (err) => {
+    const msg = (err?.message || '').toLowerCase()
+    const code = err?.code || ''
+    const isAuth = code === 'PGRST301' || code === '401' ||
+                   msg.includes('jwt') || msg.includes('expired') ||
+                   msg.includes('invalid token') || msg.includes('not authenticated')
+    if (!isAuth) return false
+    const { error: refreshErr } = await supabase.auth.refreshSession()
+    if (refreshErr) await supabase.auth.signOut()
+    return true
+  }
+
   // ── Load from Supabase ──
   useEffect(() => {
     let cancelled = false
@@ -36,6 +49,7 @@ export default function Tracker({ session }) {
 
       if (error) {
         console.error('Load error:', error)
+        if (await handleAuthError(error)) return
         attempt++
         if (attempt < 5) setTimeout(load, 1500 * attempt)
         else setSaveStatus('error')
@@ -48,7 +62,10 @@ export default function Tracker({ session }) {
         const { error: seedErr } = await supabase
           .from('adrenalyn_collections')
           .upsert({ user_id: session.user.id, data: init })
-        if (seedErr) console.error('Initial seed error:', seedErr)
+        if (seedErr) {
+          console.error('Initial seed error:', seedErr)
+          if (await handleAuthError(seedErr)) return
+        }
       } else {
         setCol(data.data)
       }
@@ -78,6 +95,7 @@ export default function Tracker({ session }) {
     if (error) {
       console.error('Save error:', error)
       setSaveStatus('error')
+      if (await handleAuthError(error)) return
       const delay = Math.min(8000, 1000 * Math.pow(2, saveRef.current.retryAt++))
       setTimeout(() => save(saveRef.current.pending || newCol), delay)
       return
