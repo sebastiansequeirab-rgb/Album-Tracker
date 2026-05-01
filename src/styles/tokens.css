@@ -1,0 +1,129 @@
+:root {
+  /* Backgrounds */
+  --bg: #06080F;
+  --bg-card: #0F172A;
+  --bg-elevated: #162030;
+  --bg-deep: #060B18;
+  --bg-header: #09101F;
+  --bg-track: #0C1220;
+
+  /* Borders */
+  --border: #1E293B;
+  --border-strong: #334155;
+  --border-hint: #1E293B33;
+
+  /* Text */
+  --text: #E2E8F0;
+  --text-strong: #CBD5E1;
+  --text-muted: #94A3B8;
+  --text-dim: #64748B;
+  --text-faint: #475569;
+  --text-hint: #334155;
+
+  /* Brand accents */
+  --accent: #FCD34D;
+  --accent-strong: #F59E0B;
+  --accent-deep: #D97706;
+  --accent-soft: #FCD34D44;
+  --accent-bg: #1C1008;
+  --accent-grad: linear-gradient(135deg, #FCD34D, #F59E0B);
+  --accent-grad-soft: linear-gradient(135deg, #1E1809, #2D200A);
+
+  /* Card states */
+  --have: #4ADE80;
+  --have-strong: #22C55E;
+  --have-bg: #041E0F;
+  --have-border: #15803D;
+  --have-deep: #052E16;
+
+  --duplicate: #F59E0B;
+  --duplicate-soft: #FCD34D;
+  --duplicate-bg: #180A00;
+  --duplicate-border: #D97706;
+
+  --missing: #475569;
+  --missing-bg: #0C1220;
+
+  --error: #F87171;
+  --error-soft: #FCA5A5;
+  --error-bg: #1C0808;
+  --error-deep: #7F1D1D;
+
+  /* Card type colors */
+  --type-heroes: #60A5FA;
+  --type-fan: #F472B6;
+  --type-crest: #38BDF8;
+  --type-icon: #C084FC;
+  --type-contender: #818CF8;
+  --type-fixture: #6366F1;
+  --type-rookie: #34D399;
+  --type-keeper: #22D3EE;
+  --type-defense: #4ADE80;
+  --type-mid: #A3E635;
+  --type-fwd: #FB923C;
+  --type-golden: #FCD34D;
+  --type-emblem: #E11D48;
+  --type-mascot: #A78BFA;
+  --type-eternos: #F87171;
+  --type-momentum: #E879F9;
+  --type-momentum-deep: #2D0045;
+  --type-momentum-bg: #4C1D95;
+  --type-momentum-border: #A855F7;
+
+  /* Confederations */
+  --conf-conmebol: #FCD34D;
+  --conf-uefa: #60A5FA;
+  --conf-concacaf: #4ADE80;
+  --conf-caf: #F87171;
+  --conf-afc: #C084FC;
+  --conf-ofc: #34D399;
+
+  /* Categories */
+  --cat-base: #475569;
+  --cat-special: #C084FC;
+  --cat-rare: #FCD34D;
+  --cat-ultra: #F43F5E;
+
+  /* Spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 28px;
+  --sp-8: 32px;
+
+  /* Radii */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 12px;
+  --r-xl: 14px;
+  --r-2xl: 18px;
+  --r-3xl: 22px;
+  --r-pill: 999px;
+
+  /* Typography */
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Shadows */
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 8px 28px rgba(245, 158, 11, 0.5);
+  --shadow-have: 0 0 20px rgba(34, 197, 94, 0.2);
+
+  /* Layout */
+  --container-max: 980px;
+  --header-h: 90px;
+  --nav-h: 42px;
+  --bottom-pad: 80px;
+
+  /* Transitions */
+  --t-fast: 0.12s ease;
+  --t-base: 0.2s ease;
+  --t-slow: 0.7s ease;
+}

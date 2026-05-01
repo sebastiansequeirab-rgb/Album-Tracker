@@ -1,7 +1,7 @@
 # Adrenalyn Tracker — Estado actual del proyecto
 
 > Brief para una sesión nueva. Lee esto, valida el backend, y pasa a refinar el UI.
-> Última actualización: 2026-05-01.
+> Última actualización: 2026-05-01 (sesión de UI redesign + marketplace).
 
 ---
 
@@ -24,8 +24,9 @@ App React + Vite + Supabase para hacer seguimiento personal del álbum Panini Ad
 - **API key activa**: publishable `sb_publishable_uiJKOVJ79-Yjs-ne_El6OQ_Qfx6Nmq7` (en Vercel env y `.env` local). Funciona perfectamente para REST + Auth.
 - **Legacy JWT anon key**: deshabilitada en dashboard. No usar.
 
-### Tabla única de la app: `public.adrenalyn_collections`
+### Tablas de la app (todas prefijo `adrenalyn_`)
 
+#### `public.adrenalyn_collections` — colecciones por usuario
 ```
 id          uuid PK (gen_random_uuid)
 user_id     uuid UNIQUE FK auth.users(id)
@@ -33,24 +34,52 @@ data        jsonb default '{}'
 created_at  timestamptz default now()
 updated_at  timestamptz default now()
 ```
+- 1 fila por usuario (UNIQUE en `user_id`)
+- `data` = `{ "<card_id>": "missing"|"have"|"duplicate", ... }`
 
-- 1 fila por usuario (constraint UNIQUE en `user_id`)
-- `data` guarda el estado completo de la colección como blob JSON: `{ "<card_id>": "missing"|"have"|"duplicate", ... }`
+#### `public.adrenalyn_profiles` — identidad pública del marketplace
+```
+user_id              uuid PK FK auth.users(id)
+display_name         text (1..40 chars)
+avatar_emoji         text (default ⚽)
+contact              jsonb { instagram?, whatsapp?, email? }
+marketplace_visible  boolean default false
+created_at, updated_at timestamptz
+```
+- 1 fila por usuario, creada por `ensureMyProfile()` en el boot.
+- Usuario opta in al marketplace activando `marketplace_visible`.
+
+#### `public.adrenalyn_friendships` — solicitudes y amigos
+```
+id            uuid PK
+requester_id  uuid FK auth.users(id)
+receiver_id   uuid FK auth.users(id)
+status        text check ('pending'|'accepted'|'blocked')
+created_at, updated_at timestamptz
+unique (requester_id, receiver_id)
+check (requester_id <> receiver_id)
+```
 
 ### RLS — confirmar siempre antes de cambios
 
-- RLS habilitada ✓
-- 4 policies, todas filtran por `auth.uid() = user_id`:
-  - `adrenalyn_select` (SELECT)
-  - `adrenalyn_insert` (INSERT, with_check)
-  - `adrenalyn_update` (UPDATE)
-  - `adrenalyn_delete` (DELETE)
+Todas las tablas tienen RLS habilitada. Resumen:
+
+- **`adrenalyn_collections`**:
+  - `adrenalyn_select`: `auth.uid() = user_id` **OR** `EXISTS (perfil del owner con marketplace_visible=true)`. Esto permite que el marketplace lea otras colecciones para calcular matches.
+  - `adrenalyn_insert/update/delete`: solo el dueño.
+- **`adrenalyn_profiles`**:
+  - SELECT: dueño siempre, otros si `marketplace_visible=true AND auth.uid() IS NOT NULL`.
+  - INSERT/UPDATE/DELETE: solo el dueño.
+- **`adrenalyn_friendships`**:
+  - SELECT/UPDATE/DELETE: si `auth.uid() IN (requester_id, receiver_id)`.
+  - INSERT: solo si `auth.uid() = requester_id`.
 
 Verificar con:
 ```sql
-SELECT policyname, cmd, qual, with_check
+SELECT tablename, policyname, cmd, qual, with_check
 FROM pg_policies
-WHERE schemaname = 'public' AND tablename = 'adrenalyn_collections';
+WHERE schemaname = 'public' AND tablename LIKE 'adrenalyn_%'
+ORDER BY tablename, policyname;
 ```
 
 ### Auth
@@ -97,72 +126,80 @@ Estos arreglos costaron debugging real. Si se "limpian" sin entender el por qué
 
 - `buildInitialState()` devuelve TODAS las cartas como `'missing'`. Cuentas nuevas arrancan vacías. La constante `INITIAL_MISSING` ya no se usa en runtime (era el preset personal del owner; quedó como referencia muerta — se puede borrar si limpian).
 
+### En [src/lib/marketplace.js](src/lib/marketplace.js)
+
+- `sendFriendRequest(currentUserId, receiverId)` debe pasar `requester_id` explícito (no se autocompleta). La RLS valida `auth.uid() = requester_id` en el `with_check`.
+- `loadCollectionsByUserIds(ids)` lee colecciones de **otros** usuarios. Funciona porque la SELECT policy de `adrenalyn_collections` tiene OR con `EXISTS (perfil con marketplace_visible=true)`. Si alguien quita su `marketplace_visible`, automáticamente desaparece de los cálculos de match (no hay caché stale).
+- `ensureMyProfile(userId, fallbackEmail)` se llama desde Tracker.jsx en el load (no en App.jsx) — Tracker solo monta cuando hay sesión, así que es equivalente y mantiene el boot de App liviano.
+
 ---
 
-## Frontend — aquí es donde toca trabajar
+## Frontend
 
 ### Estructura
 
 ```
 src/
 ├── App.jsx                    auth gate (Auth o Tracker según session)
-├── main.jsx                   entry
+├── main.jsx                   entry — importa tokens.css + global.css
 ├── supabaseClient.js          createClient con env vars
 ├── data.js                    633 cartas hardcoded, TEAMS_LIST, TM/CC/ST maps, helpers
+├── styles/
+│   ├── tokens.css             CSS variables (colores, spacing, radii, fuentes, etc.)
+│   └── global.css             reset, scrollbar, @keyframes globales
+├── lib/
+│   └── marketplace.js         helpers de Supabase para profiles/friendships/matching
 └── components/
-    ├── Auth.jsx               login/signup (~70 líneas, inline styles)
-    └── Tracker.jsx            app principal (~700 líneas, 4 tabs, inline styles)
+    ├── Auth.jsx + Auth.module.css
+    ├── Tracker.jsx + Tracker.module.css   (~700 líneas, app principal, 5 tabs)
+    ├── Marketplace.jsx + Marketplace.module.css  (sub-tabs Todos/Amigos/Mi lista/Solicitudes)
+    └── Profile.jsx + Profile.module.css   (display_name, avatar emoji, contactos, toggle visible)
 ```
 
-### Stack visual actual
+### Stack visual
 
-- **Inline `style={{}}` por todos lados**. No hay CSS modules, no Tailwind, no styled-components. Si vamos a hacer rediseño grande, considerar migrar a algo más mantenible — pero confirmar con el usuario antes (puede preferir mantener simple).
-- **Fuentes**: Bebas Neue (display) + DM Sans (body) vía Google Fonts inline.
-- **Tema**: dark, fondo `#06080F`, accent amarillo `#FCD34D`/`#F59E0B`, cartas en `#0F172A`/`#162030`.
-- **Status colors**: have `#4ADE80` (verde), duplicate `#F59E0B` (naranja), missing `#475569` (gris), Momentum `#E879F9` (morado).
+- **CSS variables (`tokens.css`) + CSS Modules por componente**. Cero deps, scoped automático, nativo en Vite.
+- Para cambiar la paleta global → editar `src/styles/tokens.css`.
+- Inline `style={{}}` solo se usa para valores genuinamente dinámicos (color sacado de un map, % en barras de progreso, etc.). Estructura/spacing/typography van por className.
+- **Fuentes**: Bebas Neue (display) + DM Sans (body), importadas en `global.css`.
+- **Tema**: dark; fondo `#06080F`, cards `#0F172A`/`#162030`, accent amarillo `#FCD34D`/`#F59E0B`.
+- **Mobile responsive**: media queries en cada `.module.css` (768px, 480px). Stats grid colapsa, sub-tabs hacen scroll horizontal, modales con padding reducido.
 
-### Tabs implementados
+### Tabs implementados (5)
 
-1. **Dashboard** — estadísticas globales, progreso por equipo (preview), Momentum tracker (3/3), tipos de carta.
-2. **Equipos** — grid de 32 selecciones con barra de progreso; click → drill-down por jugador y tipo.
-3. **Cartas** — catálogo navegable con filtros (status / tipo / equipo / búsqueda por nombre/número).
-4. **Intercambio** — lista de duplicados agrupados por equipo, botón copy-to-clipboard.
+1. **Dashboard** — stats globales, Momentum tracker, progreso por tipo y confederación, equipos con más faltantes.
+2. **Equipos** — grid de 32 selecciones con barra de progreso; drill-down por jugador y tipo.
+3. **Cartas** — catálogo navegable con filtros (status / tipo / equipo / búsqueda).
+4. **Marketplace** — sub-tabs:
+   - **Todos**: lista de coleccionistas visibles ordenados por matches contigo. Cada card muestra "Te puede dar X / Le das Y". Tap → drill-down con matches y CTA "Solicitar trade" → modal con contactos copyables y mensaje template.
+   - **Amigos**: filtra a friendships con `status='accepted'`.
+   - **Mi lista**: la antigua pantalla Intercambio (mis duplicados agrupados por categoría/equipo, botón Copiar lista).
+   - **Solicitudes**: friend requests entrantes (aceptar/rechazar) y enviadas (cancelar).
+5. **Perfil** — form: display_name, avatar emoji selector, contactos (Instagram/WhatsApp/email), toggle "Visible en Marketplace".
 
 ### UX flows
 
 - Tap pill de carta → cicla missing → have → duplicate → missing. Toast del cambio.
-- Botón ✏️ "Actualización rápida" → modal con textarea para pegar números (`1,3,4-7,10,15-20`) + selector have/duplicate/missing → aplicar bulk.
-- Botón ⟲ → reset modal de confirmación → pone toda la colección en `missing`.
-- Botón "Salir" → signOut.
+- "✓ Guardado" pop top-right (animación savedPop, 1.6s).
+- Botón ✏️ "Actualización rápida" (FAB) → modal con textarea para rangos `1,3,4-7,10,15-20` + selector estado → aplicar bulk.
+- Botón ⟲ → reset modal de confirmación.
+- Marketplace requiere `marketplace_visible=true` en el perfil para ver coleccionistas (empty state te lleva al perfil).
+- Trade modal: revela contactos del otro usuario y un mensaje sugerido editable, listo para copiar y pegar en WhatsApp/Instagram/email. **No hay mensajería in-app — el contacto se hace por fuera, deliberadamente.**
 
 ---
 
-## Tareas para la próxima sesión
-
-### Fase 1 — Validación de backend (haz esto antes de tocar UI)
+## Validación de backend (Fase 1, hacer antes de cualquier cambio mayor)
 
 Run en orden:
 
-1. `mcp__claude_ai_Supabase__list_tables` con `schemas=["public"]` → confirmar que `adrenalyn_collections` existe con la estructura descrita arriba.
-2. `mcp__claude_ai_Supabase__execute_sql` con la query de RLS (arriba) → 4 policies, todas con `auth.uid() = user_id`.
-3. `mcp__claude_ai_Supabase__get_advisors` `type=security` → revisar warnings. Conocidos: `function_search_path_mutable` en `set_updated_at` (no bloqueante), `auth_leaked_password_protection` desactivada (opcional).
-4. Verificar Vercel env: `vercel env ls` desde el proyecto local → debe mostrar `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` ambas en Production. La key debe ser `sb_publishable_*`, NO una JWT (`eyJ...`) que sería el secret expuesto del incidente anterior.
-5. Sanity check de auth: `curl -X POST 'https://xawgomhknzdnhkxcegqi.supabase.co/auth/v1/token?grant_type=password' -H 'apikey: <key>' -H 'Content-Type: application/json' -d '{"email":"x@x.x","password":"wrong"}'` → debe responder 400 `invalid_credentials` (NO 401 ni "Legacy API keys are disabled").
-
-### Fase 2 — Mejoras de UI/UX (el grueso del trabajo)
-
-Sin lista cerrada — el usuario va a guiar. Algunas observaciones desde ya:
-
-- Inline styles está OK para esta escala pero limita iteración rápida. Considerar (con consenso del usuario): extraer un objeto `theme` central, o migrar a CSS variables, o introducir Tailwind solo si el usuario lo aprueba.
-- El Dashboard mezcla muchos elementos visuales — puede beneficiarse de jerarquía más clara.
-- El cycling missing→have→duplicate al tocar es elegante pero no obvio. Considerar tooltip o leyenda.
-- Falta confirmación visual fuerte cuando el "✓ Guardado" aparece (es muy sutil ahora mismo).
-- Mobile: revisar responsive — la grid del Dashboard puede romperse en pantallas chicas.
-
-**Reglas para la fase de UI:**
-- NO cambiar el data model ni la lógica de save/load.
-- NO romper el contrato de `buildCards()` / `data.js` (los IDs de carta son load-bearing porque están guardados en el `data` jsonb de cada usuario).
-- Mantener los 4 tabs, el botón Reset, el botón Salir, la funcionalidad de Quick Update y Trading.
+1. `mcp__claude_ai_Supabase__list_tables` con `schemas=["public"]` → confirmar que existen `adrenalyn_collections`, `adrenalyn_profiles`, `adrenalyn_friendships`, todas con RLS enabled.
+2. `mcp__claude_ai_Supabase__execute_sql` con la query de RLS (arriba) → policies como se describen.
+3. `mcp__claude_ai_Supabase__get_advisors` `type=security` → revisar. Conocidos:
+   - `function_search_path_mutable` en `adrenalyn.set_updated_at` y `public.adrenalyn_set_updated_at` (no bloqueante).
+   - `auth_leaked_password_protection` off (opcional).
+   - El resto de warnings (`security_definer_view`, `anon_security_definer_*`) pertenece a Skolar — NO tocar.
+4. Verificar Vercel env: `vercel env ls` → `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` en Production. La key debe ser `sb_publishable_*`, NO una JWT.
+5. Sanity check de auth: `curl -X POST 'https://xawgomhknzdnhkxcegqi.supabase.co/auth/v1/token?grant_type=password' -H 'apikey: <key>' -H 'Content-Type: application/json' -d '{"email":"x@x.x","password":"wrong"}'` → debe responder `400 invalid_credentials`.
 
 ---
 
@@ -171,6 +208,12 @@ Sin lista cerrada — el usuario va a guiar. Algunas observaciones desde ya:
 - Rotar el `service_role` secret en Supabase. Estuvo brevemente en Vercel env (~5 min) durante el debugging del 2026-05-01. Como las legacy keys están deshabilitadas, no se puede explotar — pero higiénicamente conviene rotar cuando se acuerden.
 - Agregar `VITE_SUPABASE_ANON_KEY` a Vercel **Preview** env si en algún momento se quiere usar branch deploys (CLI da error con la confirmación "all branches" — usar dashboard de Vercel para esto).
 - 2 funciones en Supabase con `search_path` mutable (`adrenalyn.set_updated_at`, `public.adrenalyn_set_updated_at`). Warning menor de advisors. Fix: micro-migración con `SET search_path = ''` en cada función.
+- Marketplace v2 ideas (no implementadas, registradas):
+  - Tracking de trades cerrados (cuando dos usuarios completan un intercambio fuera de la app).
+  - Botón de reportar usuario (campo `reported_count` en profiles + RPC).
+  - Notificaciones in-app cuando llega una friend request o trade match nuevo.
+  - Mensajería in-app vía Supabase Realtime (decisión actual: contacto externo solamente).
+  - "Friends-only" listings (campo `marketplace_audience: 'public' | 'friends'` en profiles).
 
 ---
 

@@ -1,0 +1,129 @@
+.wrap {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+}
+
+.card {
+  background: linear-gradient(135deg, var(--bg-card), var(--bg-elevated));
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: var(--sp-8);
+  width: 100%;
+  max-width: 400px;
+  box-shadow: var(--shadow-lg);
+}
+
+.logo {
+  text-align: center;
+  font-size: 48px;
+  margin-bottom: var(--sp-2);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  margin-bottom: var(--sp-1);
+  text-align: center;
+}
+
+.sub {
+  font-size: 12px;
+  color: var(--text-faint);
+  text-align: center;
+  margin-bottom: var(--sp-7);
+  letter-spacing: 1px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.input {
+  width: 100%;
+  background: var(--bg-deep);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  padding: 11px 14px;
+  font-size: 14px;
+  margin-bottom: var(--sp-4);
+  transition: border-color var(--t-base);
+}
+
+.btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--r-md);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  background: var(--accent-grad);
+  color: #000;
+  transition: opacity var(--t-base), transform var(--t-fast);
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  background: var(--border-strong);
+  color: var(--text-dim);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.toggle {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.toggleLink {
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.toggleLink:hover {
+  text-decoration: underline;
+}
+
+.alert {
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: var(--sp-4);
+}
+
+.err {
+  composes: alert;
+  background: var(--error-bg);
+  border: 1px solid var(--error);
+  color: var(--error-soft);
+}
+
+.ok {
+  composes: alert;
+  background: var(--have-bg);
+  border: 1px solid #16A34A;
+  color: var(--have);
+}
+
+@media (max-width: 420px) {
+  .card { padding: var(--sp-5); border-radius: 16px; }
+  .logo { font-size: 40px; }
+  .title { font-size: 24px; }
+}

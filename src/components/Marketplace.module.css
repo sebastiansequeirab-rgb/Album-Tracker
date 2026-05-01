@@ -1,0 +1,477 @@
+.wrap { animation: fadeUp 0.22s ease; }
+
+/* ============================================================== Sub-tabs */
+.subnav {
+  display: flex;
+  gap: 6px;
+  margin-bottom: var(--sp-4);
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.subnav::-webkit-scrollbar { display: none; }
+
+.subnavBtn {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast);
+}
+.subnavBtn:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.subnavBtnActive {
+  background: var(--accent-bg);
+  border-color: var(--accent-deep);
+  color: var(--accent);
+}
+.subnavBadge {
+  background: var(--accent-deep);
+  color: #000;
+  border-radius: var(--r-pill);
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+/* ============================================================== Empty state */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+}
+.emptyEmoji { font-size: 56px; margin-bottom: 12px; }
+.emptyTitle {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--text-faint);
+  margin-bottom: 8px;
+}
+.emptyText {
+  color: var(--text-hint);
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 320px;
+  margin: 0 auto;
+}
+.emptyCta {
+  margin-top: 18px;
+  background: var(--accent-grad);
+  color: #000;
+  padding: 10px 20px;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ============================================================== Users grid */
+.usersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--sp-3);
+}
+
+.userCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: var(--sp-4);
+  transition: transform var(--t-base), border-color var(--t-base);
+  cursor: pointer;
+}
+.userCard:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-soft);
+}
+
+.userCardHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+.userAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+.userMeta { flex: 1; min-width: 0; }
+.userName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.userSub {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+.matchRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.matchPill {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  border: 1px solid;
+  font-size: 11px;
+  text-align: center;
+  font-weight: 700;
+}
+.matchPillThey {
+  background: var(--have-bg);
+  border-color: var(--have-border);
+  color: var(--have);
+}
+.matchPillI {
+  background: var(--accent-bg);
+  border-color: var(--accent-deep);
+  color: var(--accent);
+}
+.matchLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-faint);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+.friendBadge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+.friendBadgeAccepted {
+  background: var(--have-bg);
+  color: var(--have);
+  border: 1px solid var(--have-border);
+}
+.friendBadgePending {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border: 1px solid var(--accent-deep);
+}
+
+/* ============================================================== Drill-down */
+.detailHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-2xl);
+  padding: var(--sp-5);
+}
+.detailAvatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  flex-shrink: 0;
+}
+.detailBody { flex: 1; min-width: 0; }
+.detailName {
+  font-family: var(--font-display);
+  font-size: 26px;
+  letter-spacing: 2px;
+  color: var(--text);
+  line-height: 1;
+}
+.detailSub {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-top: 4px;
+}
+.detailActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.btnPrimary {
+  background: var(--accent-grad);
+  color: #000;
+  padding: 9px 16px;
+  border-radius: var(--r-md);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.btnSecondary {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  padding: 9px 16px;
+  border-radius: var(--r-md);
+  font-size: 12px;
+  font-weight: 700;
+}
+.btnSecondary:hover { border-color: var(--accent-soft); color: var(--text); }
+
+.matchSection { margin-bottom: var(--sp-5); }
+.matchSectionTitle {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: var(--sp-3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.matchCount {
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  font-size: 11px;
+}
+.matchEmptyText {
+  color: var(--text-hint);
+  font-size: 13px;
+  text-align: center;
+  padding: 30px 20px;
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-lg);
+}
+
+.cardsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 6px;
+}
+
+.miniCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 9px 11px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.miniCardFlag { font-size: 18px; flex-shrink: 0; }
+.miniCardBody { flex: 1; min-width: 0; }
+.miniCardName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.miniCardMeta {
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-top: 1px;
+}
+.miniCardNum {
+  background: var(--bg-elevated);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+  flex-shrink: 0;
+}
+
+/* ============================================================== Mi lista (old Intercambio) */
+.myListHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-4);
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+.myListTitle {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--accent-strong);
+}
+.myListSub {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+/* ============================================================== Friend requests */
+.requestList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.requestRow {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--sp-3) var(--sp-4);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.requestActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.btnAccept {
+  background: var(--have-bg);
+  border: 1px solid var(--have-border);
+  color: var(--have);
+  padding: 7px 14px;
+  border-radius: var(--r-md);
+  font-size: 12px;
+  font-weight: 700;
+}
+.btnReject {
+  background: var(--error-bg);
+  border: 1px solid var(--error);
+  color: var(--error-soft);
+  padding: 7px 14px;
+  border-radius: var(--r-md);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ============================================================== Trade modal */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+}
+.modalCard {
+  background: linear-gradient(180deg, var(--bg-card), #0A0F1E);
+  border: 1px solid var(--accent-soft);
+  border-radius: var(--r-2xl);
+  padding: var(--sp-5);
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalIn 0.22s ease;
+  box-shadow: var(--shadow-lg);
+}
+
+.contactList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: var(--sp-4) 0;
+}
+.contactRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+}
+.contactIcon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.contactValue {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.contactCopy {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  padding: 5px 10px;
+  border-radius: var(--r-sm);
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.contactCopy:hover { color: var(--accent); border-color: var(--accent-deep); }
+
+.messageBox {
+  width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  resize: vertical;
+  min-height: 140px;
+  margin-top: var(--sp-2);
+}
+
+.modalHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--sp-3);
+}
+.modalTitle {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--accent);
+}
+.modalSub {
+  font-size: 12px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+.modalClose {
+  color: var(--text-faint);
+  font-size: 24px;
+  line-height: 1;
+}
+
+@media (max-width: 480px) {
+  .usersGrid { grid-template-columns: 1fr; }
+  .cardsList { grid-template-columns: 1fr; }
+  .detailHead { padding: var(--sp-4); }
+  .detailAvatar { width: 52px; height: 52px; font-size: 28px; }
+  .detailName { font-size: 22px; }
+}
