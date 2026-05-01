@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { buildCards, buildInitialState, parseNumberList, TEAMS_LIST, TEAM_DATA, MOMENTUM, TM, CC, ST } from '../data'
 
@@ -22,42 +22,76 @@ export default function Tracker({ session }) {
 
   // ── Load from Supabase ──
   useEffect(() => {
+    let cancelled = false
+    let attempt = 0
+
     const load = async () => {
       const { data, error } = await supabase
         .from('adrenalyn_collections')
         .select('data')
         .eq('user_id', session.user.id)
-        .single()
+        .maybeSingle()
 
-      if (error || !data?.data || Object.keys(data.data).length === 0) {
-        // First time: seed with initial state
+      if (cancelled) return
+
+      if (error) {
+        console.error('Load error:', error)
+        attempt++
+        if (attempt < 5) setTimeout(load, 1500 * attempt)
+        else setSaveStatus('error')
+        return
+      }
+
+      if (!data || !data.data || Object.keys(data.data).length === 0) {
         const init = buildInitialState()
         setCol(init)
-        await supabase.from('adrenalyn_collections').upsert({
-          user_id: session.user.id,
-          data: init,
-        })
+        const { error: seedErr } = await supabase
+          .from('adrenalyn_collections')
+          .upsert({ user_id: session.user.id, data: init })
+        if (seedErr) console.error('Initial seed error:', seedErr)
       } else {
         setCol(data.data)
       }
       setLoaded(true)
     }
     load()
+    return () => { cancelled = true }
   }, [session])
 
-  // ── Save to Supabase ──
+  // ── Save to Supabase (coalesced + retry) ──
+  const saveRef = useRef({ inFlight: false, pending: null, retryAt: 0 })
+
   const save = async (newCol) => {
+    if (saveRef.current.inFlight) {
+      saveRef.current.pending = newCol
+      return
+    }
+    saveRef.current.inFlight = true
     setSaveStatus('saving')
+
     const { error } = await supabase
       .from('adrenalyn_collections')
       .upsert({ user_id: session.user.id, data: newCol })
+
+    saveRef.current.inFlight = false
+
     if (error) {
-      setSaveStatus('error')
       console.error('Save error:', error)
-    } else {
-      setSaveStatus('saved')
+      setSaveStatus('error')
+      const delay = Math.min(8000, 1000 * Math.pow(2, saveRef.current.retryAt++))
+      setTimeout(() => save(saveRef.current.pending || newCol), delay)
+      return
     }
-    setTimeout(() => setSaveStatus('idle'), 1500)
+
+    saveRef.current.retryAt = 0
+    if (saveRef.current.pending) {
+      const next = saveRef.current.pending
+      saveRef.current.pending = null
+      save(next)
+      return
+    }
+    setSaveStatus('saved')
+    setTimeout(() => setSaveStatus(s => s === 'saved' ? 'idle' : s), 1500)
   }
 
   const flash = (msg, color = '#4ADE80') => {
