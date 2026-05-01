@@ -8,10 +8,21 @@ export default function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
+    const boot = async () => {
+      const { data: { session: existing } } = await supabase.auth.getSession()
+      if (existing) {
+        const { data: { user }, error } = await supabase.auth.getUser()
+        if (error || !user) {
+          await supabase.auth.signOut()
+          setSession(null)
+          setLoading(false)
+          return
+        }
+      }
+      setSession(existing)
       setLoading(false)
-    })
+    }
+    boot()
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
     })
