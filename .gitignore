@@ -10,3 +10,6 @@ login.PNG
 *.png
 *.jpg
 *.jpeg
+
+# Excepción: bg del login (asset propio del usuario)
+!public/login-bg.jpg
