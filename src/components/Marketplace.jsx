@@ -165,21 +165,40 @@ export default function Marketplace({
     if (!selUserId || !selCol || !selProfile) return
     setTradeCtx({
       targetProfile: selProfile,
+      targetCol:     selCol,
       offered: Array.from(pickedMine),
       wanted:  Array.from(pickedTheirs),
+      meetingPoint: '',
+      meetingTime:  '',
     })
     setShowTrade(true)
   }
 
   // Abrir modal de Contra-oferta desde un banner — pre-rellena con datos del listing
-  const openTradeModalFromListing = (listing) => {
+  // y carga la colección del autor on-demand para que el picker pueda mostrar
+  // TODAS sus dups (no solo las del listing).
+  const openTradeModalFromListing = async (listing) => {
     const author = listingProfiles[listing.user_id]
     if (!author) {
       flash?.('⚠️ No se pudo cargar el perfil del autor', '#F87171')
       return
     }
+    flash?.('⏳ Cargando colección del autor…', '#94A3B8')
+    let targetCol = collections[listing.user_id]
+    if (!targetCol) {
+      try {
+        targetCol = await loadAlbum(albumType, listing.user_id)
+        // Cachear para uso futuro
+        setCollections(prev => ({ ...prev, [listing.user_id]: targetCol }))
+      } catch (e) {
+        console.error('loadAlbum error:', e)
+        flash?.(`⚠️ ${e.message || 'No se pudo cargar la colección del autor'}`, '#F87171')
+        return
+      }
+    }
     setTradeCtx({
       targetProfile: author,
+      targetCol,
       // Por default, el usuario quiere todo lo que el listing ofrece
       // y ofrece todas sus dups que matchean lo que el listing busca
       offered: ALL_ITEMS
@@ -198,7 +217,7 @@ export default function Marketplace({
     if (busyAccept) return
     const author = listingProfiles[listing.user_id]
     if (!author) {
-      flash?.('⚠️ No se pudo cargar el perfil del autor', '#F87171')
+      flash?.('⚠️ Perfil del autor no disponible — refrescá la página', '#F87171')
       return
     }
     setBusyAccept(listing.id)
@@ -207,25 +226,25 @@ export default function Marketplace({
         initiator_id: myId,
         target_id:    listing.user_id,
         album_type:   albumType,
-        offered_ids:  listing.wanted_ids,   // les doy lo que pidieron
-        wanted_ids:   listing.offered_ids,  // pido lo que ofrecen
+        offered_ids:  listing.wanted_ids || [],   // les doy lo que pidieron
+        wanted_ids:   listing.offered_ids || [],  // pido lo que ofrecen
         meeting_point:      listing.meeting_point || null,
         meeting_time_label: listing.meeting_time_label || null,
-        message: `✅ Acepté tu oferta tal cual. ¡Hagamos el trade!`,
+        message: '✅ Acepté tu oferta tal cual. ¡Hagamos el trade!',
       })
-      flash?.('✅ Oferta aceptada — solicitud enviada', '#4ADE80')
-      // Reload trade requests
+      flash?.('✅ Trade enviado — abriendo chat…', '#4ADE80')
       const tr = await loadMyTradeRequests(myId)
       setTradeRequests(tr)
-      // Mensaje system al chat para que el otro vea el contexto
       sendMessage(myId, listing.user_id,
-        `✅ Acepté tu oferta pública (${listing.offered_ids.length} ofrecidas / ${listing.wanted_ids.length} pedidas) — abrí Bandeja para confirmar.`
-      ).catch(() => {})
+        `✅ Acepté tu oferta pública (${listing.offered_ids?.length || 0} ofrecidas / ${listing.wanted_ids?.length || 0} pedidas) — abrí Bandeja para confirmar.`
+      ).catch(err => console.warn('system msg failed:', err))
       openChatWith(listing.user_id)
-    } catch(e) {
-      flash?.(`⚠️ ${e.message || 'No se pudo aceptar'}`, '#F87171')
+    } catch (e) {
+      console.error('acceptListing error:', e)
+      flash?.(`⚠️ ${e?.message || 'No se pudo enviar el trade'}`, '#F87171')
+    } finally {
+      setBusyAccept(null)
     }
-    setBusyAccept(null)
   }
 
   const onTradeSent = async (created) => {
@@ -751,7 +770,8 @@ export default function Marketplace({
       />
 
       {/* TradeRequestModal hoisted al render principal — sobrevive el unmount
-          del drill-down branch cuando el flow termina abriendo chat */}
+          del drill-down branch cuando el flow termina abriendo chat. El modal
+          es un editor real con picker de cartas (2 tabs OFREZCO / PIDO). */}
       <TradeRequestModal
         open={showTrade}
         onClose={() => { setShowTrade(false); setTradeCtx(null) }}
@@ -760,8 +780,11 @@ export default function Marketplace({
         targetProfile={tradeCtx?.targetProfile}
         albumType={albumType}
         itemsById={ITEMS_BY_ID}
-        offeredIds={tradeCtx?.offered || []}
-        wantedIds={tradeCtx?.wanted || []}
+        allItems={ALL_ITEMS}
+        myCol={myCol}
+        targetCol={tradeCtx?.targetCol || {}}
+        prefillOfferedIds={tradeCtx?.offered || []}
+        prefillWantedIds={tradeCtx?.wanted || []}
         prefillMeetingPoint={tradeCtx?.meetingPoint || ''}
         prefillMeetingTime={tradeCtx?.meetingTime || ''}
         flash={flash}

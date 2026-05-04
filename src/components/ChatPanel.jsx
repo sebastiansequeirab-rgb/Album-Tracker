@@ -35,16 +35,22 @@ export default function ChatPanel({
     }
   }, [activeCpId])
 
+  const [listError, setListError] = useState(null)
+
   // Cargar lista de hilos
   const reloadThreads = async () => {
     setLoadingList(true)
+    setListError(null)
     try {
       const t = await loadMyThreads(myId)
-      setThreads(t)
+      setThreads(Array.isArray(t) ? t : [])
     } catch(e) {
-      flash?.(`⚠️ ${e.message || 'Error cargando mensajes'}`, '#F87171')
+      console.error('loadMyThreads error:', e)
+      setListError(e?.message || 'Error cargando mensajes')
+      flash?.(`⚠️ ${e?.message || 'Error cargando mensajes'}`, '#F87171')
+    } finally {
+      setLoadingList(false)
     }
-    setLoadingList(false)
   }
 
   useEffect(() => {
@@ -60,26 +66,35 @@ export default function ChatPanel({
     }
   }, [initialCounterpartId])  // eslint-disable-line
 
-  // Realtime: escuchar nuevos mensajes entrantes y refrescar threads/messages
+  // Realtime: escuchar nuevos mensajes entrantes y refrescar threads/messages.
+  // CUALQUIER throw acá rompe el render del componente, así que envolvemos todo
+  // en try/catch y validamos el shape del payload.
   useEffect(() => {
-    const unsub = subscribeToInbox(myId, async (newMsg) => {
-      // Si tenemos hilo abierto con ese sender, append + mark-read
-      setActiveCpId(curCp => {
-        if (curCp === newMsg.sender_id) {
-          setMessages(prev => [...prev, newMsg])
-          // mark-read inmediato
-          markThreadRead(myId, newMsg.sender_id).catch(() => {})
-          onMessagesChanged?.() // refrescar global unread
-        } else {
-          // notificación leve
-          flash?.('💬 Nuevo mensaje','#FCD34D')
+    let unsub = () => {}
+    try {
+      unsub = subscribeToInbox(myId, (newMsg) => {
+        try {
+          if (!newMsg?.sender_id) return
+          setActiveCpId(curCp => {
+            if (curCp === newMsg.sender_id) {
+              setMessages(prev => [...prev, newMsg])
+              markThreadRead(myId, newMsg.sender_id).catch(() => {})
+              onMessagesChanged?.()
+            } else {
+              flash?.('💬 Nuevo mensaje','#FCD34D')
+            }
+            return curCp
+          })
+          reloadThreads()
+          onMessagesChanged?.()
+        } catch (e) {
+          console.warn('Realtime callback error:', e)
         }
-        return curCp
       })
-      reloadThreads()
-      onMessagesChanged?.()
-    })
-    return unsub
+    } catch (e) {
+      console.warn('subscribeToInbox setup error:', e)
+    }
+    return () => { try { unsub?.() } catch {} }
   }, [myId])  // eslint-disable-line
 
   // Cargar mensajes del hilo activo + profile
@@ -101,15 +116,16 @@ export default function ChatPanel({
             : loadProfile(activeCpId),
         ])
         if (cancelled) return
-        setMessages(msgs)
-        setActiveProfile(prof)
-        // Mark-read silencioso
+        setMessages(Array.isArray(msgs) ? msgs : [])
+        setActiveProfile(prof || null)
         await markThreadRead(myId, activeCpId).catch(() => {})
         onMessagesChanged?.()
       } catch(e) {
-        flash?.(`⚠️ ${e.message || 'Error cargando hilo'}`, '#F87171')
+        console.error('loadThreadMessages error:', e)
+        if (!cancelled) flash?.(`⚠️ ${e?.message || 'Error cargando hilo'}`, '#F87171')
+      } finally {
+        if (!cancelled) setLoadingThread(false)
       }
-      setLoadingThread(false)
     })()
     return () => { cancelled = true }
   }, [activeCpId, myId])  // eslint-disable-line
@@ -217,19 +233,48 @@ export default function ChatPanel({
   }
 
   // ============================================================ VISTA LISTA
+  // Header siempre visible — garantiza que el panel nunca quede en blanco
+  // aunque loadMyThreads falle o devuelva null.
+  const safeThreads = Array.isArray(threads) ? threads : []
   return (
     <div ref={rootRef} className={s.listView}>
-      {loadingList && <div className={s.listLoading}>Cargando…</div>}
-      {!loadingList && threads.length === 0 && (
+      <div className={s.listHeader}>
+        <div className={s.listHeaderTitle}>💬 MENSAJES</div>
+        <div className={s.listHeaderSub}>
+          {safeThreads.length === 0
+            ? 'Sin hilos todavía'
+            : `${safeThreads.length} ${safeThreads.length === 1 ? 'hilo' : 'hilos'}`}
+        </div>
+      </div>
+
+      {loadingList && (
+        <div className={s.listLoading}>
+          <div style={{ fontSize: 28, marginBottom: 8 }}>⏳</div>
+          Cargando hilos…
+        </div>
+      )}
+
+      {!loadingList && listError && (
+        <div className={s.listEmpty}>
+          <div className={s.listEmptyEmoji}>⚠️</div>
+          <div className={s.listEmptyTitle}>ERROR CARGANDO MENSAJES</div>
+          <div className={s.listEmptyText}>{listError}</div>
+          <button onClick={reloadThreads} className={s.listRetry}>Reintentar</button>
+        </div>
+      )}
+
+      {!loadingList && !listError && safeThreads.length === 0 && (
         <div className={s.listEmpty}>
           <div className={s.listEmptyEmoji}>💬</div>
           <div className={s.listEmptyTitle}>SIN MENSAJES AÚN</div>
           <div className={s.listEmptyText}>
-            Tap "💬 Chat" en el perfil de cualquier coleccionista para empezar.
+            Tap "💬 Iniciar chat" en cualquier oferta para empezar una conversación.
           </div>
         </div>
       )}
-      {threads.map(t => {
+
+      {!loadingList && !listError && safeThreads.map(t => {
+        if (!t?.counterpart_id) return null
         const prof = profilesById?.[t.counterpart_id]
         const isFromMe = t.last_sender_id === myId
         return (
