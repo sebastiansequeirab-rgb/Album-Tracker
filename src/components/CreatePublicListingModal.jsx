@@ -10,6 +10,7 @@ export default function CreatePublicListingModal({
   albumType,
   myCol,
   allItems,
+  myProfile,
   flash,
 }) {
   const [offered, setOffered] = useState(new Set())
@@ -18,6 +19,11 @@ export default function CreatePublicListingModal({
   const [busy,    setBusy]    = useState(false)
   const [err,     setErr]     = useState('')
   const [tab,     setTab]     = useState('offered') // 'offered' | 'wanted'
+  const [meetingPoint, setMeetingPoint] = useState('')
+  const [meetingPointId, setMeetingPointId] = useState('default')
+  const [meetingTime,  setMeetingTime]  = useState('')
+
+  const myMeetingPoints = Array.isArray(myProfile?.meeting_points) ? myProfile.meeting_points : []
 
   const myDups = useMemo(() => allItems.filter(c => myCol[c.id] === 'duplicate'), [allItems, myCol])
   const myMissing = useMemo(() => allItems.filter(c => (myCol[c.id] || 'missing') === 'missing'), [allItems, myCol])
@@ -47,12 +53,22 @@ export default function CreatePublicListingModal({
     }
     setBusy(true); setErr('')
     try {
+      // Resolver meeting point: dropdown mp del perfil > input libre > null
+      let resolvedMeetingPoint = null
+      if (meetingPointId === 'other') {
+        resolvedMeetingPoint = meetingPoint.trim() || null
+      } else if (meetingPointId !== 'default') {
+        const found = myMeetingPoints.find(mp => mp.id === meetingPointId)
+        resolvedMeetingPoint = found ? [found.name, found.hint].filter(Boolean).join(' · ') : null
+      }
       const created = await createPublicListing({
         user_id: myId,
         album_type: albumType,
         offered_ids: Array.from(offered),
         wanted_ids: Array.from(wanted),
         note: note.trim() || null,
+        meeting_point: resolvedMeetingPoint,
+        meeting_time_label: meetingTime.trim() || null,
       })
       flash?.('📢 Oferta publicada','#FCD34D')
       onCreated?.(created)
@@ -122,13 +138,55 @@ export default function CreatePublicListingModal({
         </div>
 
         <div className={s.field}>
+          <label className={s.label}>📍 PUNTO DE ENCUENTRO (opcional)</label>
+          <select
+            className={s.input}
+            value={meetingPointId}
+            onChange={e => setMeetingPointId(e.target.value)}>
+            <option value="default">— Sin definir —</option>
+            {myMeetingPoints.map(mp => (
+              <option key={mp.id} value={mp.id}>{mp.name}{mp.hint ? ` (${mp.hint})` : ''}</option>
+            ))}
+            <option value="other">Otro (escribir)</option>
+          </select>
+          {meetingPointId === 'other' && (
+            <input
+              className={s.input}
+              type="text"
+              maxLength={120}
+              value={meetingPoint}
+              onChange={e => setMeetingPoint(e.target.value)}
+              placeholder="Ej: Sambil Caracas, planta baja"
+              style={{ marginTop: 8 }}
+            />
+          )}
+          {myMeetingPoints.length === 0 && meetingPointId === 'default' && (
+            <div className={s.fieldHint}>
+              Tip: agregá tus puntos habituales en Perfil para reusarlos.
+            </div>
+          )}
+        </div>
+
+        <div className={s.field}>
+          <label className={s.label}>⏰ HORA / DISPONIBILIDAD (opcional)</label>
+          <input
+            className={s.input}
+            type="text"
+            maxLength={80}
+            value={meetingTime}
+            onChange={e => setMeetingTime(e.target.value)}
+            placeholder="Ej: Sábados AM, lunes a viernes después de 5pm"
+          />
+        </div>
+
+        <div className={s.field}>
           <label className={s.label}>📝 NOTA (opcional)</label>
           <textarea
             className={s.textarea}
             maxLength={500}
             value={note}
             onChange={e => setNote(e.target.value)}
-            placeholder="Ej: Solo intercambios en Caracas, prefiero por Instagram"
+            placeholder="Cualquier detalle extra"
           />
           <div className={s.charCount}>{note.length}/500</div>
         </div>

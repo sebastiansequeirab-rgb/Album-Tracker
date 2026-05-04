@@ -325,6 +325,8 @@ export async function createPublicListing(payload) {
     offered_ids: payload.offered_ids || [],
     wanted_ids: payload.wanted_ids || [],
     note: payload.note || null,
+    meeting_point: payload.meeting_point || null,
+    meeting_time_label: payload.meeting_time_label || null,
   }
   const { data, error } = await supabase
     .from('adrenalyn_public_listings')

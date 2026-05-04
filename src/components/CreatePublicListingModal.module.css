@@ -201,6 +201,13 @@
   margin-top: -2px;
 }
 
+.fieldHint {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-style: italic;
+  margin-top: 2px;
+}
+
 .cta {
   background: var(--accent-grad);
   color: #000;

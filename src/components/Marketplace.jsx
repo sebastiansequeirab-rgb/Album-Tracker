@@ -105,7 +105,7 @@ export default function Marketplace({
     return list
   }, [profiles, collections, myCol, sub, favoriteIdSet])
 
-  const onSelectUser = async (uid) => {
+  const onSelectUser = async (uid, prefill = null) => {
     setSelUserId(uid)
     setSelCol(null)
     setDrillTab('theirs')
@@ -116,10 +116,11 @@ export default function Marketplace({
       ])
       setSelCol(col)
       setSelProfile(prof)
-      // Pre-seleccionar matches por defecto
-      const matches = computeMatches(myCol, col)
-      setPickedTheirs(new Set(matches.theyHaveIWant))
-      setPickedMine(new Set(matches.iHaveTheyWant))
+      // Sin pre-selección: el usuario elige qué pedir y qué ofrecer.
+      // Los matches se muestran como "★ matchea" badge para guiar la decisión.
+      // Si viene `prefill` (ej: desde una listing), ahí sí pre-seleccionamos.
+      setPickedTheirs(new Set(prefill?.wanted || []))
+      setPickedMine(new Set(prefill?.offered || []))
     } catch(e) {
       flash?.(`⚠️ ${e.message || 'No se pudo cargar la colección'}`, '#F87171')
       setSelUserId(null)
@@ -168,16 +169,23 @@ export default function Marketplace({
         sendMessage(myId, created.target_id,
           '🤝 Te envié una solicitud de trade — abrí Bandeja para verla.'
         ).catch(() => {})
+        // Auto-abrir chat con el target tras enviar el trade
+        openChatWith(created.target_id)
       }
     } catch { /* sin-op */ }
   }
 
   const openChatWith = (otherId) => {
+    if (!otherId) return
     setChatCpId(otherId)
-    setSub('messages')
     setSelUserId(null)
     setSelCol(null)
     setSelProfile(null)
+    setSub('messages')
+    // Scroll al top para que el usuario vea el chat
+    if (typeof window !== 'undefined') {
+      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50)
+    }
   }
 
   const onUpdateTradeStatus = async (id, status) => {
@@ -378,89 +386,93 @@ export default function Marketplace({
         ))}
       </div>
 
-      {/* TODOS — Public listings + Create CTA encima de los perfiles */}
-      {sub === 'all' && myProfile?.marketplace_visible && (
-        <div className={s.listingsBlock}>
-          <div className={s.listingsHead}>
-            <div>
-              <div className={s.listingsTitle}>📢 OFERTAS ACTIVAS</div>
-              <div className={s.listingsSub}>{listings.length} {listings.length === 1 ? 'oferta' : 'ofertas'}</div>
-            </div>
-            <button className={s.btnPrimary} onClick={() => setShowCreate(true)}>
-              + Crear oferta
-            </button>
-          </div>
-
-          {listings.length === 0 ? (
-            <div className={s.listingsEmpty}>
-              Nadie publicó ofertas en este álbum todavía. ¡Sé el primero!
+      {/* TODOS — Solo ofertas activas como banners desglosados */}
+      {sub === 'all' && (
+        <>
+          {!myProfile?.marketplace_visible ? (
+            <div className={s.empty}>
+              <div className={s.emptyEmoji}>🌐</div>
+              <div className={s.emptyTitle}>NO ESTÁS VISIBLE</div>
+              <div className={s.emptyText}>
+                Activa "Visible en Marketplace" en tu perfil para ver y publicar ofertas.
+              </div>
+              <button onClick={onGoToProfile} className={s.emptyCta}>Ir a mi perfil</button>
             </div>
           ) : (
-            <div className={s.listingsGrid}>
-              {listings.map(l => {
-                const author = listingProfiles[l.user_id]
-                return (
-                  <div key={l.id} className={s.listingCard}>
-                    <div className={s.listingHead}>
-                      <div className={s.userAvatar}>{author?.avatar_emoji || '👤'}</div>
-                      <div className={s.userMeta}>
-                        <div className={s.userName}>{author?.display_name || 'Coleccionista'}</div>
-                        <div className={s.userSub}>
-                          Ofrece {l.offered_ids.length} · Busca {l.wanted_ids.length}
-                        </div>
-                      </div>
-                    </div>
-                    {l.note && <div className={s.listingNote}>{l.note}</div>}
-                    <div className={s.listingPreview}>
-                      {l.offered_ids.slice(0, 3).map(id => {
-                        const c = ITEMS_BY_ID[id]; if (!c) return null
-                        return <span key={'o'+id} className={s.listingChip}>+ #{c.num} {c.name}</span>
-                      })}
-                      {l.wanted_ids.slice(0, 3).map(id => {
-                        const c = ITEMS_BY_ID[id]; if (!c) return null
-                        return <span key={'w'+id} className={`${s.listingChip} ${s.listingChipWant}`}>? #{c.num} {c.name}</span>
-                      })}
-                      {(l.offered_ids.length + l.wanted_ids.length) > 6 && (
-                        <span className={s.listingChipMore}>+{l.offered_ids.length + l.wanted_ids.length - 6} más</span>
-                      )}
-                    </div>
-                    <button onClick={() => onSelectUser(l.user_id)} className={s.btnSecondary}>
-                      Ver coleccionista
-                    </button>
+            <>
+              <div className={s.listingsHead}>
+                <div>
+                  <div className={s.listingsTitle}>📢 OFERTAS ACTIVAS</div>
+                  <div className={s.listingsSub}>
+                    {listings.length} {listings.length === 1 ? 'oferta' : 'ofertas'} en {ALBUM_CONFIG[albumType].label || albumType}
                   </div>
-                )
-              })}
-            </div>
+                </div>
+                <button className={s.btnPrimary} onClick={() => setShowCreate(true)}>
+                  + Nueva oferta
+                </button>
+              </div>
+
+              {loading && <div className={s.emptyText} style={{ padding: 30 }}>Cargando ofertas…</div>}
+
+              {!loading && listings.length === 0 && (
+                <div className={s.empty}>
+                  <div className={s.emptyEmoji}>📢</div>
+                  <div className={s.emptyTitle}>SIN OFERTAS AÚN</div>
+                  <div className={s.emptyText}>
+                    Nadie publicó ofertas en este álbum. ¡Sé el primero! Tap "+ Nueva oferta".
+                  </div>
+                </div>
+              )}
+
+              {!loading && listings.length > 0 && (
+                <div className={s.bannerList}>
+                  {listings.map(l => (
+                    <ListingBanner
+                      key={l.id}
+                      listing={l}
+                      author={listingProfiles[l.user_id]}
+                      itemsById={ITEMS_BY_ID}
+                      isFavorite={favoriteIdSet.has(l.user_id)}
+                      onToggleFavorite={() => onToggleFavorite(l.user_id)}
+                      onChat={() => openChatWith(l.user_id)}
+                      onTrade={() => onSelectUser(l.user_id, {
+                        wanted: l.offered_ids,
+                        offered: [],
+                      })}
+                      onViewProfile={() => onSelectUser(l.user_id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
-        </div>
+        </>
       )}
 
-      {/* TODOS / FAVORITOS */}
-      {(sub === 'all' || sub === 'favorites') && (
+      {/* FAVORITOS — perfiles de coleccionistas marcados con ⭐ */}
+      {sub === 'favorites' && (
         <>
           {!myProfile?.marketplace_visible && (
             <div className={s.empty}>
               <div className={s.emptyEmoji}>🌐</div>
               <div className={s.emptyTitle}>NO ESTÁS VISIBLE</div>
               <div className={s.emptyText}>
-                Activa "Visible en Marketplace" en tu perfil para que otros puedan ver tus cartas y proponerte trades.
+                Activa "Visible en Marketplace" en tu perfil para ver coleccionistas.
               </div>
               <button onClick={onGoToProfile} className={s.emptyCta}>Ir a mi perfil</button>
             </div>
           )}
 
           {myProfile?.marketplace_visible && loading && (
-            <div className={s.emptyText} style={{ padding: 30 }}>Cargando coleccionistas…</div>
+            <div className={s.emptyText} style={{ padding: 30 }}>Cargando…</div>
           )}
 
           {myProfile?.marketplace_visible && !loading && profilesView.length === 0 && (
             <div className={s.empty}>
-              <div className={s.emptyEmoji}>{sub === 'favorites' ? '⭐' : '🌐'}</div>
-              <div className={s.emptyTitle}>{sub === 'favorites' ? 'SIN FAVORITOS AÚN' : 'NADIE MÁS POR ACÁ'}</div>
+              <div className={s.emptyEmoji}>⭐</div>
+              <div className={s.emptyTitle}>SIN FAVORITOS AÚN</div>
               <div className={s.emptyText}>
-                {sub === 'favorites'
-                  ? 'Marca con ⭐ a los coleccionistas que te interesen para tenerlos a mano.'
-                  : 'Sé el primero en compartir el link con tus amigos. Cuando otros activen Marketplace aparecerán aquí.'}
+                Marca con ⭐ a los coleccionistas que te interesen desde sus ofertas o perfil.
               </div>
             </div>
           )}
@@ -497,6 +509,10 @@ export default function Marketplace({
                           <div className={s.matchLabel}>Le das</div>
                           {p.matches.iHaveTheyWant.length}
                         </div>
+                      </div>
+                      <div className={s.userActions}>
+                        <button onClick={() => openChatWith(p.user_id)} className={s.btnSecondary}>💬 Chat</button>
+                        <button onClick={() => onSelectUser(p.user_id)} className={s.btnPrimary}>🤝 Trade</button>
                       </div>
                     </div>
                   )
@@ -671,8 +687,91 @@ export default function Marketplace({
         albumType={albumType}
         myCol={myCol}
         allItems={ALL_ITEMS}
+        myProfile={myProfile}
         flash={flash}
       />
+    </div>
+  )
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Sub-componente: banner desglosado de un listing público (full info, no clic-para-expandir)
+// ───────────────────────────────────────────────────────────────────────────
+function ListingBanner({ listing, author, itemsById, isFavorite, onToggleFavorite, onChat, onTrade, onViewProfile }) {
+  const offeredCards = listing.offered_ids.map(id => itemsById[id]).filter(Boolean)
+  const wantedCards  = listing.wanted_ids.map(id => itemsById[id]).filter(Boolean)
+  return (
+    <div className={s.banner}>
+      <div className={s.bannerHead}>
+        <button onClick={onViewProfile} className={s.bannerAuthor} type="button">
+          <div className={s.userAvatar}>{author?.avatar_emoji || '👤'}</div>
+          <div className={s.userMeta}>
+            <div className={s.userName}>{author?.display_name || 'Coleccionista'}</div>
+            <div className={s.userSub}>
+              Ofrece {listing.offered_ids.length} · Busca {listing.wanted_ids.length}
+            </div>
+          </div>
+        </button>
+        <button
+          onClick={onToggleFavorite}
+          className={`${s.favStar} ${isFavorite ? s.favStarOn : ''}`}
+          aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}>
+          {isFavorite ? '⭐' : '☆'}
+        </button>
+      </div>
+
+      {offeredCards.length > 0 && (
+        <div className={s.bannerSection}>
+          <div className={s.bannerSectionTitle} style={{ color: 'var(--have)' }}>
+            ⬆️ OFRECE <span className={s.matchCount}>{offeredCards.length}</span>
+          </div>
+          <div className={s.cardsList}>
+            {offeredCards.map(c => (
+              <div key={c.id} className={s.miniCard}>
+                <span className={s.miniCardFlag}>{c.flag}</span>
+                <div className={s.miniCardBody}>
+                  <div className={s.miniCardName}>{c.name}</div>
+                  <div className={s.miniCardMeta}>{c.team} · {c.type}</div>
+                </div>
+                <span className={s.miniCardNum}>#{c.num}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {wantedCards.length > 0 && (
+        <div className={s.bannerSection}>
+          <div className={s.bannerSectionTitle} style={{ color: 'var(--accent)' }}>
+            ⬇️ BUSCA <span className={s.matchCount}>{wantedCards.length}</span>
+          </div>
+          <div className={s.cardsList}>
+            {wantedCards.map(c => (
+              <div key={c.id} className={s.miniCard}>
+                <span className={s.miniCardFlag}>{c.flag}</span>
+                <div className={s.miniCardBody}>
+                  <div className={s.miniCardName}>{c.name}</div>
+                  <div className={s.miniCardMeta}>{c.team} · {c.type}</div>
+                </div>
+                <span className={s.miniCardNum}>#{c.num}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(listing.meeting_point || listing.meeting_time_label || listing.note) && (
+        <div className={s.bannerInfo}>
+          {listing.meeting_point && <div className={s.bannerInfoLine}>📍 {listing.meeting_point}</div>}
+          {listing.meeting_time_label && <div className={s.bannerInfoLine}>⏰ {listing.meeting_time_label}</div>}
+          {listing.note && <div className={s.bannerNote}>"{listing.note}"</div>}
+        </div>
+      )}
+
+      <div className={s.bannerActions}>
+        <button onClick={onChat} className={s.btnSecondary}>💬 Iniciar chat</button>
+        <button onClick={onTrade} className={s.btnPrimary}>🤝 Proponer trade</button>
+      </div>
     </div>
   )
 }
