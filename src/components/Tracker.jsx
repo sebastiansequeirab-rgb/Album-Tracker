@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 import { parseNumberList, MOMENTUM, ALBUM_CONFIG, ALBUM_ADRENALYN, ALBUM_TYPES } from '../data'
-import { ensureMyProfile } from '../lib/marketplace'
+import { ensureMyProfile, loadUnreadCount, subscribeToInbox } from '../lib/marketplace'
 import AlbumSwitcher from './AlbumSwitcher'
 import Flag from './Flag'
 import Marketplace from './Marketplace'
@@ -33,6 +33,7 @@ export default function Tracker({
   const [quickAction,setQuickAction]=useState('have')
   const [showReset, setShowReset] = useState(false)
   const [myProfile, setMyProfile] = useState(null)
+  const [unread,    setUnread]    = useState(0)
 
   // Auth errors (JWT expired/invalid) — try refresh, else sign out so user re-logins
   const handleAuthError = async (err) => {
@@ -96,6 +97,20 @@ export default function Tracker({
 
     return () => { cancelled = true }
   }, [session, albumType, cfg.table, cfg.buildInitial])
+
+  // Unread chat badge — load + realtime subscription (independiente de albumType)
+  useEffect(() => {
+    let cancelled = false
+    const refreshUnread = async () => {
+      try {
+        const n = await loadUnreadCount(session.user.id)
+        if (!cancelled) setUnread(n)
+      } catch { /* sin-op */ }
+    }
+    refreshUnread()
+    const unsub = subscribeToInbox(session.user.id, () => refreshUnread())
+    return () => { cancelled = true; unsub?.() }
+  }, [session.user.id])
 
   // ── Save to Supabase (coalesced + retry) ──
   const saveRef = useRef({ inFlight: false, pending: null, retryAt: 0 })
@@ -392,14 +407,14 @@ export default function Tracker({
             { id:'dashboard',   i:'📊', l:'Dashboard' },
             { id:'teams',       i:'🌍', l:'Equipos' },
             { id:'cards',       i:'🃏', l:'Cartas' },
-            { id:'marketplace', i:'🤝', l:'Marketplace', b: stats.dup },
+            { id:'marketplace', i:'🤝', l:'Marketplace', b: unread > 0 ? unread : stats.dup, dot: unread > 0 },
             { id:'profile',     i:'👤', l:'Perfil' },
           ].map(t => (
             <button key={t.id} onClick={() => { setTab(t.id); setSelTeam(null) }}
               className={`${s.navBtn} ${tab === t.id ? s.navBtnActive : ''}`}>
               <span className={s.navIcon}>{t.i}</span>
               <span className={s.navLabel}>{t.l}</span>
-              {t.b > 0 && <span className={s.navBadge}>{t.b}</span>}
+              {t.b > 0 && <span className={`${s.navBadge} ${t.dot ? s.navBadgeAlert : ''}`}>{t.b}</span>}
             </button>
           ))}
         </div>
@@ -635,6 +650,9 @@ export default function Tracker({
             myCol={col}
             myProfile={myProfile}
             onGoToProfile={() => setTab('profile')}
+            onUnreadChange={() => {
+              loadUnreadCount(session.user.id).then(setUnread).catch(() => {})
+            }}
             flash={flash}
           />
         )}

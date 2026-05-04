@@ -1,0 +1,309 @@
+/* ============================================================ Lista hilos */
+.listView {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 6px;
+  min-height: 280px;
+}
+
+.listLoading {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.listEmpty {
+  text-align: center;
+  padding: 50px 20px;
+}
+.listEmptyEmoji { font-size: 56px; margin-bottom: 12px; }
+.listEmptyTitle {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--text-faint);
+  margin-bottom: 8px;
+}
+.listEmptyText {
+  color: var(--text-hint);
+  font-size: 13px;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.threadItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg-deep);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.threadItem:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border);
+}
+
+.threadItemAvatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.threadItemBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.threadItemHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.threadItemName {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.threadItemTime {
+  color: var(--text-faint);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.threadItemPreview {
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.threadItemMe {
+  color: var(--text-faint);
+  font-weight: 600;
+}
+
+.threadItemBadge {
+  flex-shrink: 0;
+  background: var(--accent-grad);
+  color: #000;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  min-width: 20px;
+  text-align: center;
+}
+
+/* ============================================================ Vista hilo */
+.threadView {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  height: clamp(420px, 70vh, 720px);
+  overflow: hidden;
+}
+
+.threadHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg-deep);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.backBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.backBtn:hover { border-color: var(--accent); color: var(--accent); }
+
+.threadAvatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.threadHeadBody {
+  flex: 1;
+  min-width: 0;
+}
+.threadHeadName {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 14px;
+}
+.threadHeadSub {
+  color: var(--text-faint);
+  font-size: 10px;
+}
+
+.threadScroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg);
+}
+
+.threadLoading,
+.threadEmpty {
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 12px;
+  padding: 30px 10px;
+  font-style: italic;
+}
+
+.bubbleRow {
+  display: flex;
+  justify-content: flex-start;
+}
+.bubbleRowMine { justify-content: flex-end; }
+.bubbleRowSystem { justify-content: center; }
+
+.bubble {
+  max-width: 78%;
+  padding: 9px 12px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  word-wrap: break-word;
+}
+
+.bubbleTheirs {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+
+.bubbleMine {
+  background: var(--accent);
+  color: #000;
+  border-bottom-right-radius: 4px;
+}
+
+.bubbleSystem {
+  background: var(--bg-deep);
+  border: 1px dashed var(--accent-deep);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.bubbleContent {
+  font-size: 13.5px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.bubbleTime {
+  font-size: 9px;
+  opacity: 0.6;
+  align-self: flex-end;
+}
+.bubbleMine .bubbleTime { color: rgba(0, 0, 0, 0.6); }
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px;
+  background: var(--bg-deep);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.composerInput {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  max-height: 120px;
+  min-height: 40px;
+  line-height: 1.4;
+  transition: border-color var(--t-fast);
+}
+.composerInput:focus { border-color: var(--accent); }
+
+.composerSend {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-grad);
+  color: #000;
+  border: none;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--t-fast);
+}
+.composerSend:hover:not(:disabled) { transform: scale(1.05); }
+.composerSend:disabled {
+  background: var(--border-strong);
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .threadView { height: clamp(420px, 75vh, 720px); }
+  .bubble { max-width: 85%; }
+}

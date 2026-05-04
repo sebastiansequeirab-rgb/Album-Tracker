@@ -4,12 +4,14 @@ import {
   loadMyFavorites, addFavorite, removeFavorite,
   loadMyTradeRequests, updateTradeRequestStatus,
   loadActivePublicListings, closePublicListing,
+  sendMessage,
   computeMatches,
 } from '../lib/marketplace'
 import { loadAlbum, loadAlbumByUserIds } from '../lib/album'
 import { ALBUM_CONFIG, ALBUM_ADRENALYN } from '../data'
 import TradeRequestModal from './TradeRequestModal'
 import CreatePublicListingModal from './CreatePublicListingModal'
+import ChatPanel from './ChatPanel'
 import s from './Marketplace.module.css'
 
 export default function Marketplace({
@@ -18,6 +20,7 @@ export default function Marketplace({
   myCol,
   myProfile,
   onGoToProfile,
+  onUnreadChange,
   flash,
 }) {
   const cfg = ALBUM_CONFIG[albumType]
@@ -43,6 +46,7 @@ export default function Marketplace({
   const [listings,     setListings]     = useState([])
   const [listingProfiles, setListingProfiles] = useState({}) // user_id -> profile
   const [showCreate,   setShowCreate]   = useState(false)
+  const [chatCpId,     setChatCpId]     = useState(null) // counterpart id activo en chat
 
   const myId = session.user.id
 
@@ -155,11 +159,25 @@ export default function Marketplace({
     setShowTrade(true)
   }
 
-  const onTradeSent = async () => {
+  const onTradeSent = async (created) => {
     try {
       const tr = await loadMyTradeRequests(myId)
       setTradeRequests(tr)
+      // Mensaje system al chat con el target del trade
+      if (created?.target_id) {
+        sendMessage(myId, created.target_id,
+          '🤝 Te envié una solicitud de trade — abrí Bandeja para verla.'
+        ).catch(() => {})
+      }
     } catch { /* sin-op */ }
+  }
+
+  const openChatWith = (otherId) => {
+    setChatCpId(otherId)
+    setSub('messages')
+    setSelUserId(null)
+    setSelCol(null)
+    setSelProfile(null)
   }
 
   const onUpdateTradeStatus = async (id, status) => {
@@ -252,7 +270,7 @@ export default function Marketplace({
               <button onClick={() => onToggleFavorite(selUserId)} className={isFav ? s.btnAccent : s.btnSecondary}>
                 {isFav ? '⭐ Favorito' : '☆ Favoritear'}
               </button>
-              <button onClick={() => flash?.('💬 Chat — próximamente', '#94A3B8')} className={s.btnSecondary}>
+              <button onClick={() => openChatWith(selUserId)} className={s.btnSecondary}>
                 💬 Chat
               </button>
               <button
@@ -488,16 +506,17 @@ export default function Marketplace({
         </>
       )}
 
-      {/* MENSAJES (placeholder hasta Commit 4 del plan) */}
+      {/* MENSAJES — chat in-app */}
       {sub === 'messages' && (
-        <div className={s.empty}>
-          <div className={s.emptyEmoji}>💬</div>
-          <div className={s.emptyTitle}>MENSAJES — PRÓXIMAMENTE</div>
-          <div className={s.emptyText}>
-            Estamos terminando el chat in-app realtime. Mientras tanto, copia los contactos
-            del usuario desde "Proponer trade" para coordinar por fuera.
-          </div>
-        </div>
+        <ChatPanel
+          myId={myId}
+          myProfile={myProfile}
+          initialCounterpartId={chatCpId}
+          profilesById={{ ...profilesById, ...listingProfiles }}
+          onActiveCounterpartChange={setChatCpId}
+          onMessagesChanged={() => onUnreadChange?.()}
+          flash={flash}
+        />
       )}
 
       {/* BANDEJA — trade requests */}
