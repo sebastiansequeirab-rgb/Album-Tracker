@@ -10,22 +10,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--sp-5);
+  /* padding-bottom mayor para que el card no choque con la features bar baked-in del bg */
+  padding: var(--sp-5) var(--sp-5) calc(var(--sp-5) + 60px);
   position: relative;
   background-color: var(--bg);
   background-image: url('/login-bg.jpg');
   background-size: cover;
-  background-position: center;
+  background-position: center center;
   background-repeat: no-repeat;
   overflow: hidden;
 }
 
-/* Vignette sutil para que el card opaco contraste mejor contra el bg colorido */
+/* Vignette muy sutil al rededor del card para que destaque sin tapar packs/features baked-in */
 .wrap::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.5) 100%);
+  background: radial-gradient(ellipse 50% 60% at 50% 45%, rgba(0, 0, 0, 0.55) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -38,7 +39,7 @@
   align-items: center;
   gap: var(--sp-4);
   width: 100%;
-  max-width: 460px;
+  max-width: 420px;
 }
 
 /* Card de login (opaco, cubre el "fake card" del bg image en la misma posición) */
@@ -290,108 +291,28 @@
   color: var(--have);
 }
 
-/* Footer features — barra única con separadores verticales */
-.features {
-  display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 0;
-  width: 100%;
-  margin-top: var(--sp-2);
-  background: rgba(8, 12, 22, 0.85);
-  border: 1px solid rgba(252, 211, 77, 0.12);
-  border-radius: var(--r-lg);
-  padding: 12px 4px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.feature {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 12px;
-  border-left: 1px solid rgba(255, 255, 255, 0.06);
-}
-.feature:first-child { border-left: none; }
-
-.featureIcon {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent);
-}
-
-.featureText {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.featureTitle {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  color: var(--text);
-  line-height: 1.2;
-  text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.featureSub {
-  font-size: 9px;
-  color: var(--text-muted);
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Responsive */
+/* Responsive — features bar baked-in en bg, no se renderiza en HTML */
 @media (max-width: 768px) {
-  .wrap { background-position: 50% 35%; }
-  .features {
-    flex-wrap: wrap;
-    padding: 10px 6px;
+  /* Mover el card un poco hacia arriba en mobile para que no choque con la features bar baked-in */
+  .wrap {
+    align-items: flex-start;
+    padding-top: clamp(60px, 12vh, 120px);
+    padding-bottom: clamp(80px, 14vh, 140px);
+    background-position: 50% 30%;
   }
-  .feature {
-    flex: 1 0 calc(50% - 1px);
-    padding: 6px 8px;
-  }
-  .feature:first-child { border-left: none; }
-  .feature:nth-child(3) { border-left: none; }
-  .featureTitle { font-size: 9px; }
-  .featureSub { font-size: 9px; }
 }
 
 @media (max-width: 480px) {
-  .wrap { padding: var(--sp-4) var(--sp-3); background-position: 50% 30%; }
+  .wrap {
+    padding: clamp(40px, 8vh, 80px) var(--sp-3) clamp(70px, 12vh, 110px);
+    background-position: 50% 25%;
+  }
   .card { padding: var(--sp-5) var(--sp-4); border-radius: 18px; }
   .heroTitle { font-size: 34px; letter-spacing: 2.5px; }
   .heroSubtitle { font-size: 10px; letter-spacing: 4px; }
   .welcome { font-size: 13px; flex-wrap: wrap; }
-  .features { padding: 8px 4px; gap: 4px; }
-  .feature { padding: 4px 6px; gap: 6px; }
-  .featureIcon svg { width: 16px; height: 16px; }
-  .featureTitle { font-size: 8px; }
-  .featureSub { font-size: 8px; }
 }
 
 @media (max-width: 360px) {
   .heroTitle { font-size: 28px; letter-spacing: 2px; }
-  .features {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .feature {
-    flex: 1 0 auto;
-    border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 6px 12px;
-  }
-  .feature:first-child { border-top: none; }
 }

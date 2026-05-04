@@ -36,33 +36,6 @@ const IconTrophy = (p) => (
     <path d="M6 5v6a6 6 0 0 0 12 0V5" /><path d="M9 21h6" /><path d="M12 17v4" />
   </svg>
 )
-const IconAlbum = (p) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
-    <path d="M4 4h13a3 3 0 0 1 3 3v13a1 1 0 0 1-1 1H7a3 3 0 0 1-3-3V4z" /><path d="M8 4v15" />
-  </svg>
-)
-const IconCards = (p) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
-    <rect x="3" y="6" width="13" height="15" rx="2" /><path d="M8 3h11a2 2 0 0 1 2 2v13" />
-  </svg>
-)
-const IconSwap = (p) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
-    <path d="M7 7h13l-3-3M17 17H4l3 3" />
-  </svg>
-)
-const IconChart = (p) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
-    <path d="M5 21V11M12 21V3M19 21v-7" />
-  </svg>
-)
-
-const FEATURES = [
-  { Icon: IconAlbum, title: 'ÁLBUM DE STICKERS', sub: 'Completa tu colección' },
-  { Icon: IconCards, title: 'ADRENALYN XL',       sub: 'Colecciona y compite' },
-  { Icon: IconSwap,  title: 'INTERCAMBIA',        sub: 'Conecta y comparte' },
-  { Icon: IconChart, title: 'SIGUE TU PROGRESO',  sub: 'No pierdas nada' },
-]
 
 export default function Auth() {
   const [mode,     setMode]     = useState('login')
@@ -201,18 +174,8 @@ export default function Auth() {
             )}
           </div>
         </div>
-
-        <div className={s.features}>
-          {FEATURES.map(({ Icon, title, sub }) => (
-            <div key={title} className={s.feature}>
-              <div className={s.featureIcon}><Icon /></div>
-              <div className={s.featureText}>
-                <div className={s.featureTitle}>{title}</div>
-                <div className={s.featureSub}>{sub}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* La barra de features (Álbum de stickers / Adrenalyn XL / Intercambia / Sigue tu progreso)
+            está baked-in en /login-bg.jpg, por eso no la renderizamos en HTML — se duplicaba */}
       </div>
     </div>
   )
