@@ -4,3 +4,9 @@ dist
 .env.local
 .DS_Store
 .vercel
+
+# Local-only mockup assets (third-party imagery — no trackear)
+login.PNG
+*.png
+*.jpg
+*.jpeg
