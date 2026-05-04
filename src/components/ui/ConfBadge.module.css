@@ -1,0 +1,48 @@
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: 1px solid transparent;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.xs {
+  padding: 2px 6px;
+  font-size: 9px;
+}
+
+.confCONMEBOL {
+  color: var(--conf-conmebol);
+  border-color: var(--conf-conmebol);
+  background: var(--conf-conmebol-dim);
+}
+.confUEFA {
+  color: var(--conf-uefa);
+  border-color: var(--conf-uefa);
+  background: var(--conf-uefa-dim);
+}
+.confCONCACAF {
+  color: var(--conf-concacaf);
+  border-color: var(--conf-concacaf);
+  background: var(--conf-concacaf-dim);
+}
+.confCAF {
+  color: var(--conf-caf);
+  border-color: var(--conf-caf);
+  background: var(--conf-caf-dim);
+}
+.confAFC {
+  color: var(--conf-afc);
+  border-color: var(--conf-afc);
+  background: var(--conf-afc-dim);
+}
+.confOFC {
+  color: var(--conf-ofc);
+  border-color: var(--conf-ofc);
+  background: var(--conf-ofc-dim);
+}

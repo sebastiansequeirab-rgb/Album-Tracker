@@ -1,0 +1,27 @@
+.dot {
+  display: inline-block;
+  border-radius: var(--r-pill);
+  flex-shrink: 0;
+}
+
+.have {
+  background: var(--status-have);
+  box-shadow: 0 0 8px var(--status-have-glow);
+  animation: dotPulse 2.4s ease-in-out infinite;
+}
+
+.repeated {
+  background: var(--status-dup);
+  box-shadow: 0 0 8px var(--status-dup-glow);
+  animation: dotPulse 2.4s ease-in-out infinite;
+}
+
+.missing {
+  background: var(--status-missing);
+  opacity: 0.75;
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(0.85); }
+}

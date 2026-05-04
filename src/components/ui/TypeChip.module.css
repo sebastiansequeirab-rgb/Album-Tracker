@@ -1,0 +1,24 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.emoji {
+  font-size: 11px;
+  line-height: 1;
+}
+
+.typeIntro   { color: var(--type-intro);   background: var(--type-intro-dim); }
+.typeMuseum  { color: var(--type-museum);  background: var(--type-museum-dim); }
+.typeJugador { color: var(--type-jugador); background: var(--type-jugador-dim); }
+.typePlantel { color: var(--type-plantel); background: var(--type-plantel-dim); }
+.typeEscudo  { color: var(--type-escudo);  background: var(--type-escudo-dim); }
