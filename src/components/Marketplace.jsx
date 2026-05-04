@@ -1,11 +1,15 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
   loadVisibleProfiles, loadProfile,
-  loadMyFavorites, addFavorite, removeFavorite, isFavorite,
-  computeMatches, buildTradeMessage,
+  loadMyFavorites, addFavorite, removeFavorite,
+  loadMyTradeRequests, updateTradeRequestStatus,
+  loadActivePublicListings, closePublicListing,
+  computeMatches,
 } from '../lib/marketplace'
 import { loadAlbum, loadAlbumByUserIds } from '../lib/album'
 import { ALBUM_CONFIG, ALBUM_ADRENALYN } from '../data'
+import TradeRequestModal from './TradeRequestModal'
+import CreatePublicListingModal from './CreatePublicListingModal'
 import s from './Marketplace.module.css'
 
 export default function Marketplace({
@@ -34,26 +38,44 @@ export default function Marketplace({
   const [pickedTheirs,setPickedTheirs]= useState(new Set()) // ids requested from them
   const [pickedMine,  setPickedMine]  = useState(new Set()) // ids offered by me
   const [onlyMatches, setOnlyMatches] = useState(true)
-  const [showTrade,   setShowTrade]   = useState(false)
-  const [tradeMsg,    setTradeMsg]    = useState('')
+  const [showTrade,    setShowTrade]    = useState(false)
+  const [tradeRequests,setTradeRequests]= useState([])
+  const [listings,     setListings]     = useState([])
+  const [listingProfiles, setListingProfiles] = useState({}) // user_id -> profile
+  const [showCreate,   setShowCreate]   = useState(false)
 
   const myId = session.user.id
 
   const reload = async () => {
     setLoading(true)
     try {
-      const [vp, fv] = await Promise.all([
+      const [vp, fv, tr, pl] = await Promise.all([
         loadVisibleProfiles(myId),
         loadMyFavorites(myId),
+        loadMyTradeRequests(myId),
+        loadActivePublicListings(albumType),
       ])
       setProfiles(vp)
       setFavorites(fv)
+      setTradeRequests(tr)
+      setListings(pl.filter(l => l.user_id !== myId))
       const ids = vp.map(p => p.user_id)
       const cm  = await loadAlbumByUserIds(albumType, ids)
       setCollections(cm)
       const map = {}
       for (const p of vp) map[p.user_id] = p
       setProfilesById(map)
+      // Resolver perfiles de autores de listings que no estén en visible profiles
+      const listingAuthors = pl.map(l => l.user_id).filter(uid => uid !== myId && !map[uid])
+      const uniqueAuthors = [...new Set(listingAuthors)]
+      const authorProfiles = {}
+      for (const uid of uniqueAuthors) {
+        try {
+          const p = await loadProfile(uid)
+          if (p) authorProfiles[uid] = p
+        } catch { /* skip si RLS no deja */ }
+      }
+      setListingProfiles({ ...map, ...authorProfiles })
     } catch(e) {
       flash?.(`⚠️ ${e.message || 'Error cargando marketplace'}`, '#F87171')
     }
@@ -130,15 +152,49 @@ export default function Marketplace({
 
   const openTradeModal = () => {
     if (!selUserId || !selCol) return
-    const msg = buildTradeMessage({
-      myName: myProfile?.display_name || 'Coleccionista',
-      theirName: selProfile?.display_name || 'amigo',
-      theyHaveIWant: Array.from(pickedTheirs),
-      iHaveTheyWant: Array.from(pickedMine),
-      allCardsById: ITEMS_BY_ID,
-    })
-    setTradeMsg(msg)
     setShowTrade(true)
+  }
+
+  const onTradeSent = async () => {
+    try {
+      const tr = await loadMyTradeRequests(myId)
+      setTradeRequests(tr)
+    } catch { /* sin-op */ }
+  }
+
+  const onUpdateTradeStatus = async (id, status) => {
+    try {
+      await updateTradeRequestStatus(id, status)
+      const tr = await loadMyTradeRequests(myId)
+      setTradeRequests(tr)
+      const labels = {
+        accepted: '✅ Aceptada',
+        declined: '✋ Rechazada',
+        cancelled: '🚫 Cancelada',
+        completed: '🎉 Trade completado',
+      }
+      flash?.(labels[status] || 'Actualizado','#FCD34D')
+    } catch(e) {
+      flash?.(`⚠️ ${e.message || 'Error'}`, '#F87171')
+    }
+  }
+
+  const onListingCreated = async () => {
+    try {
+      const pl = await loadActivePublicListings(albumType)
+      setListings(pl.filter(l => l.user_id !== myId))
+    } catch { /* sin-op */ }
+  }
+
+  const onCloseListing = async (id) => {
+    try {
+      await closePublicListing(id)
+      const pl = await loadActivePublicListings(albumType)
+      setListings(pl.filter(l => l.user_id !== myId))
+      flash?.('🔒 Oferta cerrada','#94A3B8')
+    } catch(e) {
+      flash?.(`⚠️ ${e.message || 'Error'}`, '#F87171')
+    }
   }
 
   const copy = (txt) => {
@@ -263,63 +319,33 @@ export default function Marketplace({
           </>
         )}
 
-        {showTrade && (
-          <div className={s.modalBackdrop} onClick={() => setShowTrade(false)}>
-            <div className={s.modalCard} onClick={e => e.stopPropagation()}>
-              <div className={s.modalHead}>
-                <div>
-                  <div className={s.modalTitle}>🤝 PROPONER TRADE</div>
-                  <div className={s.modalSub}>Contacta a {prof?.display_name} por fuera de la app</div>
-                </div>
-                <button onClick={() => setShowTrade(false)} className={s.modalClose}>×</button>
-              </div>
-
-              <div className={s.contactList}>
-                {prof?.contact?.instagram && (
-                  <div className={s.contactRow}>
-                    <span className={s.contactIcon}>📸</span>
-                    <span className={s.contactValue}>@{String(prof.contact.instagram).replace(/^@/, '')}</span>
-                    <button onClick={() => copy('@' + String(prof.contact.instagram).replace(/^@/, ''))} className={s.contactCopy}>Copiar</button>
-                  </div>
-                )}
-                {prof?.contact?.whatsapp && (
-                  <div className={s.contactRow}>
-                    <span className={s.contactIcon}>💬</span>
-                    <span className={s.contactValue}>{prof.contact.whatsapp}</span>
-                    <button onClick={() => copy(prof.contact.whatsapp)} className={s.contactCopy}>Copiar</button>
-                  </div>
-                )}
-                {prof?.contact?.email && (
-                  <div className={s.contactRow}>
-                    <span className={s.contactIcon}>✉️</span>
-                    <span className={s.contactValue}>{prof.contact.email}</span>
-                    <button onClick={() => copy(prof.contact.email)} className={s.contactCopy}>Copiar</button>
-                  </div>
-                )}
-                {!prof?.contact?.instagram && !prof?.contact?.whatsapp && !prof?.contact?.email && (
-                  <div className={s.matchEmptyText}>Este usuario no agregó contactos. Pídele que llene su perfil.</div>
-                )}
-              </div>
-
-              <div className={s.matchSectionTitle} style={{ color: 'var(--text-muted)' }}>MENSAJE SUGERIDO</div>
-              <textarea className={s.messageBox} value={tradeMsg} onChange={e => setTradeMsg(e.target.value)} />
-              <button onClick={() => copy(tradeMsg)} className={s.btnPrimary} style={{ width: '100%', marginTop: 12 }}>
-                📋 Copiar mensaje
-              </button>
-            </div>
-          </div>
-        )}
+        <TradeRequestModal
+          open={showTrade}
+          onClose={() => setShowTrade(false)}
+          onSent={onTradeSent}
+          myId={myId}
+          targetProfile={selProfile}
+          albumType={albumType}
+          itemsById={ITEMS_BY_ID}
+          offeredIds={Array.from(pickedMine)}
+          wantedIds={Array.from(pickedTheirs)}
+          flash={flash}
+        />
       </div>
     )
   }
 
   // ============================================================ LIST VIEW
+  const incomingPending = tradeRequests.filter(t => t.target_id === myId && t.status === 'pending')
+  const outgoingPending = tradeRequests.filter(t => t.initiator_id === myId && t.status === 'pending')
+  const closedTrades    = tradeRequests.filter(t => t.status !== 'pending')
+
   const subtabs = [
     { id: 'all',       i: '🌐', l: 'Todos' },
     { id: 'favorites', i: '⭐', l: 'Favoritos', b: favoriteIdSet.size },
     { id: 'messages',  i: '💬', l: 'Mensajes' },
-    { id: 'inbox',     i: '📬', l: 'Bandeja' },
-    { id: 'mine',      i: '📋', l: 'Mi lista', b: myDups.length },
+    { id: 'inbox',     i: '📬', l: 'Bandeja',   b: incomingPending.length },
+    { id: 'mine',      i: '📋', l: 'Mi lista',  b: myDups.length },
   ]
 
   return (
@@ -333,6 +359,63 @@ export default function Marketplace({
           </button>
         ))}
       </div>
+
+      {/* TODOS — Public listings + Create CTA encima de los perfiles */}
+      {sub === 'all' && myProfile?.marketplace_visible && (
+        <div className={s.listingsBlock}>
+          <div className={s.listingsHead}>
+            <div>
+              <div className={s.listingsTitle}>📢 OFERTAS ACTIVAS</div>
+              <div className={s.listingsSub}>{listings.length} {listings.length === 1 ? 'oferta' : 'ofertas'}</div>
+            </div>
+            <button className={s.btnPrimary} onClick={() => setShowCreate(true)}>
+              + Crear oferta
+            </button>
+          </div>
+
+          {listings.length === 0 ? (
+            <div className={s.listingsEmpty}>
+              Nadie publicó ofertas en este álbum todavía. ¡Sé el primero!
+            </div>
+          ) : (
+            <div className={s.listingsGrid}>
+              {listings.map(l => {
+                const author = listingProfiles[l.user_id]
+                return (
+                  <div key={l.id} className={s.listingCard}>
+                    <div className={s.listingHead}>
+                      <div className={s.userAvatar}>{author?.avatar_emoji || '👤'}</div>
+                      <div className={s.userMeta}>
+                        <div className={s.userName}>{author?.display_name || 'Coleccionista'}</div>
+                        <div className={s.userSub}>
+                          Ofrece {l.offered_ids.length} · Busca {l.wanted_ids.length}
+                        </div>
+                      </div>
+                    </div>
+                    {l.note && <div className={s.listingNote}>{l.note}</div>}
+                    <div className={s.listingPreview}>
+                      {l.offered_ids.slice(0, 3).map(id => {
+                        const c = ITEMS_BY_ID[id]; if (!c) return null
+                        return <span key={'o'+id} className={s.listingChip}>+ #{c.num} {c.name}</span>
+                      })}
+                      {l.wanted_ids.slice(0, 3).map(id => {
+                        const c = ITEMS_BY_ID[id]; if (!c) return null
+                        return <span key={'w'+id} className={`${s.listingChip} ${s.listingChipWant}`}>? #{c.num} {c.name}</span>
+                      })}
+                      {(l.offered_ids.length + l.wanted_ids.length) > 6 && (
+                        <span className={s.listingChipMore}>+{l.offered_ids.length + l.wanted_ids.length - 6} más</span>
+                      )}
+                    </div>
+                    <button onClick={() => onSelectUser(l.user_id)} className={s.btnSecondary}>
+                      Ver coleccionista
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* TODOS / FAVORITOS */}
       {(sub === 'all' || sub === 'favorites') && (
@@ -417,15 +500,78 @@ export default function Marketplace({
         </div>
       )}
 
-      {/* BANDEJA (placeholder hasta Commit 3 del plan) */}
+      {/* BANDEJA — trade requests */}
       {sub === 'inbox' && (
-        <div className={s.empty}>
-          <div className={s.emptyEmoji}>📬</div>
-          <div className={s.emptyTitle}>BANDEJA — PRÓXIMAMENTE</div>
-          <div className={s.emptyText}>
-            Acá vas a recibir y enviar trade requests con punto de encuentro y hora.
-          </div>
-        </div>
+        <>
+          {tradeRequests.length === 0 ? (
+            <div className={s.empty}>
+              <div className={s.emptyEmoji}>📬</div>
+              <div className={s.emptyTitle}>SIN TRADES AÚN</div>
+              <div className={s.emptyText}>
+                Cuando alguien te proponga un trade aparecerá acá. Vos también podés iniciar uno
+                desde el drill-down de cualquier coleccionista.
+              </div>
+            </div>
+          ) : (
+            <>
+              {incomingPending.length > 0 && (
+                <div className={s.tradeSection}>
+                  <div className={s.tradeSectionTitle}>
+                    📩 RECIBIDAS <span className={s.matchCount}>{incomingPending.length}</span>
+                  </div>
+                  {incomingPending.map(t => (
+                    <TradeRow
+                      key={t.id}
+                      trade={t}
+                      isIncoming
+                      profile={profilesById[t.initiator_id] || listingProfiles[t.initiator_id]}
+                      itemsById={ITEMS_BY_ID}
+                      onAccept={() => onUpdateTradeStatus(t.id, 'accepted')}
+                      onReject={() => onUpdateTradeStatus(t.id, 'declined')}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {outgoingPending.length > 0 && (
+                <div className={s.tradeSection}>
+                  <div className={s.tradeSectionTitle} style={{ color: 'var(--text-faint)' }}>
+                    📤 ENVIADAS <span className={s.matchCount}>{outgoingPending.length}</span>
+                  </div>
+                  {outgoingPending.map(t => (
+                    <TradeRow
+                      key={t.id}
+                      trade={t}
+                      profile={profilesById[t.target_id] || listingProfiles[t.target_id]}
+                      itemsById={ITEMS_BY_ID}
+                      onCancel={() => onUpdateTradeStatus(t.id, 'cancelled')}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {closedTrades.length > 0 && (
+                <div className={s.tradeSection}>
+                  <div className={s.tradeSectionTitle} style={{ color: 'var(--text-faint)' }}>
+                    📚 HISTORIAL <span className={s.matchCount}>{closedTrades.length}</span>
+                  </div>
+                  {closedTrades.slice(0, 12).map(t => {
+                    const otherId = t.initiator_id === myId ? t.target_id : t.initiator_id
+                    return (
+                      <TradeRow
+                        key={t.id}
+                        trade={t}
+                        profile={profilesById[otherId] || listingProfiles[otherId]}
+                        itemsById={ITEMS_BY_ID}
+                        readonly
+                      />
+                    )
+                  })}
+                </div>
+              )}
+            </>
+          )}
+        </>
       )}
 
       {/* MI LISTA */}
@@ -496,6 +642,75 @@ export default function Marketplace({
             </>
           )}
         </>
+      )}
+
+      <CreatePublicListingModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={onListingCreated}
+        myId={myId}
+        albumType={albumType}
+        myCol={myCol}
+        allItems={ALL_ITEMS}
+        flash={flash}
+      />
+    </div>
+  )
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Sub-componente: row de trade request en la Bandeja
+// ───────────────────────────────────────────────────────────────────────────
+function TradeRow({ trade, profile, itemsById, isIncoming, onAccept, onReject, onCancel, readonly }) {
+  const fmtCards = (ids) => ids.slice(0, 3).map(id => {
+    const c = itemsById[id]
+    return c ? `#${c.num} ${c.name}` : null
+  }).filter(Boolean).join(', ')
+  const offText = trade.offered_ids.length > 0
+    ? `${fmtCards(trade.offered_ids)}${trade.offered_ids.length > 3 ? ` +${trade.offered_ids.length - 3}` : ''}`
+    : '—'
+  const wantText = trade.wanted_ids.length > 0
+    ? `${fmtCards(trade.wanted_ids)}${trade.wanted_ids.length > 3 ? ` +${trade.wanted_ids.length - 3}` : ''}`
+    : '—'
+  const time = trade.meeting_time_label || (trade.meeting_time_exact
+    ? new Date(trade.meeting_time_exact).toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })
+    : null)
+  const statusLabel = {
+    accepted: '✅ Aceptada',
+    declined: '✋ Rechazada',
+    cancelled: '🚫 Cancelada',
+    completed: '🎉 Completada',
+  }[trade.status]
+  return (
+    <div className={s.tradeRow}>
+      <div className={s.tradeRowHead}>
+        <div className={s.userAvatar}>{profile?.avatar_emoji || '👤'}</div>
+        <div className={s.userMeta}>
+          <div className={s.userName}>{profile?.display_name || 'Coleccionista'}</div>
+          <div className={s.userSub}>
+            {isIncoming ? 'Te propone' : (readonly ? statusLabel : 'Esperando respuesta…')}
+          </div>
+        </div>
+      </div>
+      <div className={s.tradeRowBody}>
+        <div className={s.tradeLine}><strong>{isIncoming ? 'Te ofrece:' : 'Ofreces:'}</strong> {offText}</div>
+        <div className={s.tradeLine}><strong>{isIncoming ? 'Te pide:' : 'Pides:'}</strong> {wantText}</div>
+        {trade.meeting_point && <div className={s.tradeLine}>📍 {trade.meeting_point}</div>}
+        {time && <div className={s.tradeLine}>⏰ {time}</div>}
+        {trade.message && <div className={s.tradeMessage}>"{trade.message}"</div>}
+      </div>
+      {!readonly && (
+        <div className={s.tradeActions}>
+          {isIncoming && (
+            <>
+              <button onClick={onAccept} className={s.btnAccept}>Aceptar</button>
+              <button onClick={onReject} className={s.btnReject}>Rechazar</button>
+            </>
+          )}
+          {!isIncoming && onCancel && (
+            <button onClick={onCancel} className={s.btnSecondary}>Cancelar</button>
+          )}
+        </div>
       )}
     </div>
   )
