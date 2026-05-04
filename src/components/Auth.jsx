@@ -2,13 +2,51 @@ import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 import s from './Auth.module.css'
 
+// SVG icons inline (cero deps)
+const IconMail = (p) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" />
+  </svg>
+)
+const IconLock = (p) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 1 1 8 0v4" />
+  </svg>
+)
+const IconEye = (p) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" />
+  </svg>
+)
+const IconEyeOff = (p) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M17.94 17.94A10.06 10.06 0 0 1 12 19c-6.5 0-10-7-10-7a18 18 0 0 1 4.06-4.94" />
+    <path d="M9.9 4.24A10 10 0 0 1 12 4c6.5 0 10 8 10 8a17 17 0 0 1-2.16 3.19" />
+    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" /><path d="M2 2l20 20" />
+  </svg>
+)
+const IconArrow = (p) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M5 12h14M13 5l7 7-7 7" />
+  </svg>
+)
+
+const FEATURES = [
+  { icon: '📖', title: 'ÁLBUM DE STICKERS', sub: 'Completa tu colección' },
+  { icon: '⚽', title: 'ADRENALYN XL',       sub: 'Colecciona y compite' },
+  { icon: '🤝', title: 'INTERCAMBIA',        sub: 'Conecta y trade' },
+  { icon: '📊', title: 'SIGUE TU PROGRESO',  sub: 'No pierdas nada' },
+]
+
 export default function Auth() {
-  const [mode,  setMode]  = useState('login')
-  const [email, setEmail] = useState('')
-  const [pass,  setPass]  = useState('')
-  const [load,  setLoad]  = useState(false)
-  const [err,   setErr]   = useState('')
-  const [ok,    setOk]    = useState('')
+  const [mode,     setMode]     = useState('login')
+  const [email,    setEmail]    = useState('')
+  const [pass,     setPass]     = useState('')
+  const [showPass, setShowPass] = useState(false)
+  const [remember, setRemember] = useState(true)
+  const [load,     setLoad]     = useState(false)
+  const [err,      setErr]      = useState('')
+  const [ok,       setOk]       = useState('')
 
   const handle = async e => {
     e.preventDefault()
@@ -20,44 +58,134 @@ export default function Auth() {
       } else {
         const { error } = await supabase.auth.signUp({ email, password: pass })
         if (error) throw error
-        setOk('¡Cuenta creada! Revisa tu email para confirmar.')
+        setOk('¡Cuenta creada! Ya podés iniciar sesión.')
+        setMode('login')
       }
-    } catch(e) {
-      setErr(e.message || 'Error inesperado')
+    } catch(ex) {
+      setErr(ex.message || 'Error inesperado')
     }
     setLoad(false)
   }
 
+  const handleForgot = async () => {
+    setErr(''); setOk('')
+    if (!email) {
+      setErr('Escribí tu email primero para enviarte el link de reseteo.')
+      return
+    }
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        emailRedirectTo: 'https://album-tracker-three.vercel.app',
+      })
+      if (error) throw error
+      setOk(`Te enviamos un link a ${email} para resetear tu contraseña.`)
+    } catch(ex) {
+      setErr(ex.message || 'No se pudo enviar el email')
+    }
+  }
+
   return (
     <div className={s.wrap}>
-      <div className={s.card}>
-        <div className={s.logo}>⚽</div>
-        <div className={s.title}>ADRENALYN XL</div>
-        <div className={s.sub}>FIFA WORLD CUP 2026™ · COLLECTION TRACKER</div>
+      <div className={s.stage}>
 
-        {err && <div className={s.err}>⚠️ {err}</div>}
-        {ok  && <div className={s.ok}>✓ {ok}</div>}
+        <div className={s.card}>
+          <div className={s.hero}>
+            <div className={s.heroBadge}>🏆</div>
+            <div className={s.heroBrand}>FIFA</div>
+            <div className={s.heroTitle}>WORLD CUP 2026</div>
+            <div className={s.heroDivider} />
+            <div className={s.heroSubtitle}>Collection Tracker</div>
+          </div>
 
-        <form onSubmit={handle}>
-          <label className={s.label}>EMAIL</label>
-          <input className={s.input} type="email" value={email}
-            onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" required />
+          <div className={s.welcome}>Bienvenido, coleccionista</div>
 
-          <label className={s.label}>CONTRASEÑA</label>
-          <input className={s.input} type="password" value={pass}
-            onChange={e => setPass(e.target.value)} placeholder="••••••••" required minLength={6} />
+          {err && <div className={s.err}>⚠️ {err}</div>}
+          {ok  && <div className={s.ok}>✓ {ok}</div>}
 
-          <button type="submit" disabled={load} className={s.btn}>
-            {load ? '...' : mode === 'login' ? 'ENTRAR' : 'CREAR CUENTA'}
-          </button>
-        </form>
+          <form onSubmit={handle} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
+            <div className={s.field}>
+              <div className={s.labelRow}>
+                <label className={s.label}>Correo electrónico</label>
+              </div>
+              <div className={s.inputBox}>
+                <span className={s.inputIcon}><IconMail /></span>
+                <input
+                  className={s.input}
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                />
+              </div>
+            </div>
 
-        <div className={s.toggle}>
-          {mode === 'login' ? (
-            <>¿No tienes cuenta? <span onClick={() => setMode('signup')} className={s.toggleLink}>Regístrate</span></>
-          ) : (
-            <>¿Ya tienes cuenta? <span onClick={() => setMode('login')} className={s.toggleLink}>Inicia sesión</span></>
-          )}
+            <div className={s.field}>
+              <div className={s.labelRow}>
+                <label className={s.label}>Contraseña</label>
+                {mode === 'login' && (
+                  <button type="button" className={s.forgot} onClick={handleForgot}>
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                )}
+              </div>
+              <div className={s.inputBox}>
+                <span className={s.inputIcon}><IconLock /></span>
+                <input
+                  className={s.input}
+                  type={showPass ? 'text' : 'password'}
+                  required
+                  minLength={6}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  value={pass}
+                  onChange={e => setPass(e.target.value)}
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  className={s.eyeBtn}
+                  onClick={() => setShowPass(v => !v)}
+                  aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                  {showPass ? <IconEyeOff /> : <IconEye />}
+                </button>
+              </div>
+            </div>
+
+            {mode === 'login' && (
+              <label className={s.rememberRow}>
+                <span
+                  className={`${s.checkbox} ${remember ? s.checkboxOn : ''}`}
+                  onClick={() => setRemember(v => !v)}>
+                  {remember ? '✓' : ''}
+                </span>
+                <span onClick={() => setRemember(v => !v)}>Recordarme</span>
+              </label>
+            )}
+
+            <button type="submit" disabled={load} className={s.cta}>
+              {load ? 'CARGANDO…' : (mode === 'login' ? 'INICIAR SESIÓN' : 'CREAR CUENTA')}
+              {!load && <IconArrow />}
+            </button>
+          </form>
+
+          <div className={s.toggle}>
+            {mode === 'login' ? (
+              <>¿No tenés cuenta? <span onClick={() => setMode('signup')} className={s.toggleLink}>Regístrate</span></>
+            ) : (
+              <>¿Ya tenés cuenta? <span onClick={() => setMode('login')} className={s.toggleLink}>Iniciar sesión</span></>
+            )}
+          </div>
+        </div>
+
+        <div className={s.features}>
+          {FEATURES.map(f => (
+            <div key={f.title} className={s.feature}>
+              <div className={s.featureIcon}>{f.icon}</div>
+              <div className={s.featureTitle}>{f.title}</div>
+              <div className={s.featureSub}>{f.sub}</div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

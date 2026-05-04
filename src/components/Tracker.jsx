@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient'
 import { parseNumberList, MOMENTUM, ALBUM_CONFIG, ALBUM_ADRENALYN, ALBUM_TYPES } from '../data'
 import { ensureMyProfile } from '../lib/marketplace'
 import AlbumSwitcher from './AlbumSwitcher'
+import Flag from './Flag'
 import Marketplace from './Marketplace'
 import Profile from './Profile'
 import s from './Tracker.module.css'
@@ -528,7 +529,9 @@ export default function Tracker({
                 {teamStats.sort((a,b) => (b.tot - b.have) - (a.tot - a.have)).slice(0,12).map(t => (
                   <div key={t.id} onClick={() => { setTab('teams'); setSelTeam(t.id) }}
                     className={s.missingTeamCard} style={{ cursor:'pointer' }}>
-                    <span className={s.missingTeamFlag}>{t.flag}</span>
+                    <span className={s.missingTeamFlag}>
+                      <Flag fifa={t.id} emoji={t.flag} size={28} alt={t.name} />
+                    </span>
                     <div className={s.missingTeamBody}>
                       <div className={s.missingTeamName}>{t.name}</div>
                       <div className={s.missingTeamCount}>Faltan {t.tot - t.have}</div>
@@ -547,7 +550,9 @@ export default function Tracker({
               <div key={t.id} onClick={() => setSelTeam(t.id)}
                 className={`${s.teamCard} ${t.pct === 100 ? s.teamCardComplete : ''}`}
                 style={{ cursor:'pointer' }}>
-                <div className={s.teamFlag}>{t.flag}</div>
+                <div className={s.teamFlag}>
+                  <Flag fifa={t.id} emoji={t.flag} size={48} alt={t.name} />
+                </div>
                 <div className={s.teamName}>{t.name}</div>
                 <div className={s.teamConf} style={{ color: CC[t.conf] || '#64748B' }}>{t.conf}</div>
                 <Bar pct={t.pct} color={t.pct === 100 ? '#22C55E' : '#60A5FA'} h={5} />
@@ -572,7 +577,9 @@ export default function Tracker({
             <div className={s.fade}>
               <button onClick={() => setSelTeam(null)} className={s.backBtn}>← Volver</button>
               <div className={s.teamHeader}>
-                <div className={s.teamHeaderFlag}>{flag}</div>
+                <div className={s.teamHeaderFlag}>
+                  <Flag fifa={team.id} emoji={flag} size={72} alt={name} />
+                </div>
                 <div className={s.teamHeaderBody}>
                   <h2 className={s.teamHeaderName}>{name}</h2>
                   <div className={s.teamHeaderConf} style={{ color: CC[conf] || '#64748B' }}>{conf}</div>
