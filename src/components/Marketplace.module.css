@@ -500,3 +500,151 @@
   .detailName { font-size: 22px; }
   .subnavBtn { padding: 7px 12px; font-size: 11px; }
 }
+
+/* ============================================================ Marketplace v2 */
+
+/* Botón "estado activado" (favorito puesto) */
+.btnAccent {
+  background: var(--accent-grad);
+  color: #000;
+  border: none;
+  border-radius: var(--r-md);
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform var(--t-fast);
+}
+.btnAccent:hover { transform: translateY(-1px); }
+
+/* Estrella de favoritar en el card del perfil */
+.favStar {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-faint);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-pill);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+  flex-shrink: 0;
+}
+.favStar:hover { color: var(--accent); border-color: var(--accent-deep); }
+.favStarOn {
+  color: var(--accent);
+  border-color: var(--accent-deep);
+  background: var(--accent-bg);
+}
+
+/* Drill-down sub-tabs (sus dups / mis dups) */
+.drillTabs {
+  display: flex;
+  gap: 6px;
+  margin: 14px 0 10px;
+  border-bottom: 1px solid var(--border);
+}
+.drillTab {
+  flex: 1;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: color var(--t-fast), border-color var(--t-fast);
+}
+.drillTab:hover { color: var(--text); }
+.drillTabActive {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Filtro "solo matches" del drill-down */
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+.filterRow input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* Counter de selecciones */
+.pickCounter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 8px 14px;
+  margin-bottom: 12px;
+}
+.pickCounter strong {
+  color: var(--accent);
+  font-weight: 900;
+}
+.pickDot {
+  color: var(--text-faint);
+  font-weight: 900;
+}
+
+/* miniCard variant: pickable (button-style) */
+.miniCardPickable {
+  width: 100%;
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-family: inherit;
+}
+.miniCardPickable:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-elevated);
+}
+.miniCardPicked {
+  border-color: var(--accent-deep);
+  background: var(--accent-bg);
+  box-shadow: 0 0 0 1px var(--accent-deep) inset;
+}
+
+.miniCardCheck {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--text-faint);
+  margin-right: 4px;
+}
+.miniCardPicked .miniCardCheck { color: var(--accent); }
+
+.miniCardMatchBadge {
+  display: inline-block;
+  background: rgba(74, 222, 128, 0.12);
+  color: var(--have);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 1px 6px;
+  border-radius: var(--r-pill);
+  margin-left: 8px;
+  vertical-align: middle;
+}

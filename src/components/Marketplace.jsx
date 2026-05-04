@@ -1,12 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
-  loadVisibleProfiles,
-  loadFriendships, partitionFriendships, friendshipBetween,
-  sendFriendRequest, acceptFriendRequest, rejectFriendRequest,
+  loadVisibleProfiles, loadProfile,
+  loadMyFavorites, addFavorite, removeFavorite, isFavorite,
   computeMatches, buildTradeMessage,
 } from '../lib/marketplace'
 import { loadAlbum, loadAlbumByUserIds } from '../lib/album'
-import { ALBUM_CONFIG, ALBUM_ADRENALYN, ALBUM_LABELS } from '../data'
+import { ALBUM_CONFIG, ALBUM_ADRENALYN } from '../data'
 import s from './Marketplace.module.css'
 
 export default function Marketplace({
@@ -21,14 +20,20 @@ export default function Marketplace({
   const ALL_ITEMS   = useMemo(() => cfg.buildItems(), [albumType])
   const ITEMS_BY_ID = useMemo(() => Object.fromEntries(ALL_ITEMS.map(c => [c.id, c])), [ALL_ITEMS])
   const TEAMS_LIST  = cfg.teams
-  const [sub,         setSub]         = useState('all') // 'all' | 'friends' | 'mine' | 'requests'
+  const totalItems  = ALL_ITEMS.length
+  const [sub,         setSub]         = useState('all') // 'all' | 'favorites' | 'messages' | 'inbox' | 'mine'
   const [profiles,    setProfiles]    = useState([])
   const [collections, setCollections] = useState({})
-  const [friendships, setFriendships] = useState([])
+  const [favorites,   setFavorites]   = useState([])
   const [profilesById,setProfilesById]= useState({})
   const [loading,     setLoading]     = useState(true)
   const [selUserId,   setSelUserId]   = useState(null)
   const [selCol,      setSelCol]      = useState(null)
+  const [selProfile,  setSelProfile]  = useState(null)
+  const [drillTab,    setDrillTab]    = useState('theirs') // 'theirs' | 'mine'
+  const [pickedTheirs,setPickedTheirs]= useState(new Set()) // ids requested from them
+  const [pickedMine,  setPickedMine]  = useState(new Set()) // ids offered by me
+  const [onlyMatches, setOnlyMatches] = useState(true)
   const [showTrade,   setShowTrade]   = useState(false)
   const [tradeMsg,    setTradeMsg]    = useState('')
 
@@ -37,12 +42,12 @@ export default function Marketplace({
   const reload = async () => {
     setLoading(true)
     try {
-      const [vp, fs] = await Promise.all([
+      const [vp, fv] = await Promise.all([
         loadVisibleProfiles(myId),
-        loadFriendships(myId),
+        loadMyFavorites(myId),
       ])
       setProfiles(vp)
-      setFriendships(fs)
+      setFavorites(fv)
       const ids = vp.map(p => p.user_id)
       const cm  = await loadAlbumByUserIds(albumType, ids)
       setCollections(cm)
@@ -59,80 +64,77 @@ export default function Marketplace({
     reload()
     setSelUserId(null)
     setSelCol(null)
+    setSelProfile(null)
     /* eslint-disable-next-line */
   }, [myId, albumType])
 
-  const { incoming, outgoing, accepted } = useMemo(() => partitionFriendships(friendships, myId), [friendships, myId])
-
-  const friendIdSet = useMemo(() => {
-    const s = new Set()
-    for (const f of accepted) s.add(f.requester_id === myId ? f.receiver_id : f.requester_id)
-    return s
-  }, [accepted, myId])
+  const favoriteIdSet = useMemo(() => new Set(favorites.map(f => f.target_id)), [favorites])
 
   const profilesView = useMemo(() => {
     const list = profiles.map(p => {
       const matches = computeMatches(myCol, collections[p.user_id] || {})
       return { ...p, matches }
     })
-    if (sub === 'friends') return list.filter(p => friendIdSet.has(p.user_id))
+    if (sub === 'favorites') return list.filter(p => favoriteIdSet.has(p.user_id))
     return list
-  }, [profiles, collections, myCol, sub, friendIdSet])
+  }, [profiles, collections, myCol, sub, favoriteIdSet])
 
   const onSelectUser = async (uid) => {
     setSelUserId(uid)
     setSelCol(null)
+    setDrillTab('theirs')
     try {
-      // We may already have it; fall back to direct fetch.
-      const col = collections[uid] || await loadAlbum(albumType, uid)
+      const [col, prof] = await Promise.all([
+        collections[uid] ? Promise.resolve(collections[uid]) : loadAlbum(albumType, uid),
+        profilesById[uid] ? Promise.resolve(profilesById[uid]) : loadProfile(uid),
+      ])
       setSelCol(col)
+      setSelProfile(prof)
+      // Pre-seleccionar matches por defecto
+      const matches = computeMatches(myCol, col)
+      setPickedTheirs(new Set(matches.theyHaveIWant))
+      setPickedMine(new Set(matches.iHaveTheyWant))
     } catch(e) {
       flash?.(`⚠️ ${e.message || 'No se pudo cargar la colección'}`, '#F87171')
       setSelUserId(null)
     }
   }
 
-  const onSendFriendRequest = async (otherId) => {
+  const onToggleFavorite = async (otherId) => {
+    const wasFav = favoriteIdSet.has(otherId)
     try {
-      await sendFriendRequest(myId, otherId)
-      flash?.('💌 Solicitud enviada','#FCD34D')
-      const fs = await loadFriendships(myId)
-      setFriendships(fs)
+      if (wasFav) {
+        await removeFavorite(myId, otherId)
+        setFavorites(prev => prev.filter(f => f.target_id !== otherId))
+        flash?.('☆ Removido de favoritos', '#94A3B8')
+      } else {
+        const created = await addFavorite(myId, otherId)
+        setFavorites(prev => [created, ...prev])
+        flash?.('⭐ Agregado a favoritos', '#FCD34D')
+      }
     } catch(e) {
-      flash?.(`⚠️ ${e.message || 'No se pudo enviar la solicitud'}`, '#F87171')
+      flash?.(`⚠️ ${e.message || 'Error con favoritos'}`, '#F87171')
     }
   }
 
-  const onAccept = async (id) => {
-    try {
-      await acceptFriendRequest(id)
-      flash?.('🤝 Amigos agregados','#4ADE80')
-      const fs = await loadFriendships(myId)
-      setFriendships(fs)
-    } catch(e) {
-      flash?.(`⚠️ ${e.message || 'Error'}`, '#F87171')
-    }
-  }
-
-  const onReject = async (id) => {
-    try {
-      await rejectFriendRequest(id)
-      const fs = await loadFriendships(myId)
-      setFriendships(fs)
-    } catch(e) {
-      flash?.(`⚠️ ${e.message || 'Error'}`, '#F87171')
-    }
-  }
+  const togglePickTheirs = (id) => setPickedTheirs(prev => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
+  const togglePickMine = (id) => setPickedMine(prev => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
 
   const openTradeModal = () => {
     if (!selUserId || !selCol) return
-    const otherProf = profilesById[selUserId]
-    const matches = computeMatches(myCol, selCol)
     const msg = buildTradeMessage({
       myName: myProfile?.display_name || 'Coleccionista',
-      theirName: otherProf?.display_name || 'amigo',
-      theyHaveIWant: matches.theyHaveIWant,
-      iHaveTheyWant: matches.iHaveTheyWant,
+      theirName: selProfile?.display_name || 'amigo',
+      theyHaveIWant: Array.from(pickedTheirs),
+      iHaveTheyWant: Array.from(pickedMine),
       allCardsById: ITEMS_BY_ID,
     })
     setTradeMsg(msg)
@@ -145,16 +147,41 @@ export default function Marketplace({
 
   // ────────────────────────────────────────────────────────── Render helpers
   const myDups = useMemo(() => ALL_ITEMS.filter(c => myCol[c.id] === 'duplicate'), [myCol, ALL_ITEMS])
+  const myMissingSet = useMemo(() => {
+    const out = new Set()
+    for (const c of ALL_ITEMS) if ((myCol[c.id] || 'missing') === 'missing') out.add(c.id)
+    return out
+  }, [myCol, ALL_ITEMS])
 
+  // ============================================================ DRILL-DOWN
   if (selUserId) {
-    const prof = profilesById[selUserId]
+    const prof = selProfile
     const matches = selCol ? computeMatches(myCol, selCol) : null
-    const friendship = friendshipBetween(friendships, myId, selUserId)
-    const friendStatus = friendship?.status
+    const isFav = favoriteIdSet.has(selUserId)
+
+    // Listas para el drill-down
+    const theirDuplicates = selCol
+      ? ALL_ITEMS.filter(c => selCol[c.id] === 'duplicate')
+      : []
+    const theirMissingSet = new Set(
+      selCol ? ALL_ITEMS.filter(c => (selCol[c.id] || 'missing') === 'missing').map(c => c.id) : []
+    )
+    // Mis duplicates que el otro tiene como missing (matches) + el resto de mis duplicates
+    const myDupsList = ALL_ITEMS.filter(c => myCol[c.id] === 'duplicate')
+
+    const theirsList = onlyMatches
+      ? theirDuplicates.filter(c => myMissingSet.has(c.id))
+      : theirDuplicates
+    const mineList = onlyMatches
+      ? myDupsList.filter(c => theirMissingSet.has(c.id))
+      : myDupsList
+
+    const theirCount = selCol ? Object.values(selCol).filter(v => v !== 'missing').length : 0
+    const theirPct   = totalItems ? Math.round((theirCount / totalItems) * 100) : 0
 
     return (
       <div className={s.wrap}>
-        <button onClick={() => { setSelUserId(null); setSelCol(null) }} className={s.btnSecondary} style={{ marginBottom: 16 }}>
+        <button onClick={() => { setSelUserId(null); setSelCol(null); setSelProfile(null) }} className={s.btnSecondary} style={{ marginBottom: 16 }}>
           ← Volver al Marketplace
         </button>
 
@@ -163,85 +190,76 @@ export default function Marketplace({
           <div className={s.detailBody}>
             <div className={s.detailName}>{prof?.display_name || 'Coleccionista'}</div>
             <div className={s.detailSub}>
-              {selCol ? `${Object.values(selCol).filter(v => v !== 'missing').length} cartas en colección` : 'Cargando…'}
-              {friendStatus === 'accepted' && ' · 🤝 Amigos'}
-              {friendStatus === 'pending' && friendship?.requester_id === myId && ' · 💌 Solicitud enviada'}
-              {friendStatus === 'pending' && friendship?.receiver_id === myId && ' · 📩 Quiere ser tu amigo'}
+              {selCol ? `${theirCount}/${totalItems} cartas · ${theirPct}%` : 'Cargando…'}
             </div>
             <div className={s.detailActions}>
-              {!friendStatus && (
-                <button onClick={() => onSendFriendRequest(selUserId)} className={s.btnSecondary}>
-                  ➕ Agregar amigo
-                </button>
-              )}
-              {friendStatus === 'pending' && friendship?.receiver_id === myId && (
-                <>
-                  <button onClick={() => onAccept(friendship.id)} className={s.btnAccept}>Aceptar</button>
-                  <button onClick={() => onReject(friendship.id)} className={s.btnReject}>Rechazar</button>
-                </>
-              )}
-              {matches && (matches.theyHaveIWant.length > 0 || matches.iHaveTheyWant.length > 0) && (
-                <button onClick={openTradeModal} className={s.btnPrimary}>
-                  🤝 Solicitar trade
-                </button>
-              )}
+              <button onClick={() => onToggleFavorite(selUserId)} className={isFav ? s.btnAccent : s.btnSecondary}>
+                {isFav ? '⭐ Favorito' : '☆ Favoritear'}
+              </button>
+              <button onClick={() => flash?.('💬 Chat — próximamente', '#94A3B8')} className={s.btnSecondary}>
+                💬 Chat
+              </button>
+              <button
+                onClick={openTradeModal}
+                disabled={!selCol || (pickedTheirs.size === 0 && pickedMine.size === 0)}
+                className={s.btnPrimary}>
+                🤝 Proponer trade
+              </button>
             </div>
           </div>
         </div>
 
         {!selCol && <div className={s.emptyText}>Cargando colección…</div>}
 
-        {matches && (
+        {selCol && (
           <>
-            <div className={s.matchSection}>
-              <div className={s.matchSectionTitle} style={{ color: 'var(--have)' }}>
-                ⬆️ TE PUEDE DAR <span className={s.matchCount}>{matches.theyHaveIWant.length}</span>
-              </div>
-              {matches.theyHaveIWant.length === 0 ? (
-                <div className={s.matchEmptyText}>No tiene duplicados de cartas que te falten.</div>
-              ) : (
-                <div className={s.cardsList}>
-                  {matches.theyHaveIWant.map(id => {
-                    const c = ITEMS_BY_ID[id]; if (!c) return null
-                    return (
-                      <div key={id} className={s.miniCard}>
-                        <span className={s.miniCardFlag}>{c.flag}</span>
-                        <div className={s.miniCardBody}>
-                          <div className={s.miniCardName}>{c.name}</div>
-                          <div className={s.miniCardMeta}>{c.team} · {c.type}</div>
-                        </div>
-                        <span className={s.miniCardNum}>#{c.num}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
+            <div className={s.drillTabs}>
+              <button
+                onClick={() => setDrillTab('theirs')}
+                className={`${s.drillTab} ${drillTab === 'theirs' ? s.drillTabActive : ''}`}>
+                SUS DUPLICATES <span className={s.matchCount}>{theirsList.length}</span>
+              </button>
+              <button
+                onClick={() => setDrillTab('mine')}
+                className={`${s.drillTab} ${drillTab === 'mine' ? s.drillTabActive : ''}`}>
+                MIS DUPLICATES <span className={s.matchCount}>{mineList.length}</span>
+              </button>
             </div>
 
-            <div className={s.matchSection}>
-              <div className={s.matchSectionTitle} style={{ color: 'var(--accent)' }}>
-                ⬇️ LE PUEDES DAR <span className={s.matchCount}>{matches.iHaveTheyWant.length}</span>
-              </div>
-              {matches.iHaveTheyWant.length === 0 ? (
-                <div className={s.matchEmptyText}>No tienes duplicados de cartas que le falten.</div>
-              ) : (
-                <div className={s.cardsList}>
-                  {matches.iHaveTheyWant.map(id => {
-                    const c = ITEMS_BY_ID[id]; if (!c) return null
-                    return (
-                      <div key={id} className={s.miniCard}>
-                        <span className={s.miniCardFlag}>{c.flag}</span>
-                        <div className={s.miniCardBody}>
-                          <div className={s.miniCardName}>{c.name}</div>
-                          <div className={s.miniCardMeta}>{c.team} · {c.type}</div>
-                        </div>
-                        <span className={s.miniCardNum}>#{c.num}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
+            <label className={s.filterRow}>
+              <input
+                type="checkbox"
+                checked={onlyMatches}
+                onChange={e => setOnlyMatches(e.target.checked)}
+              />
+              <span>Solo mostrar matches (lo que cierra el trade)</span>
+            </label>
+
+            <div className={s.pickCounter}>
+              <span><strong>{pickedTheirs.size}</strong> pides</span>
+              <span className={s.pickDot}>·</span>
+              <span><strong>{pickedMine.size}</strong> ofreces</span>
             </div>
+
+            {drillTab === 'theirs' && (
+              <DrillList
+                cards={theirsList}
+                picked={pickedTheirs}
+                onToggle={togglePickTheirs}
+                emptyText="No tiene duplicados que te falten."
+                matchHighlightSet={myMissingSet}
+              />
+            )}
+
+            {drillTab === 'mine' && (
+              <DrillList
+                cards={mineList}
+                picked={pickedMine}
+                onToggle={togglePickMine}
+                emptyText="No tienes duplicados que le falten."
+                matchHighlightSet={theirMissingSet}
+              />
+            )}
           </>
         )}
 
@@ -295,12 +313,13 @@ export default function Marketplace({
     )
   }
 
-  // ──────────────────────────────────────────────────────── List view
+  // ============================================================ LIST VIEW
   const subtabs = [
-    { id: 'all',      i: '🌐', l: 'Todos' },
-    { id: 'friends',  i: '🤝', l: 'Amigos',      b: friendIdSet.size },
-    { id: 'mine',     i: '📋', l: 'Mi lista',    b: myDups.length },
-    { id: 'requests', i: '📬', l: 'Solicitudes', b: incoming.length },
+    { id: 'all',       i: '🌐', l: 'Todos' },
+    { id: 'favorites', i: '⭐', l: 'Favoritos', b: favoriteIdSet.size },
+    { id: 'messages',  i: '💬', l: 'Mensajes' },
+    { id: 'inbox',     i: '📬', l: 'Bandeja' },
+    { id: 'mine',      i: '📋', l: 'Mi lista', b: myDups.length },
   ]
 
   return (
@@ -315,8 +334,8 @@ export default function Marketplace({
         ))}
       </div>
 
-      {/* TODOS / AMIGOS */}
-      {(sub === 'all' || sub === 'friends') && (
+      {/* TODOS / FAVORITOS */}
+      {(sub === 'all' || sub === 'favorites') && (
         <>
           {!myProfile?.marketplace_visible && (
             <div className={s.empty}>
@@ -335,11 +354,11 @@ export default function Marketplace({
 
           {myProfile?.marketplace_visible && !loading && profilesView.length === 0 && (
             <div className={s.empty}>
-              <div className={s.emptyEmoji}>{sub === 'friends' ? '🤝' : '🌐'}</div>
-              <div className={s.emptyTitle}>{sub === 'friends' ? 'SIN AMIGOS AÚN' : 'NADIE MÁS POR ACÁ'}</div>
+              <div className={s.emptyEmoji}>{sub === 'favorites' ? '⭐' : '🌐'}</div>
+              <div className={s.emptyTitle}>{sub === 'favorites' ? 'SIN FAVORITOS AÚN' : 'NADIE MÁS POR ACÁ'}</div>
               <div className={s.emptyText}>
-                {sub === 'friends'
-                  ? 'Acepta solicitudes o agrega coleccionistas desde "Todos".'
+                {sub === 'favorites'
+                  ? 'Marca con ⭐ a los coleccionistas que te interesen para tenerlos a mano.'
                   : 'Sé el primero en compartir el link con tus amigos. Cuando otros activen Marketplace aparecerán aquí.'}
               </div>
             </div>
@@ -351,19 +370,24 @@ export default function Marketplace({
                 .sort((a,b) => (b.matches.theyHaveIWant.length + b.matches.iHaveTheyWant.length)
                               - (a.matches.theyHaveIWant.length + a.matches.iHaveTheyWant.length))
                 .map(p => {
-                  const fr = friendshipBetween(friendships, myId, p.user_id)
+                  const fav = favoriteIdSet.has(p.user_id)
+                  const colCount = Object.values(collections[p.user_id] || {}).filter(v => v !== 'missing').length
                   return (
-                    <div key={p.user_id} onClick={() => onSelectUser(p.user_id)} className={s.userCard}>
-                      <div className={s.userCardHead}>
+                    <div key={p.user_id} className={s.userCard}>
+                      <div className={s.userCardHead} onClick={() => onSelectUser(p.user_id)}>
                         <div className={s.userAvatar}>{p.avatar_emoji}</div>
                         <div className={s.userMeta}>
                           <div className={s.userName}>{p.display_name}</div>
-                          <div className={s.userSub}>{Object.values(collections[p.user_id] || {}).filter(v => v !== 'missing').length} cartas</div>
-                          {fr?.status === 'accepted' && <span className={`${s.friendBadge} ${s.friendBadgeAccepted}`}>🤝 Amigo</span>}
-                          {fr?.status === 'pending' && <span className={`${s.friendBadge} ${s.friendBadgePending}`}>⏳ Pendiente</span>}
+                          <div className={s.userSub}>{colCount}/{totalItems} cartas</div>
                         </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onToggleFavorite(p.user_id) }}
+                          className={`${s.favStar} ${fav ? s.favStarOn : ''}`}
+                          aria-label={fav ? 'Quitar de favoritos' : 'Agregar a favoritos'}>
+                          {fav ? '⭐' : '☆'}
+                        </button>
                       </div>
-                      <div className={s.matchRow}>
+                      <div className={s.matchRow} onClick={() => onSelectUser(p.user_id)}>
                         <div className={`${s.matchPill} ${s.matchPillThey}`}>
                           <div className={s.matchLabel}>Te puede dar</div>
                           {p.matches.theyHaveIWant.length}
@@ -381,7 +405,30 @@ export default function Marketplace({
         </>
       )}
 
-      {/* MI LISTA (old Intercambio) */}
+      {/* MENSAJES (placeholder hasta Commit 4 del plan) */}
+      {sub === 'messages' && (
+        <div className={s.empty}>
+          <div className={s.emptyEmoji}>💬</div>
+          <div className={s.emptyTitle}>MENSAJES — PRÓXIMAMENTE</div>
+          <div className={s.emptyText}>
+            Estamos terminando el chat in-app realtime. Mientras tanto, copia los contactos
+            del usuario desde "Proponer trade" para coordinar por fuera.
+          </div>
+        </div>
+      )}
+
+      {/* BANDEJA (placeholder hasta Commit 3 del plan) */}
+      {sub === 'inbox' && (
+        <div className={s.empty}>
+          <div className={s.emptyEmoji}>📬</div>
+          <div className={s.emptyTitle}>BANDEJA — PRÓXIMAMENTE</div>
+          <div className={s.emptyText}>
+            Acá vas a recibir y enviar trade requests con punto de encuentro y hora.
+          </div>
+        </div>
+      )}
+
+      {/* MI LISTA */}
       {sub === 'mine' && (
         <>
           {myDups.length === 0 ? (
@@ -450,66 +497,41 @@ export default function Marketplace({
           )}
         </>
       )}
+    </div>
+  )
+}
 
-      {/* SOLICITUDES */}
-      {sub === 'requests' && (
-        <>
-          {incoming.length === 0 && outgoing.length === 0 ? (
-            <div className={s.empty}>
-              <div className={s.emptyEmoji}>📭</div>
-              <div className={s.emptyTitle}>SIN SOLICITUDES</div>
-              <div className={s.emptyText}>Cuando alguien te quiera agregar como amigo aparecerá aquí.</div>
+// ───────────────────────────────────────────────────────────────────────────
+// Sub-componente: lista seleccionable de cartas en el drill-down
+// ───────────────────────────────────────────────────────────────────────────
+function DrillList({ cards, picked, onToggle, emptyText, matchHighlightSet }) {
+  if (cards.length === 0) {
+    return <div className={s.matchEmptyText}>{emptyText}</div>
+  }
+  return (
+    <div className={s.cardsList}>
+      {cards.map(c => {
+        const isPicked = picked.has(c.id)
+        const isMatch  = matchHighlightSet?.has(c.id)
+        return (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => onToggle(c.id)}
+            className={`${s.miniCard} ${s.miniCardPickable} ${isPicked ? s.miniCardPicked : ''}`}>
+            <span className={s.miniCardCheck}>{isPicked ? '☑' : '☐'}</span>
+            <span className={s.miniCardFlag}>{c.flag}</span>
+            <div className={s.miniCardBody}>
+              <div className={s.miniCardName}>
+                {c.name}
+                {isMatch && <span className={s.miniCardMatchBadge}>★ matchea</span>}
+              </div>
+              <div className={s.miniCardMeta}>{c.team} · {c.type}</div>
             </div>
-          ) : (
-            <div className={s.requestList}>
-              {incoming.length > 0 && (
-                <>
-                  <div className={s.matchSectionTitle} style={{ color: 'var(--accent)' }}>
-                    📩 ENTRANTES <span className={s.matchCount}>{incoming.length}</span>
-                  </div>
-                  {incoming.map(f => {
-                    const p = profilesById[f.requester_id]
-                    return (
-                      <div key={f.id} className={s.requestRow}>
-                        <div className={s.userAvatar}>{p?.avatar_emoji || '👤'}</div>
-                        <div className={s.userMeta}>
-                          <div className={s.userName}>{p?.display_name || 'Coleccionista'}</div>
-                          <div className={s.userSub}>Quiere ser tu amigo</div>
-                        </div>
-                        <div className={s.requestActions}>
-                          <button onClick={() => onAccept(f.id)} className={s.btnAccept}>Aceptar</button>
-                          <button onClick={() => onReject(f.id)} className={s.btnReject}>Rechazar</button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </>
-              )}
-
-              {outgoing.length > 0 && (
-                <>
-                  <div className={s.matchSectionTitle} style={{ color: 'var(--text-faint)', marginTop: 14 }}>
-                    📤 ENVIADAS <span className={s.matchCount}>{outgoing.length}</span>
-                  </div>
-                  {outgoing.map(f => {
-                    const p = profilesById[f.receiver_id]
-                    return (
-                      <div key={f.id} className={s.requestRow}>
-                        <div className={s.userAvatar}>{p?.avatar_emoji || '👤'}</div>
-                        <div className={s.userMeta}>
-                          <div className={s.userName}>{p?.display_name || 'Coleccionista'}</div>
-                          <div className={s.userSub}>Esperando respuesta…</div>
-                        </div>
-                        <button onClick={() => onReject(f.id)} className={s.btnSecondary}>Cancelar</button>
-                      </div>
-                    )
-                  })}
-                </>
-              )}
-            </div>
-          )}
-        </>
-      )}
+            <span className={s.miniCardNum}>#{c.num}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }

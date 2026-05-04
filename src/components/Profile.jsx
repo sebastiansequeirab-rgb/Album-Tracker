@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
-import { EMOJI_AVATARS, loadMyProfile, saveMyProfile, deriveDisplayName } from '../lib/marketplace'
+import {
+  EMOJI_AVATARS, loadMyProfile, saveMyProfile, deriveDisplayName,
+  MEETING_POINT_TYPES, newMeetingPoint,
+} from '../lib/marketplace'
 import { activateAlbum, deactivateAlbum } from '../lib/album'
 import { ALBUM_ADRENALYN, ALBUM_STICKER } from '../data'
 import s from './Profile.module.css'
@@ -20,6 +23,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         avatar_emoji: '⚽',
         contact: { instagram: '', whatsapp: '', email: '' },
         marketplace_visible: false,
+        meeting_points: [],
       })
     }).catch(e => { if (!cancelled) setErr(e.message || 'Error cargando perfil') })
     return () => { cancelled = true }
@@ -29,6 +33,18 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
 
   const upd = (k, v) => setProfile(p => ({ ...p, [k]: v }))
   const updContact = (k, v) => setProfile(p => ({ ...p, contact: { ...(p.contact || {}), [k]: v } }))
+
+  const meetingPoints = Array.isArray(profile.meeting_points) ? profile.meeting_points : []
+  const addMeetingPoint = () => {
+    const next = [...meetingPoints, newMeetingPoint({ name: '', type: 'university' })]
+    upd('meeting_points', next)
+  }
+  const updateMeetingPoint = (id, patch) => {
+    upd('meeting_points', meetingPoints.map(mp => mp.id === id ? { ...mp, ...patch } : mp))
+  }
+  const removeMeetingPoint = (id) => {
+    upd('meeting_points', meetingPoints.filter(mp => mp.id !== id))
+  }
 
   const onSave = async () => {
     setSaving(true); setErr('')
@@ -147,6 +163,56 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
             <div className={s.switchKnob} />
           </div>
         </div>
+      </div>
+
+      <div className={s.section}>
+        <div className={s.sectionTitle}>📍 PUNTOS DE ENCUENTRO HABITUALES</div>
+        <div className={s.sectionSub}>
+          Lugares donde solés intercambiar cartas. Aparecen como sugerencias cuando alguien te
+          propone un trade.
+        </div>
+
+        {meetingPoints.length === 0 && (
+          <div className={s.mpEmpty}>Todavía no agregaste ningún punto. Tap "Agregar punto" para empezar.</div>
+        )}
+
+        {meetingPoints.map((mp) => (
+          <div key={mp.id} className={s.mpCard}>
+            <div className={s.mpRow}>
+              <input
+                className={s.input}
+                type="text"
+                maxLength={80}
+                value={mp.name}
+                onChange={e => updateMeetingPoint(mp.id, { name: e.target.value })}
+                placeholder="Ej: UCAB campus principal"
+              />
+              <button type="button" className={s.mpRemove} onClick={() => removeMeetingPoint(mp.id)} aria-label="Eliminar punto">×</button>
+            </div>
+            <div className={s.mpRow}>
+              <select
+                className={s.input}
+                value={mp.type || 'other'}
+                onChange={e => updateMeetingPoint(mp.id, { type: e.target.value })}>
+                {MEETING_POINT_TYPES.map(t => (
+                  <option key={t.id} value={t.id}>{t.label}</option>
+                ))}
+              </select>
+              <input
+                className={s.input}
+                type="text"
+                maxLength={120}
+                value={mp.hint || ''}
+                onChange={e => updateMeetingPoint(mp.id, { hint: e.target.value })}
+                placeholder="Hint opcional (puerta, hora habitual…)"
+              />
+            </div>
+          </div>
+        ))}
+
+        <button type="button" className={s.mpAdd} onClick={addMeetingPoint}>
+          + Agregar punto
+        </button>
       </div>
 
       <div className={s.section}>
