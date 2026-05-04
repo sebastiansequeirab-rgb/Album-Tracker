@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import {
   loadVisibleProfiles, loadProfile,
   loadMyFavorites, addFavorite, removeFavorite,
-  loadMyTradeRequests, updateTradeRequestStatus,
+  loadMyTradeRequests, updateTradeRequestStatus, createTradeRequest,
   loadActivePublicListings, closePublicListing,
   sendMessage,
   computeMatches,
@@ -42,11 +42,16 @@ export default function Marketplace({
   const [pickedMine,  setPickedMine]  = useState(new Set()) // ids offered by me
   const [onlyMatches, setOnlyMatches] = useState(true)
   const [showTrade,    setShowTrade]    = useState(false)
+  // Contexto independiente para el modal de trade — no depende de drill-down state
+  // así el modal sobrevive el unmount del drill-down cuando se cierra/abre chat.
+  const [tradeCtx,     setTradeCtx]     = useState(null)
+  // tradeCtx = { targetProfile, offered: [], wanted: [] }
   const [tradeRequests,setTradeRequests]= useState([])
   const [listings,     setListings]     = useState([])
   const [listingProfiles, setListingProfiles] = useState({}) // user_id -> profile
   const [showCreate,   setShowCreate]   = useState(false)
   const [chatCpId,     setChatCpId]     = useState(null) // counterpart id activo en chat
+  const [busyAccept,   setBusyAccept]   = useState(null) // listing.id en curso
 
   const myId = session.user.id
 
@@ -155,21 +160,84 @@ export default function Marketplace({
     return next
   })
 
-  const openTradeModal = () => {
-    if (!selUserId || !selCol) return
+  // Abrir modal de Proponer Trade desde drill-down (selecciones manuales)
+  const openTradeModalFromDrillDown = () => {
+    if (!selUserId || !selCol || !selProfile) return
+    setTradeCtx({
+      targetProfile: selProfile,
+      offered: Array.from(pickedMine),
+      wanted:  Array.from(pickedTheirs),
+    })
     setShowTrade(true)
   }
 
+  // Abrir modal de Contra-oferta desde un banner — pre-rellena con datos del listing
+  const openTradeModalFromListing = (listing) => {
+    const author = listingProfiles[listing.user_id]
+    if (!author) {
+      flash?.('⚠️ No se pudo cargar el perfil del autor', '#F87171')
+      return
+    }
+    setTradeCtx({
+      targetProfile: author,
+      // Por default, el usuario quiere todo lo que el listing ofrece
+      // y ofrece todas sus dups que matchean lo que el listing busca
+      offered: ALL_ITEMS
+        .filter(c => myCol[c.id] === 'duplicate' && listing.wanted_ids.includes(c.id))
+        .map(c => c.id),
+      wanted: listing.offered_ids,
+      // Pre-llenar meeting point + hora del listing (el usuario puede cambiar)
+      meetingPoint: listing.meeting_point || '',
+      meetingTime:  listing.meeting_time_label || '',
+    })
+    setShowTrade(true)
+  }
+
+  // Aceptar oferta automáticamente — crea trade con datos exactos del listing
+  const acceptListing = async (listing) => {
+    if (busyAccept) return
+    const author = listingProfiles[listing.user_id]
+    if (!author) {
+      flash?.('⚠️ No se pudo cargar el perfil del autor', '#F87171')
+      return
+    }
+    setBusyAccept(listing.id)
+    try {
+      const created = await createTradeRequest({
+        initiator_id: myId,
+        target_id:    listing.user_id,
+        album_type:   albumType,
+        offered_ids:  listing.wanted_ids,   // les doy lo que pidieron
+        wanted_ids:   listing.offered_ids,  // pido lo que ofrecen
+        meeting_point:      listing.meeting_point || null,
+        meeting_time_label: listing.meeting_time_label || null,
+        message: `✅ Acepté tu oferta tal cual. ¡Hagamos el trade!`,
+      })
+      flash?.('✅ Oferta aceptada — solicitud enviada', '#4ADE80')
+      // Reload trade requests
+      const tr = await loadMyTradeRequests(myId)
+      setTradeRequests(tr)
+      // Mensaje system al chat para que el otro vea el contexto
+      sendMessage(myId, listing.user_id,
+        `✅ Acepté tu oferta pública (${listing.offered_ids.length} ofrecidas / ${listing.wanted_ids.length} pedidas) — abrí Bandeja para confirmar.`
+      ).catch(() => {})
+      openChatWith(listing.user_id)
+    } catch(e) {
+      flash?.(`⚠️ ${e.message || 'No se pudo aceptar'}`, '#F87171')
+    }
+    setBusyAccept(null)
+  }
+
   const onTradeSent = async (created) => {
+    setShowTrade(false)
+    setTradeCtx(null)
     try {
       const tr = await loadMyTradeRequests(myId)
       setTradeRequests(tr)
-      // Mensaje system al chat con el target del trade
       if (created?.target_id) {
         sendMessage(myId, created.target_id,
           '🤝 Te envié una solicitud de trade — abrí Bandeja para verla.'
         ).catch(() => {})
-        // Auto-abrir chat con el target tras enviar el trade
         openChatWith(created.target_id)
       }
     } catch { /* sin-op */ }
@@ -182,9 +250,6 @@ export default function Marketplace({
     setSelCol(null)
     setSelProfile(null)
     setSub('messages')
-    // Scroll al top instantáneo + después del render (rAF) para garantizar
-    // que el ChatPanel quede a la vista — sin esto en mobile el viewport
-    // queda donde estaba el drill-down y parece que no abrió nada.
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0)
       requestAnimationFrame(() => window.scrollTo(0, 0))
@@ -285,7 +350,7 @@ export default function Marketplace({
                 💬 Chat
               </button>
               <button
-                onClick={openTradeModal}
+                onClick={openTradeModalFromDrillDown}
                 disabled={!selCol || (pickedTheirs.size === 0 && pickedMine.size === 0)}
                 className={s.btnPrimary}>
                 🤝 Proponer trade
@@ -348,18 +413,8 @@ export default function Marketplace({
           </>
         )}
 
-        <TradeRequestModal
-          open={showTrade}
-          onClose={() => setShowTrade(false)}
-          onSent={onTradeSent}
-          myId={myId}
-          targetProfile={selProfile}
-          albumType={albumType}
-          itemsById={ITEMS_BY_ID}
-          offeredIds={Array.from(pickedMine)}
-          wantedIds={Array.from(pickedTheirs)}
-          flash={flash}
-        />
+        {/* TradeRequestModal vive en el render principal, no acá adentro,
+            para que no se desmonte cuando openChatWith limpia selUserId */}
       </div>
     )
   }
@@ -436,12 +491,11 @@ export default function Marketplace({
                       author={listingProfiles[l.user_id]}
                       itemsById={ITEMS_BY_ID}
                       isFavorite={favoriteIdSet.has(l.user_id)}
+                      busyAccept={busyAccept === l.id}
                       onToggleFavorite={() => onToggleFavorite(l.user_id)}
                       onChat={() => openChatWith(l.user_id)}
-                      onTrade={() => onSelectUser(l.user_id, {
-                        wanted: l.offered_ids,
-                        offered: [],
-                      })}
+                      onTrade={() => openTradeModalFromListing(l)}
+                      onAccept={() => acceptListing(l)}
                       onViewProfile={() => onSelectUser(l.user_id)}
                     />
                   ))}
@@ -525,9 +579,11 @@ export default function Marketplace({
         </>
       )}
 
-      {/* MENSAJES — chat in-app */}
+      {/* MENSAJES — chat in-app. `key` fuerza remount limpio cuando cambia el
+          counterpart, garantizando que useState pickea el chatCpId actual. */}
       {sub === 'messages' && (
         <ChatPanel
+          key={`chat-${chatCpId || 'list'}`}
           myId={myId}
           myProfile={myProfile}
           initialCounterpartId={chatCpId}
@@ -693,6 +749,23 @@ export default function Marketplace({
         myProfile={myProfile}
         flash={flash}
       />
+
+      {/* TradeRequestModal hoisted al render principal — sobrevive el unmount
+          del drill-down branch cuando el flow termina abriendo chat */}
+      <TradeRequestModal
+        open={showTrade}
+        onClose={() => { setShowTrade(false); setTradeCtx(null) }}
+        onSent={onTradeSent}
+        myId={myId}
+        targetProfile={tradeCtx?.targetProfile}
+        albumType={albumType}
+        itemsById={ITEMS_BY_ID}
+        offeredIds={tradeCtx?.offered || []}
+        wantedIds={tradeCtx?.wanted || []}
+        prefillMeetingPoint={tradeCtx?.meetingPoint || ''}
+        prefillMeetingTime={tradeCtx?.meetingTime || ''}
+        flash={flash}
+      />
     </div>
   )
 }
@@ -700,7 +773,7 @@ export default function Marketplace({
 // ───────────────────────────────────────────────────────────────────────────
 // Sub-componente: banner desglosado de un listing público (full info, no clic-para-expandir)
 // ───────────────────────────────────────────────────────────────────────────
-function ListingBanner({ listing, author, itemsById, isFavorite, onToggleFavorite, onChat, onTrade, onViewProfile }) {
+function ListingBanner({ listing, author, itemsById, isFavorite, busyAccept, onToggleFavorite, onChat, onTrade, onAccept, onViewProfile }) {
   const offeredCards = listing.offered_ids.map(id => itemsById[id]).filter(Boolean)
   const wantedCards  = listing.wanted_ids.map(id => itemsById[id]).filter(Boolean)
   return (
@@ -772,8 +845,19 @@ function ListingBanner({ listing, author, itemsById, isFavorite, onToggleFavorit
       )}
 
       <div className={s.bannerActions}>
-        <button onClick={onChat} className={s.btnSecondary}>💬 Iniciar chat</button>
-        <button onClick={onTrade} className={s.btnPrimary}>🤝 Proponer trade</button>
+        <button onClick={onChat} className={s.btnSecondary} type="button">
+          💬 Iniciar chat
+        </button>
+        <button onClick={onTrade} className={s.btnSecondary} type="button">
+          🤝 Contra oferta
+        </button>
+        <button
+          onClick={onAccept}
+          disabled={busyAccept}
+          className={s.btnPrimary}
+          type="button">
+          {busyAccept ? 'Enviando…' : '✅ Aceptar oferta'}
+        </button>
       </div>
     </div>
   )

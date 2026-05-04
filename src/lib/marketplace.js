@@ -162,10 +162,13 @@ export function isFavorite(favorites, targetId) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function loadThreadMessages(myId, otherId) {
+  // Filter by both endpoints — RLS already restricts to messages I'm part of,
+  // and the .in() pair guarantees only this 1:1 thread (excludes other threads).
   const { data, error } = await supabase
     .from('adrenalyn_messages')
     .select('*')
-    .or(`and(sender_id.eq.${myId},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${myId})`)
+    .in('sender_id',    [myId, otherId])
+    .in('recipient_id', [myId, otherId])
     .order('created_at', { ascending: true })
   if (error) throw error
   return data || []
@@ -173,10 +176,11 @@ export async function loadThreadMessages(myId, otherId) {
 
 // Lista hilos: counterpart + last message + unread count
 export async function loadMyThreads(myId) {
+  // RLS ya garantiza que sólo veamos mensajes donde participamos. Sin filter
+  // explícito evitamos el .or() que a veces da problemas de PostgREST.
   const { data, error } = await supabase
     .from('adrenalyn_messages')
     .select('*')
-    .or(`sender_id.eq.${myId},recipient_id.eq.${myId}`)
     .order('created_at', { ascending: false })
   if (error) throw error
 

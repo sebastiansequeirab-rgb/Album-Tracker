@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { createTradeRequest } from '../lib/marketplace'
 import s from './TradeRequestModal.module.css'
 
@@ -12,16 +12,32 @@ export default function TradeRequestModal({
   itemsById,
   offeredIds = [],
   wantedIds = [],
+  prefillMeetingPoint = '',
+  prefillMeetingTime = '',
   flash,
 }) {
-  const [meetingPointId, setMeetingPointId] = useState('default')
-  const [meetingPointFree, setMeetingPointFree] = useState('')
+  const [meetingPointId, setMeetingPointId] = useState(prefillMeetingPoint ? 'other' : 'default')
+  const [meetingPointFree, setMeetingPointFree] = useState(prefillMeetingPoint)
   const [timeMode, setTimeMode] = useState('label') // 'exact' | 'label'
   const [timeExact, setTimeExact] = useState('')
-  const [timeLabel, setTimeLabel] = useState('')
+  const [timeLabel, setTimeLabel] = useState(prefillMeetingTime)
   const [message,   setMessage]   = useState('')
   const [sending,   setSending]   = useState(false)
   const [err,       setErr]       = useState('')
+
+  // Re-sync local state cuando se abre el modal con nuevos prefills (key prop al modal
+  // sería ideal pero más simple usar useEffect)
+  useEffect(() => {
+    if (open) {
+      setMeetingPointId(prefillMeetingPoint ? 'other' : 'default')
+      setMeetingPointFree(prefillMeetingPoint || '')
+      setTimeLabel(prefillMeetingTime || '')
+      setTimeExact('')
+      setTimeMode('label')
+      setMessage('')
+      setErr('')
+    }
+  }, [open, prefillMeetingPoint, prefillMeetingTime])
 
   const targetPoints = Array.isArray(targetProfile?.meeting_points) ? targetProfile.meeting_points : []
 
