@@ -1,14 +1,15 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { supabase } from '../supabaseClient'
-import { buildCards, buildInitialState, parseNumberList, TEAMS_LIST, TEAM_DATA, MOMENTUM, TM, CC, ST } from '../data'
+import { parseNumberList, MOMENTUM, ALBUM_CONFIG, ALBUM_ADRENALYN } from '../data'
 import { ensureMyProfile } from '../lib/marketplace'
 import Marketplace from './Marketplace'
 import Profile from './Profile'
 import s from './Tracker.module.css'
 
-const ALL_CARDS = buildCards()
-
-export default function Tracker({ session }) {
+export default function Tracker({ session, albumType = ALBUM_ADRENALYN, onSwitchAlbum }) {
+  const cfg = ALBUM_CONFIG[albumType]
+  const ALL_ITEMS = useMemo(() => cfg.buildItems(), [albumType])
+  const { TM, CC, ST } = cfg
   const [col,       setCol]       = useState({})
   const [tab,       setTab]       = useState('dashboard')
   const [fType,     setFType]     = useState('all')
@@ -42,10 +43,12 @@ export default function Tracker({ session }) {
   useEffect(() => {
     let cancelled = false
     let attempt = 0
+    setLoaded(false)
+    setCol({})
 
     const load = async () => {
       const { data, error } = await supabase
-        .from('adrenalyn_collections')
+        .from(cfg.table)
         .select('data')
         .eq('user_id', session.user.id)
         .maybeSingle()
@@ -62,10 +65,10 @@ export default function Tracker({ session }) {
       }
 
       if (!data || !data.data || Object.keys(data.data).length === 0) {
-        const init = buildInitialState()
+        const init = cfg.buildInitial()
         setCol(init)
         const { error: seedErr } = await supabase
-          .from('adrenalyn_collections')
+          .from(cfg.table)
           .upsert({ user_id: session.user.id, data: init }, { onConflict: 'user_id' })
         if (seedErr) {
           console.error('Initial seed error:', seedErr)
@@ -84,7 +87,7 @@ export default function Tracker({ session }) {
       .catch(err => console.warn('Profile ensure failed:', err))
 
     return () => { cancelled = true }
-  }, [session])
+  }, [session, albumType, cfg.table, cfg.buildInitial])
 
   // ── Save to Supabase (coalesced + retry) ──
   const saveRef = useRef({ inFlight: false, pending: null, retryAt: 0 })
@@ -98,7 +101,7 @@ export default function Tracker({ session }) {
     setSaveStatus('saving')
 
     const { error } = await supabase
-      .from('adrenalyn_collections')
+      .from(cfg.table)
       .upsert({ user_id: session.user.id, data: newCol }, { onConflict: 'user_id' })
 
     saveRef.current.inFlight = false
@@ -135,7 +138,7 @@ export default function Tracker({ session }) {
     const nc = { ...col, [id]: nxt }
     setCol(nc)
     save(nc)
-    const card = ALL_CARDS.find(c => c.id === id)
+    const card = ALL_ITEMS.find(c => c.id === id)
     const msgs = { have:'✅ ¡La tienes!', duplicate:'🔄 Repetida', missing:'❌ Faltante' }
     const clrs = { have:'#4ADE80', duplicate:'#F59E0B', missing:'#64748B' }
     flash(`#${card?.num} ${card?.name} — ${msgs[nxt]}`, clrs[nxt])
@@ -148,7 +151,7 @@ export default function Tracker({ session }) {
     if (!numbers.length) { flash('⚠️ No hay números válidos', '#F87171'); return }
     const nc = { ...col }
     let count = 0
-    ALL_CARDS.forEach(card => {
+    ALL_ITEMS.forEach(card => {
       if (typeof card.num === 'number' && numbers.includes(card.num)) {
         nc[card.id] = quickAction
         count++
@@ -162,7 +165,7 @@ export default function Tracker({ session }) {
   }
 
   const resetToInitial = async () => {
-    const init = buildInitialState()
+    const init = cfg.buildInitial()
     setCol(init); await save(init)
     flash('🔄 Restablecido al estado inicial', '#60A5FA')
     setShowReset(false)
@@ -171,29 +174,33 @@ export default function Tracker({ session }) {
   const matchedCards = useMemo(() => {
     if (!quickText) return []
     const nums = parseNumberList(quickText)
-    return ALL_CARDS.filter(c => typeof c.num === 'number' && nums.includes(c.num))
+    return ALL_ITEMS.filter(c => typeof c.num === 'number' && nums.includes(c.num))
   }, [quickText])
 
-  const mainCards = useMemo(() => ALL_CARDS.filter(c => c.type !== 'Momentum'), [])
+  const mainCards = useMemo(
+    () => cfg.showMomentum ? ALL_ITEMS.filter(c => c.type !== 'Momentum') : ALL_ITEMS,
+    [ALL_ITEMS, cfg.showMomentum]
+  )
   const stats = useMemo(() => {
     const have = mainCards.filter(c => gs(c.id) === 'have').length
     const dup  = mainCards.filter(c => gs(c.id) === 'duplicate').length
     const tot  = mainCards.length
-    return { tot, have, dup, miss: tot - have - dup, pct: Math.round((have + dup) / tot * 100) }
-  }, [col])
+    return { tot, have, dup, miss: tot - have - dup, pct: tot ? Math.round((have + dup) / tot * 100) : 0 }
+  }, [col, mainCards])
 
   const momStats = useMemo(() => {
-    const mc = ALL_CARDS.filter(c => c.type === 'Momentum')
-    return { have: mc.filter(c => gs(c.id) !== 'missing').length, tot: 3 }
-  }, [col])
+    if (!cfg.showMomentum) return { have: 0, tot: 0 }
+    const mc = ALL_ITEMS.filter(c => c.type === 'Momentum')
+    return { have: mc.filter(c => gs(c.id) !== 'missing').length, tot: mc.length }
+  }, [col, ALL_ITEMS, cfg.showMomentum])
 
-  const teamStats = useMemo(() => TEAMS_LIST.map(t => {
-    const tc = ALL_CARDS.filter(c => c.team === t.name)
+  const teamStats = useMemo(() => cfg.teams.map(t => {
+    const tc = ALL_ITEMS.filter(c => c.team === t.name)
     const h  = tc.filter(c => gs(c.id) !== 'missing').length
-    return { ...t, tot: tc.length, have: h, pct: Math.round(h / tc.length * 100) }
-  }), [col])
+    return { ...t, tot: tc.length, have: h, pct: tc.length ? Math.round(h / tc.length * 100) : 0 }
+  }), [col, ALL_ITEMS, cfg.teams])
 
-  const filtered = useMemo(() => ALL_CARDS.filter(c => {
+  const filtered = useMemo(() => ALL_ITEMS.filter(c => {
     const st = gs(c.id)
     if (fSt   !== 'all' && st !== fSt)       return false
     if (fType !== 'all' && c.type !== fType) return false
@@ -338,15 +345,18 @@ export default function Tracker({ session }) {
         <div className={s.headerInner}>
           <div className={s.headerRow}>
             <div className={s.brand}>
-              <div className={s.brandTitle}>⚽ ADRENALYN XL</div>
-              <div className={s.brandSub}>FIFA WORLD CUP 2026™ · {session.user.email}</div>
+              <div className={s.brandTitle} style={{ color: cfg.accent }}>{cfg.icon} {cfg.label.toUpperCase()}</div>
+              <div className={s.brandSub}>{cfg.subtitle} · {session.user.email}</div>
             </div>
             <div className={s.headerActions}>
+              {onSwitchAlbum && (
+                <button onClick={onSwitchAlbum} title="Cambiar álbum" className={s.iconBtn}>⇄</button>
+              )}
               <button onClick={() => setShowReset(true)} title="Resetear" className={s.iconBtn}>⟲</button>
               <button onClick={() => supabase.auth.signOut()} title="Cerrar sesión" className={s.iconBtn}>Salir</button>
               <div className={s.pctBlock}>
-                <div className={`${s.pctValue} ${stats.pct >= 100 ? s.pctValueDone : s.pctValueGoing}`}>{stats.pct}%</div>
-                <div className={s.pctLabel}>DE 630</div>
+                <div className={`${s.pctValue} ${stats.pct >= 100 ? s.pctValueDone : s.pctValueGoing}`} style={{ color: stats.pct >= 100 ? cfg.accent : undefined }}>{stats.pct}%</div>
+                <div className={s.pctLabel}>DE {cfg.mainCount}</div>
               </div>
             </div>
           </div>
@@ -355,8 +365,10 @@ export default function Tracker({ session }) {
             <span className={s.sumHave}>✅ {stats.have}</span>
             <span className={s.sumDup}>🔄 {stats.dup}</span>
             <span className={s.sumMiss}>❌ {stats.miss}</span>
-            <span className={s.sumMom}>💎 {momStats.have}/3</span>
-            <span className={s.sumTotal}>630 + 3 Momentum</span>
+            {cfg.showMomentum && <span className={s.sumMom}>💎 {momStats.have}/{momStats.tot}</span>}
+            <span className={s.sumTotal}>
+              {cfg.mainCount}{cfg.extraCount > 0 ? ` + ${cfg.extraCount} Momentum` : ''}
+            </span>
           </div>
         </div>
       </header>
@@ -388,10 +400,10 @@ export default function Tracker({ session }) {
           <div className={s.fade}>
             <div className={s.statsGrid}>
               {[
-                { l:'Total',     v:630,         c:'#60A5FA', e:'📦' },
-                { l:'Tengo',     v:stats.have,  c:'#4ADE80', e:'✅' },
-                { l:'Faltan',    v:stats.miss,  c:'#F87171', e:'❌' },
-                { l:'Repetidas', v:stats.dup,   c:'#F59E0B', e:'🔄' },
+                { l:'Total',     v:cfg.mainCount, c:'#60A5FA', e:'📦' },
+                { l:'Tengo',     v:stats.have,    c:'#4ADE80', e:'✅' },
+                { l:'Faltan',    v:stats.miss,    c:'#F87171', e:'❌' },
+                { l:'Repetidas', v:stats.dup,     c:'#F59E0B', e:'🔄' },
               ].map(stat => (
                 <div key={stat.l} className={s.statCard}>
                   <div className={s.statEmoji}>{stat.e}</div>
@@ -413,7 +425,7 @@ export default function Tracker({ session }) {
               <div className={s.panel}>
                 <div className={s.panelTitle}>POR TIPO</div>
                 {Object.entries(TM).filter(([t]) => t !== 'Momentum').map(([type, m]) => {
-                  const tc = ALL_CARDS.filter(c => c.type === type)
+                  const tc = ALL_ITEMS.filter(c => c.type === type)
                   const h  = tc.filter(c => gs(c.id) !== 'missing').length
                   const p  = tc.length ? Math.round(h / tc.length * 100) : 0
                   return (
@@ -432,8 +444,8 @@ export default function Tracker({ session }) {
                 <div className={s.panel}>
                   <div className={s.panelTitle}>CONFEDERACIÓN</div>
                   {['CONMEBOL','UEFA','CONCACAF','CAF','AFC','OFC'].map(cf => {
-                    const ct = TEAMS_LIST.filter(t => t.conf === cf)
-                    const cc = ALL_CARDS.filter(c => ct.some(t => t.name === c.team))
+                    const ct = cfg.teams.filter(t => t.conf === cf)
+                    const cc = ALL_ITEMS.filter(c => ct.some(t => t.name === c.team))
                     const h  = cc.filter(c => gs(c.id) !== 'missing').length
                     const p  = cc.length ? Math.round(h / cc.length * 100) : 0
                     if (!cc.length) return null
@@ -449,43 +461,53 @@ export default function Tracker({ session }) {
                   })}
                 </div>
 
-                <div className={s.rarePanel}>
-                  <div className={s.rareTitle}>🥇 RARAS / ULTRA RARAS</div>
-                  {['Golden Baller','Eternos 22','Official Emblem'].map(type => {
-                    const tc = ALL_CARDS.filter(c => c.type === type)
-                    const h  = tc.filter(c => gs(c.id) !== 'missing').length
-                    return (
-                      <div key={type} className={s.rareRow}>
-                        <span className={s.rareRowName}>{TM[type]?.e} {TM[type]?.l}</span>
-                        <span className={`${s.rareRowValue} ${h === tc.length ? s.rareRowComplete : s.rareRowGoing}`}>
-                          {h}/{tc.length}
-                        </span>
-                      </div>
-                    )
-                  })}
+                {(cfg.showRare || cfg.showMomentum) && (
+                  <div className={s.rarePanel}>
+                    {cfg.showRare && (
+                      <>
+                        <div className={s.rareTitle}>🥇 RARAS / ULTRA RARAS</div>
+                        {cfg.rareTypes.map(type => {
+                          const tc = ALL_ITEMS.filter(c => c.type === type)
+                          if (!tc.length) return null
+                          const h  = tc.filter(c => gs(c.id) !== 'missing').length
+                          return (
+                            <div key={type} className={s.rareRow}>
+                              <span className={s.rareRowName}>{TM[type]?.e} {TM[type]?.l}</span>
+                              <span className={`${s.rareRowValue} ${h === tc.length ? s.rareRowComplete : s.rareRowGoing}`}>
+                                {h}/{tc.length}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </>
+                    )}
 
-                  <div className={s.momentumWrap}>
-                    <div className={s.momentumLabel}>💎 MOMENTUM</div>
-                    {MOMENTUM.map((p, i) => {
-                      const mc = ALL_CARDS.find(c => c.id === `MOM-${i}`)
-                      const status = gs(mc.id)
-                      const on = status !== 'missing'
-                      return (
-                        <div key={i} onClick={() => toggle(mc.id)}
-                          className={`${s.momentumRow} ${on ? s.momentumRowOn : ''}`}
-                          style={{ cursor: 'pointer' }}>
-                          <span>{p.flag}</span>
-                          <span className={`${s.momentumName} ${on ? s.momentumNameOn : ''}`}>{p.name}</span>
-                          <div className={s.momentumDot} style={{
-                            background: status === 'have' ? '#A855F7'
-                                       : status === 'duplicate' ? '#F59E0B'
-                                       : '#4C1D95'
-                          }} />
-                        </div>
-                      )
-                    })}
+                    {cfg.showMomentum && (
+                      <div className={s.momentumWrap}>
+                        <div className={s.momentumLabel}>💎 MOMENTUM</div>
+                        {MOMENTUM.map((p, i) => {
+                          const mc = ALL_ITEMS.find(c => c.id === `MOM-${i}`)
+                          if (!mc) return null
+                          const status = gs(mc.id)
+                          const on = status !== 'missing'
+                          return (
+                            <div key={i} onClick={() => toggle(mc.id)}
+                              className={`${s.momentumRow} ${on ? s.momentumRowOn : ''}`}
+                              style={{ cursor: 'pointer' }}>
+                              <span>{p.flag}</span>
+                              <span className={`${s.momentumName} ${on ? s.momentumNameOn : ''}`}>{p.name}</span>
+                              <div className={s.momentumDot} style={{
+                                background: status === 'have' ? '#A855F7'
+                                           : status === 'duplicate' ? '#F59E0B'
+                                           : '#4C1D95'
+                              }} />
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -527,10 +549,10 @@ export default function Tracker({ session }) {
 
         {/* Team detail */}
         {tab === 'teams' && selTeam && (() => {
-          const td = TEAM_DATA.find(t => t[0] === selTeam)
-          if (!td) return null
-          const [,name,flag,conf] = td
-          const tc = ALL_CARDS.filter(c => c.team === name)
+          const team = cfg.teams.find(t => t.id === selTeam)
+          if (!team) return null
+          const { name, flag, conf } = team
+          const tc = ALL_ITEMS.filter(c => c.team === name)
           const hv = tc.filter(c => gs(c.id) !== 'missing').length
           const byType = Object.keys(TM)
             .map(type => ({ type, cards: tc.filter(c => c.type === type) }))
@@ -570,7 +592,7 @@ export default function Tracker({ session }) {
               {[
                 { val:fSt,   set:setFSt,   opts:[['all','Todos los estados'],['missing','❌ Faltan'],['have','✅ Tengo'],['duplicate','🔄 Repetidas']] },
                 { val:fType, set:setFType, opts:[['all','Todos los tipos'], ...Object.entries(TM).map(([t,m]) => [t, `${m.e} ${m.l}`])] },
-                { val:fTeam, set:setFTeam, opts:[['all','Todos los equipos'], ...[...new Set(ALL_CARDS.map(c => c.team))].sort().map(t => [t,t])] },
+                { val:fTeam, set:setFTeam, opts:[['all','Todos los equipos'], ...[...new Set(ALL_ITEMS.map(c => c.team))].sort().map(t => [t,t])] },
               ].map((f, i) => (
                 <select key={i} value={f.val} onChange={e => f.set(e.target.value)} className={s.select}>
                   {f.opts.map(([v,l]) => <option key={v} value={v}>{l}</option>)}
