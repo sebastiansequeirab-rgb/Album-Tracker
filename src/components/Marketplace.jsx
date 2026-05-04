@@ -182,9 +182,12 @@ export default function Marketplace({
     setSelCol(null)
     setSelProfile(null)
     setSub('messages')
-    // Scroll al top para que el usuario vea el chat
+    // Scroll al top instantáneo + después del render (rAF) para garantizar
+    // que el ChatPanel quede a la vista — sin esto en mobile el viewport
+    // queda donde estaba el drill-down y parece que no abrió nada.
     if (typeof window !== 'undefined') {
-      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50)
+      window.scrollTo(0, 0)
+      requestAnimationFrame(() => window.scrollTo(0, 0))
     }
   }
 

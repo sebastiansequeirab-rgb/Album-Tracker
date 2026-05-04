@@ -4,10 +4,12 @@
   flex-direction: column;
   gap: 4px;
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--accent-soft);
   border-radius: var(--r-lg);
   padding: 6px;
-  min-height: 280px;
+  min-height: 320px;
+  scroll-margin-top: 100px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .listLoading {
@@ -124,19 +126,22 @@
   display: flex;
   flex-direction: column;
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--accent-soft);
   border-radius: var(--r-lg);
-  height: clamp(420px, 70vh, 720px);
+  height: clamp(480px, 70vh, 720px);
+  min-height: 480px;
   overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  scroll-margin-top: 100px;
 }
 
 .threadHead {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
-  background: var(--bg-deep);
-  border-bottom: 1px solid var(--border);
+  padding: 14px 16px;
+  background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-deep) 100%);
+  border-bottom: 2px solid var(--accent);
   flex-shrink: 0;
 }
 

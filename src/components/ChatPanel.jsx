@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import {
   loadMyThreads, loadThreadMessages, sendMessage, markThreadRead,
   loadProfile, subscribeToInbox,
@@ -23,6 +23,17 @@ export default function ChatPanel({
   const [loadingThread,   setLoadingThread]   = useState(false)
   const [sending,         setSending]         = useState(false)
   const scrollRef = useRef(null)
+  const rootRef   = useRef(null)
+
+  // Asegurar que el panel quede a la vista cuando montamos / abrimos un hilo
+  useLayoutEffect(() => {
+    if (rootRef.current && typeof window !== 'undefined') {
+      // Scroll al top de la ventana para que el panel sea visible
+      window.scrollTo(0, 0)
+      // Y también scrollIntoView del propio panel por si hay containers anidados
+      rootRef.current.scrollIntoView({ block: 'start', behavior: 'auto' })
+    }
+  }, [activeCpId])
 
   // Cargar lista de hilos
   const reloadThreads = async () => {
@@ -144,7 +155,7 @@ export default function ChatPanel({
   // ============================================================ VISTA HILO
   if (activeCpId) {
     return (
-      <div className={s.threadView}>
+      <div ref={rootRef} className={s.threadView}>
         <div className={s.threadHead}>
           <button
             onClick={() => { setActiveCpId(null); onActiveCounterpartChange?.(null) }}
@@ -152,16 +163,25 @@ export default function ChatPanel({
             aria-label="Volver">←</button>
           <div className={s.threadAvatar}>{activeProfile?.avatar_emoji || '👤'}</div>
           <div className={s.threadHeadBody}>
-            <div className={s.threadHeadName}>{activeProfile?.display_name || 'Coleccionista'}</div>
-            <div className={s.threadHeadSub}>Chat 1:1</div>
+            <div className={s.threadHeadName}>
+              {activeProfile?.display_name || (loadingThread ? 'Cargando…' : 'Coleccionista')}
+            </div>
+            <div className={s.threadHeadSub}>💬 Chat 1:1 · en tiempo real</div>
           </div>
         </div>
 
         <div ref={scrollRef} className={s.threadScroll}>
-          {loadingThread && <div className={s.threadLoading}>Cargando…</div>}
+          {loadingThread && (
+            <div className={s.threadLoading}>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>⏳</div>
+              Cargando conversación…
+            </div>
+          )}
           {!loadingThread && messages.length === 0 && (
             <div className={s.threadEmpty}>
-              Todavía no hay mensajes. Mandá el primero 👋
+              <div style={{ fontSize: 32, marginBottom: 8 }}>👋</div>
+              Todavía no hay mensajes en este hilo.<br/>
+              Mandá el primero abajo.
             </div>
           )}
           {messages.map(m => {
@@ -198,7 +218,7 @@ export default function ChatPanel({
 
   // ============================================================ VISTA LISTA
   return (
-    <div className={s.listView}>
+    <div ref={rootRef} className={s.listView}>
       {loadingList && <div className={s.listLoading}>Cargando…</div>}
       {!loadingList && threads.length === 0 && (
         <div className={s.listEmpty}>
