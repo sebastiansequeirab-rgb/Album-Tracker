@@ -1,17 +1,26 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
-  loadVisibleProfiles, loadProfile, loadCollectionsByUserIds, loadCollection,
+  loadVisibleProfiles,
   loadFriendships, partitionFriendships, friendshipBetween,
   sendFriendRequest, acceptFriendRequest, rejectFriendRequest,
   computeMatches, buildTradeMessage,
 } from '../lib/marketplace'
-import { buildCards, TEAMS_LIST } from '../data'
+import { loadAlbum, loadAlbumByUserIds } from '../lib/album'
+import { ALBUM_CONFIG, ALBUM_ADRENALYN, ALBUM_LABELS } from '../data'
 import s from './Marketplace.module.css'
 
-const ALL_CARDS = buildCards()
-const CARDS_BY_ID = Object.fromEntries(ALL_CARDS.map(c => [c.id, c]))
-
-export default function Marketplace({ session, myCol, myProfile, onGoToProfile, flash }) {
+export default function Marketplace({
+  session,
+  albumType = ALBUM_ADRENALYN,
+  myCol,
+  myProfile,
+  onGoToProfile,
+  flash,
+}) {
+  const cfg = ALBUM_CONFIG[albumType]
+  const ALL_ITEMS   = useMemo(() => cfg.buildItems(), [albumType])
+  const ITEMS_BY_ID = useMemo(() => Object.fromEntries(ALL_ITEMS.map(c => [c.id, c])), [ALL_ITEMS])
+  const TEAMS_LIST  = cfg.teams
   const [sub,         setSub]         = useState('all') // 'all' | 'friends' | 'mine' | 'requests'
   const [profiles,    setProfiles]    = useState([])
   const [collections, setCollections] = useState({})
@@ -35,7 +44,7 @@ export default function Marketplace({ session, myCol, myProfile, onGoToProfile, 
       setProfiles(vp)
       setFriendships(fs)
       const ids = vp.map(p => p.user_id)
-      const cm  = await loadCollectionsByUserIds(ids)
+      const cm  = await loadAlbumByUserIds(albumType, ids)
       setCollections(cm)
       const map = {}
       for (const p of vp) map[p.user_id] = p
@@ -46,7 +55,12 @@ export default function Marketplace({ session, myCol, myProfile, onGoToProfile, 
     setLoading(false)
   }
 
-  useEffect(() => { reload() /* eslint-disable-next-line */ }, [myId])
+  useEffect(() => {
+    reload()
+    setSelUserId(null)
+    setSelCol(null)
+    /* eslint-disable-next-line */
+  }, [myId, albumType])
 
   const { incoming, outgoing, accepted } = useMemo(() => partitionFriendships(friendships, myId), [friendships, myId])
 
@@ -70,7 +84,7 @@ export default function Marketplace({ session, myCol, myProfile, onGoToProfile, 
     setSelCol(null)
     try {
       // We may already have it; fall back to direct fetch.
-      const col = collections[uid] || await loadCollection(uid)
+      const col = collections[uid] || await loadAlbum(albumType, uid)
       setSelCol(col)
     } catch(e) {
       flash?.(`⚠️ ${e.message || 'No se pudo cargar la colección'}`, '#F87171')
@@ -119,7 +133,7 @@ export default function Marketplace({ session, myCol, myProfile, onGoToProfile, 
       theirName: otherProf?.display_name || 'amigo',
       theyHaveIWant: matches.theyHaveIWant,
       iHaveTheyWant: matches.iHaveTheyWant,
-      allCardsById: CARDS_BY_ID,
+      allCardsById: ITEMS_BY_ID,
     })
     setTradeMsg(msg)
     setShowTrade(true)
@@ -130,7 +144,7 @@ export default function Marketplace({ session, myCol, myProfile, onGoToProfile, 
   }
 
   // ────────────────────────────────────────────────────────── Render helpers
-  const myDups = useMemo(() => ALL_CARDS.filter(c => myCol[c.id] === 'duplicate'), [myCol])
+  const myDups = useMemo(() => ALL_ITEMS.filter(c => myCol[c.id] === 'duplicate'), [myCol, ALL_ITEMS])
 
   if (selUserId) {
     const prof = profilesById[selUserId]
@@ -188,7 +202,7 @@ export default function Marketplace({ session, myCol, myProfile, onGoToProfile, 
               ) : (
                 <div className={s.cardsList}>
                   {matches.theyHaveIWant.map(id => {
-                    const c = CARDS_BY_ID[id]; if (!c) return null
+                    const c = ITEMS_BY_ID[id]; if (!c) return null
                     return (
                       <div key={id} className={s.miniCard}>
                         <span className={s.miniCardFlag}>{c.flag}</span>
@@ -213,7 +227,7 @@ export default function Marketplace({ session, myCol, myProfile, onGoToProfile, 
               ) : (
                 <div className={s.cardsList}>
                   {matches.iHaveTheyWant.map(id => {
-                    const c = CARDS_BY_ID[id]; if (!c) return null
+                    const c = ITEMS_BY_ID[id]; if (!c) return null
                     return (
                       <div key={id} className={s.miniCard}>
                         <span className={s.miniCardFlag}>{c.flag}</span>

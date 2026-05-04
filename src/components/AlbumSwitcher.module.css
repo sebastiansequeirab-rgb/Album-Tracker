@@ -1,0 +1,44 @@
+.wrap {
+  display: inline-flex;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 3px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.btn {
+  background: transparent;
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-faint);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+
+.btn:hover { color: var(--text-muted); }
+
+.btnActiveAdrenalyn {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.btnActiveSticker {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10B981;
+}
+
+.icon { font-size: 14px; }
+
+@media (max-width: 480px) {
+  .btn { padding: 5px 9px; font-size: 10px; }
+  .label { display: none; }
+  .icon { font-size: 13px; }
+}

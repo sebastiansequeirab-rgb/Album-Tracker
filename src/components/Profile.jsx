@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react'
 import { EMOJI_AVATARS, loadMyProfile, saveMyProfile, deriveDisplayName } from '../lib/marketplace'
+import { activateAlbum, deactivateAlbum } from '../lib/album'
+import { ALBUM_ADRENALYN, ALBUM_STICKER } from '../data'
 import s from './Profile.module.css'
 
-export default function Profile({ session, onSaved }) {
+export default function Profile({ session, onSaved, onAlbumsChanged }) {
   const [profile, setProfile] = useState(null)
   const [saving, setSaving]   = useState(false)
   const [savedAt, setSavedAt] = useState(0)
   const [err, setErr]         = useState('')
+  const [albumBusy, setAlbumBusy] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -41,6 +44,28 @@ export default function Profile({ session, onSaved }) {
   }
 
   const visible = !!profile.marketplace_visible
+  const activeAlbums = profile.active_albums || []
+
+  const toggleAlbum = async (albumType) => {
+    if (albumBusy) return
+    const isActive = activeAlbums.includes(albumType)
+    // No permitir quedarse sin álbumes — debe haber al menos uno activo
+    if (isActive && activeAlbums.length <= 1) {
+      setErr('Necesitás tener al menos un álbum activo. Activá el otro antes de desactivar este.')
+      return
+    }
+    setAlbumBusy(albumType); setErr('')
+    try {
+      const next = isActive
+        ? await deactivateAlbum(albumType, session.user.id)
+        : await activateAlbum(albumType, session.user.id)
+      setProfile(p => ({ ...p, active_albums: next }))
+      onAlbumsChanged?.(next)
+    } catch(e) {
+      setErr(e.message || 'No se pudo cambiar el álbum')
+    }
+    setAlbumBusy(null)
+  }
 
   return (
     <div className={s.wrap}>
@@ -122,6 +147,38 @@ export default function Profile({ session, onSaved }) {
             <div className={s.switchKnob} />
           </div>
         </div>
+      </div>
+
+      <div className={s.section}>
+        <div className={s.sectionTitle}>📚 MIS ÁLBUMES</div>
+        <div className={s.sectionSub}>
+          Activá los álbumes que coleccionás. Tu progreso se guarda por separado
+          en cada uno y podés alternarlos desde el header.
+        </div>
+
+        {[
+          { id: ALBUM_ADRENALYN, icon: '⚽', title: 'Adrenalyn XL',       sub: '633 cartas · trading cards' },
+          { id: ALBUM_STICKER,   icon: '📖', title: 'Álbum de Stickers',  sub: '980 stickers · álbum tradicional' },
+        ].map(album => {
+          const isActive = activeAlbums.includes(album.id)
+          const isBusy   = albumBusy === album.id
+          return (
+            <div key={album.id}
+              className={`${s.toggleRow} ${isActive ? s.toggleRowOn : ''}`}
+              onClick={() => toggleAlbum(album.id)}
+              style={{ cursor: isBusy ? 'wait' : 'pointer', marginBottom: 10, opacity: isBusy ? 0.7 : 1 }}>
+              <div className={s.toggleBody}>
+                <div className={s.toggleTitle}>{album.icon} {album.title}</div>
+                <div className={s.toggleHint}>
+                  {isBusy ? 'Procesando…' : (isActive ? 'Activo · ' : 'No activo · ') + album.sub}
+                </div>
+              </div>
+              <div className={`${s.switch} ${isActive ? s.switchOn : ''}`}>
+                <div className={s.switchKnob} />
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       <div className={s.actions}>

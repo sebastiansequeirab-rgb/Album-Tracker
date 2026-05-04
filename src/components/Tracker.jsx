@@ -1,12 +1,19 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { supabase } from '../supabaseClient'
-import { parseNumberList, MOMENTUM, ALBUM_CONFIG, ALBUM_ADRENALYN } from '../data'
+import { parseNumberList, MOMENTUM, ALBUM_CONFIG, ALBUM_ADRENALYN, ALBUM_TYPES } from '../data'
 import { ensureMyProfile } from '../lib/marketplace'
+import AlbumSwitcher from './AlbumSwitcher'
 import Marketplace from './Marketplace'
 import Profile from './Profile'
 import s from './Tracker.module.css'
 
-export default function Tracker({ session, albumType = ALBUM_ADRENALYN, onSwitchAlbum }) {
+export default function Tracker({
+  session,
+  albumType = ALBUM_ADRENALYN,
+  activeAlbums = ALBUM_TYPES,
+  onSwitchAlbum,
+  onAlbumsChanged,
+}) {
   const cfg = ALBUM_CONFIG[albumType]
   const ALL_ITEMS = useMemo(() => cfg.buildItems(), [albumType])
   const { TM, CC, ST } = cfg
@@ -349,8 +356,12 @@ export default function Tracker({ session, albumType = ALBUM_ADRENALYN, onSwitch
               <div className={s.brandSub}>{cfg.subtitle} · {session.user.email}</div>
             </div>
             <div className={s.headerActions}>
-              {onSwitchAlbum && (
-                <button onClick={onSwitchAlbum} title="Cambiar álbum" className={s.iconBtn}>⇄</button>
+              {activeAlbums.length >= 2 && onSwitchAlbum && (
+                <AlbumSwitcher
+                  albumType={albumType}
+                  activeAlbums={activeAlbums}
+                  onChange={onSwitchAlbum}
+                />
               )}
               <button onClick={() => setShowReset(true)} title="Resetear" className={s.iconBtn}>⟲</button>
               <button onClick={() => supabase.auth.signOut()} title="Cerrar sesión" className={s.iconBtn}>Salir</button>
@@ -613,6 +624,7 @@ export default function Tracker({ session, albumType = ALBUM_ADRENALYN, onSwitch
         {tab === 'marketplace' && (
           <Marketplace
             session={session}
+            albumType={albumType}
             myCol={col}
             myProfile={myProfile}
             onGoToProfile={() => setTab('profile')}
@@ -621,7 +633,13 @@ export default function Tracker({ session, albumType = ALBUM_ADRENALYN, onSwitch
         )}
 
         {/* Profile */}
-        {tab === 'profile' && <Profile session={session} onSaved={p => setMyProfile(p)} />}
+        {tab === 'profile' && (
+          <Profile
+            session={session}
+            onSaved={p => setMyProfile(p)}
+            onAlbumsChanged={onAlbumsChanged}
+          />
+        )}
       </main>
 
       {/* Floating Quick Update Button */}
