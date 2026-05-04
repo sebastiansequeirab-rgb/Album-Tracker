@@ -126,4 +126,63 @@
   --t-fast: 0.12s ease;
   --t-base: 0.2s ease;
   --t-slow: 0.7s ease;
+
+  /* ===== Visual Rebuild v2 — additive tokens (no renames) ===== */
+
+  /* Extended dark backgrounds */
+  --bg-void: #080C14;
+  --bg-elevated-2: #16213A;
+  --bg-hover: #1A2847;
+
+  /* Gold ramp */
+  --gold-1: #FFD97A;
+  --gold-2: #F5C842;
+  --gold-3: #E6A817;
+  --gold-4: #C88A00;
+  --gold-5: #8F6300;
+  --gold-glow: rgba(230, 168, 23, 0.25);
+
+  /* Status colors with glows */
+  --status-have: #22C55E;
+  --status-have-glow: rgba(34, 197, 94, 0.35);
+  --status-have-dim: rgba(34, 197, 94, 0.15);
+  --status-missing: #EF4444;
+  --status-missing-glow: rgba(239, 68, 68, 0.30);
+  --status-missing-dim: rgba(239, 68, 68, 0.12);
+  --status-dup: #F59E0B;
+  --status-dup-glow: rgba(245, 158, 11, 0.35);
+  --status-dup-dim: rgba(245, 158, 11, 0.15);
+
+  --shadow-glow-have: 0 0 20px var(--status-have-glow);
+  --shadow-glow-missing: 0 0 20px var(--status-missing-glow);
+  --shadow-glow-dup: 0 0 20px var(--status-dup-glow);
+  --shadow-glow-gold: 0 0 24px var(--gold-glow);
+
+  /* Confederation dim variants (15% opacity for chip backgrounds) */
+  --conf-conmebol-dim: rgba(252, 211, 77, 0.15);
+  --conf-uefa-dim: rgba(96, 165, 250, 0.15);
+  --conf-concacaf-dim: rgba(74, 222, 128, 0.15);
+  --conf-caf-dim: rgba(248, 113, 113, 0.15);
+  --conf-afc-dim: rgba(192, 132, 252, 0.15);
+  --conf-ofc-dim: rgba(52, 211, 153, 0.15);
+
+  /* Card type semantic colors (5 high-level categories from spec) */
+  --type-intro: #F59E0B;
+  --type-intro-dim: rgba(245, 158, 11, 0.15);
+  --type-museum: #A78BFA;
+  --type-museum-dim: rgba(167, 139, 250, 0.15);
+  --type-jugador: #38BDF8;
+  --type-jugador-dim: rgba(56, 189, 248, 0.15);
+  --type-plantel: #34D399;
+  --type-plantel-dim: rgba(52, 211, 153, 0.15);
+  --type-escudo: #FB7185;
+  --type-escudo-dim: rgba(251, 113, 133, 0.15);
+
+  /* Animation timings */
+  --t-page: 0.25s;
+  --t-drawer: 0.28s;
+  --t-modal: 0.20s;
+  --t-status: 0.15s;
+  --stagger: 0.04s;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
