@@ -1,0 +1,110 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  width: 100%;
+  min-height: 92px;
+  padding: 22px var(--sp-3) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-card);
+  cursor: pointer;
+  font-family: var(--font-body);
+  text-align: left;
+  color: inherit;
+  transition:
+    background var(--t-status),
+    border-color var(--t-status),
+    box-shadow var(--t-status);
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+}
+
+.missing {
+  background: var(--bg-card);
+  border-color: var(--border);
+}
+.missing .name { color: var(--text-muted); }
+
+.have {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--status-have) 9%, var(--bg-card)) 0%,
+    var(--bg-card) 100%
+  );
+  border-color: color-mix(in srgb, var(--status-have) 50%, var(--border));
+  box-shadow: var(--shadow-glow-have);
+}
+.have .name { color: var(--text); }
+
+.duplicate {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--status-dup) 11%, var(--bg-card)) 0%,
+    var(--bg-card) 100%
+  );
+  border-color: color-mix(in srgb, var(--status-dup) 55%, var(--border));
+  box-shadow: var(--shadow-glow-dup);
+}
+.duplicate .name { color: var(--text); }
+
+.dot {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+
+.chip {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 2px;
+  word-break: break-word;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+  margin-top: auto;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.team {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.flag {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.teamName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.num {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
