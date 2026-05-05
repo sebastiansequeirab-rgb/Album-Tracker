@@ -1,60 +1,91 @@
+/* Broadcast × vault stat card.
+   Chamfered corners (TR + BL), colored gold left bar, huge Bebas number. */
+
 .card {
   position: relative;
+  padding: 22px 22px 18px;
+  background: linear-gradient(180deg, rgba(15, 22, 38, 0.86) 0%, rgba(8, 12, 22, 0.92) 100%);
+  border: 1px solid rgba(245, 200, 70, 0.08);
+  border-left: 2px solid var(--card-accent, #FCD34D);
+  border-radius: 3px;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--sp-5) var(--sp-4);
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--border);
-  border-radius: var(--r-2xl);
-  text-align: center;
-  min-height: 120px;
-  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 130px;
+  transition: transform 0.18s ease, box-shadow 0.22s ease, border-color 0.18s ease, background 0.18s ease;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 30% 100%, var(--card-accent-soft, rgba(245, 200, 70, 0.06)) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 .card:hover {
-  border-color: var(--border-strong);
-}
-
-.accent {
-  border-color: var(--gold-3);
-  box-shadow: var(--shadow-glow-gold);
+  transform: translateY(-2px);
+  border-color: rgba(245, 200, 70, 0.18);
+  background: linear-gradient(180deg, rgba(20, 28, 48, 0.92) 0%, rgba(10, 16, 28, 0.95) 100%);
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.5),
+    0 0 28px var(--card-accent-soft, rgba(245, 200, 70, 0.18));
 }
 
 .icon {
-  font-size: 22px;
-  margin-bottom: var(--sp-2);
-  opacity: 0.9;
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 16px;
+  opacity: 0.55;
+  filter: grayscale(0.2);
 }
 
 .value {
   font-family: var(--font-display);
-  font-size: 56px;
-  font-weight: 400;
-  line-height: 1;
+  font-size: 78px;
+  line-height: 0.92;
   letter-spacing: 0.02em;
-  color: var(--text);
-  margin-bottom: 4px;
+  color: var(--card-accent, var(--text));
+  margin-top: 18px;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
+  position: relative;
+  z-index: 1;
 }
 
 .label {
   font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
+  font-size: 10px;
+  letter-spacing: 0.36em;
+  color: var(--text-secondary);
   text-transform: uppercase;
-  color: var(--text-muted);
+  font-weight: 600;
+  margin-top: -2px;
+  position: relative;
+  z-index: 1;
+}
+
+.accent {
+  border-left-width: 3px;
 }
 
 @media (max-width: 720px) {
-  .card {
-    min-height: 96px;
-    padding: var(--sp-4) var(--sp-3);
-  }
-  .value { font-size: 40px; }
-  .label { font-size: 9px; letter-spacing: 0.15em; }
-  .icon  { font-size: 18px; }
+  .card { padding: 18px 16px 14px; min-height: 110px; }
+  .value { font-size: 56px; margin-top: 12px; }
+  .label { font-size: 9px; letter-spacing: 0.28em; }
+  .icon { top: 10px; right: 12px; font-size: 13px; }
+}
+
+@media (max-width: 380px) {
+  .value { font-size: 48px; }
 }

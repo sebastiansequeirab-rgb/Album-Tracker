@@ -1,38 +1,74 @@
+/* Broadcast × vault team card.
+   Chamfered TR + BL, conf-color left bar, gradient bg, conf glow on hover.
+   Complete state: gold border + gold sheen (no trophy emoji). */
+
 .card {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
-  min-height: 160px;
-  padding: var(--sp-4) var(--sp-3);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--r-xl);
+  min-height: 168px;
+  padding: 18px 14px 14px;
+  background: linear-gradient(180deg, rgba(15, 22, 38, 0.78) 0%, rgba(8, 12, 22, 0.92) 100%);
+  border: 1px solid rgba(245, 200, 70, 0.08);
+  border-left: 2px solid var(--conf-color, var(--text-muted));
+  border-radius: 3px;
   cursor: pointer;
-  transition: transform var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
   font-family: var(--font-body);
   text-align: center;
   color: inherit;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.22s ease, background 0.18s ease;
+  overflow: hidden;
+}
+
+/* subtle conf-color glow at the bottom-left, like a stage light */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 50% at 20% 100%, color-mix(in srgb, var(--conf-color, transparent) 15%, transparent) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .card:hover {
-  transform: scale(1.03);
-  border-color: var(--conf-color);
+  transform: translateY(-2px);
+  border-color: rgba(245, 200, 70, 0.18);
+  background: linear-gradient(180deg, rgba(20, 28, 48, 0.88) 0%, rgba(10, 16, 28, 0.95) 100%);
   box-shadow:
-    0 0 0 1px var(--conf-color),
-    0 0 20px color-mix(in srgb, var(--conf-color) 22%, transparent);
+    0 14px 32px rgba(0, 0, 0, 0.45),
+    0 0 26px color-mix(in srgb, var(--conf-color) 26%, transparent);
 }
 
 .empty {
-  filter: saturate(0.35);
-  opacity: 0.85;
+  filter: saturate(0.5);
+  opacity: 0.78;
+}
+.empty:hover {
+  filter: saturate(0.85);
+  opacity: 1;
 }
 
 .complete {
   border-color: var(--gold-3);
-  box-shadow: 0 0 0 1px var(--gold-3), 0 0 18px var(--gold-glow);
+  border-left-color: var(--gold-2);
+  background: linear-gradient(180deg, rgba(38, 28, 8, 0.85) 0%, rgba(18, 12, 4, 0.95) 100%);
+  box-shadow:
+    0 0 0 1px rgba(245, 200, 70, 0.45),
+    0 0 26px var(--gold-glow);
+}
+.complete::before {
+  background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(245, 200, 70, 0.18) 0%, transparent 60%);
 }
 
 .flagWrap {
@@ -40,6 +76,8 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 2px;
+  position: relative;
+  z-index: 1;
 }
 
 .name {
@@ -47,31 +85,31 @@
   font-weight: 600;
   color: var(--text);
   line-height: 1.2;
+  letter-spacing: 0.01em;
+  position: relative;
+  z-index: 1;
 }
 
 .frac {
   font-family: var(--font-display);
-  font-size: 14px;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  color: var(--gold-2);
+  margin-top: 2px;
+  position: relative;
+  z-index: 1;
 }
+.complete .frac { color: var(--gold-1); }
 
 .bar {
   margin-top: auto;
-}
-
-.completeBadge {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  font-size: 14px;
-  filter: drop-shadow(0 0 4px var(--gold-glow));
+  position: relative;
+  z-index: 1;
+  width: 100%;
 }
 
 @media (max-width: 720px) {
-  .card {
-    min-height: 140px;
-    padding: var(--sp-3) var(--sp-2);
-  }
+  .card { min-height: 148px; padding: 14px 10px 10px; }
   .name { font-size: 12px; }
+  .frac { font-size: 16px; }
 }

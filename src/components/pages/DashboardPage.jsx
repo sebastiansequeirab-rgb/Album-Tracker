@@ -7,6 +7,18 @@ import ProgressBar from '../ui/ProgressBar'
 import TeamCard from '../ui/TeamCard'
 import s from './DashboardPage.module.css'
 
+const IconPencil = (p) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+  </svg>
+)
+const IconArrow = (p) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M5 12h14M13 5l7 7-7 7" />
+  </svg>
+)
+
 const listVariants = {
   hidden: { opacity: 1 },
   visible: { opacity: 1, transition: { staggerChildren: 0.04 } },
@@ -61,31 +73,34 @@ export default function DashboardPage({
         animate="visible"
       >
         <motion.div variants={itemVariants}>
-          <StatCard icon="📦" label="Total"     value={cfg.mainCount} color="var(--conf-uefa)" />
+          <StatCard label="Total"     value={cfg.mainCount} color="var(--conf-uefa)" />
         </motion.div>
         <motion.div variants={itemVariants}>
-          <StatCard icon="✅" label="Tengo"     value={stats.have}    color="var(--status-have)" />
+          <StatCard label="Tengo"     value={stats.have}    color="var(--status-have)" />
         </motion.div>
         <motion.div variants={itemVariants}>
-          <StatCard icon="❌" label="Faltan"    value={stats.miss}    color="var(--status-missing)" />
+          <StatCard label="Faltan"    value={stats.miss}    color="var(--status-missing)" />
         </motion.div>
         <motion.div variants={itemVariants}>
-          <StatCard icon="🔄" label="Repetidas" value={stats.dup}     color="var(--status-dup)" />
+          <StatCard label="Repetidas" value={stats.dup}     color="var(--status-dup)" />
         </motion.div>
       </motion.div>
 
       <button type="button" onClick={() => setShowQuick(true)} className={s.quickCta}>
+        <span className={s.quickCtaIcon} aria-hidden="true"><IconPencil /></span>
         <div className={s.quickCtaCopy}>
-          <div className={s.quickCtaTitle}>✏️ ACTUALIZACIÓN RÁPIDA</div>
+          <div className={s.quickCtaTitle}>Actualización Rápida</div>
           <div className={s.quickCtaSub}>Pegá varios números en bulk · Ej: "1, 3, 5-10"</div>
         </div>
-        <div className={s.quickCtaArrow} aria-hidden="true">→</div>
+        <div className={s.quickCtaArrow} aria-hidden="true"><IconArrow /></div>
       </button>
 
       <div className={s.cols}>
         <section className={s.panel}>
           <header className={s.panelHead}>
-            <h3 className={s.panelTitle}>POR TIPO</h3>
+            <span className={s.panelNum}>01</span>
+            <h3 className={s.panelTitle}>Por Tipo</h3>
+            <span className={s.panelRule} aria-hidden="true" />
           </header>
           <div className={s.rows}>
             {Object.entries(TM)
@@ -98,11 +113,12 @@ export default function DashboardPage({
                   <div key={type} className={s.typeRow}>
                     <div className={s.typeRowHeader}>
                       <span className={s.typeRowLabel} style={{ color: m.c }}>
-                        <span aria-hidden="true">{m.e}</span> {m.l}
+                        <span className={s.typeMarker} style={{ background: m.c }} aria-hidden="true" />
+                        {m.l}
                       </span>
                       <span className={s.typeRowCount}>{h}/{tc.length}</span>
                     </div>
-                    <ProgressBar pct={p} color={m.c} height={5} />
+                    <ProgressBar pct={p} color={m.c} height={6} />
                   </div>
                 )
               })}
@@ -112,7 +128,9 @@ export default function DashboardPage({
         <div className={s.colStack}>
           <section className={s.panel}>
             <header className={s.panelHead}>
-              <h3 className={s.panelTitle}>🎯 PRÓXIMOS A COMPLETAR</h3>
+              <span className={s.panelNum}>02</span>
+              <h3 className={s.panelTitle}>Próximos a Completar</h3>
+              <span className={s.panelRule} aria-hidden="true" />
               {upcoming.length > 0 && (
                 <button type="button" onClick={() => setTab('teams')} className={s.panelLink}>
                   Ver todos →
@@ -132,8 +150,9 @@ export default function DashboardPage({
                 initial="hidden"
                 animate="visible"
               >
-                {upcoming.map(t => {
+                {upcoming.map((t, i) => {
                   const conf = String(t.conf || '').toUpperCase()
+                  const rank = String(i + 1).padStart(2, '0')
                   return (
                     <motion.button
                       key={t.id}
@@ -142,6 +161,7 @@ export default function DashboardPage({
                       onClick={() => { setTab('teams'); setSelTeam(t.id) }}
                       className={s.upcomingRow}
                     >
+                      <span className={s.upcomingRank}>{rank}</span>
                       <span className={s.upcomingFlag}>
                         <Flag fifa={t.id} emoji={t.flag} size={22} alt={t.name} />
                       </span>
@@ -151,7 +171,7 @@ export default function DashboardPage({
                         <ProgressBar
                           pct={t.pct}
                           color={CONF_COLOR[conf] || 'var(--accent)'}
-                          height={6}
+                          height={7}
                         />
                       </span>
                       <span className={s.upcomingFrac}>{t.have}/{t.tot}</span>
@@ -166,7 +186,10 @@ export default function DashboardPage({
             <section className={`${s.panel} ${s.rarePanel}`}>
               {cfg.showRare && (
                 <>
-                  <div className={s.rareTitle}>🥇 RARAS / ULTRA RARAS</div>
+                  <div className={s.rareTitle}>
+                    <span className={s.rareTitleDot} aria-hidden="true" />
+                    Raras / Ultra Raras
+                  </div>
                   {cfg.rareTypes.map(type => {
                     const tc = ALL_ITEMS.filter(c => c.type === type)
                     if (!tc.length) return null
@@ -174,7 +197,8 @@ export default function DashboardPage({
                     return (
                       <div key={type} className={s.rareRow}>
                         <span className={s.rareRowName}>
-                          <span aria-hidden="true">{TM[type]?.e}</span> {TM[type]?.l}
+                          <span className={s.typeMarker} style={{ background: TM[type]?.c }} aria-hidden="true" />
+                          {TM[type]?.l}
                         </span>
                         <span className={`${s.rareRowValue} ${h === tc.length ? s.rareRowComplete : ''}`}>
                           {h}/{tc.length}
@@ -187,7 +211,10 @@ export default function DashboardPage({
 
               {cfg.showMomentum && (
                 <div className={s.momentumWrap}>
-                  <div className={s.momentumLabel}>💎 MOMENTUM</div>
+                  <div className={s.momentumLabel}>
+                    <span className={s.momentumLabelDot} aria-hidden="true" />
+                    Momentum
+                  </div>
                   {MOMENTUM.map((p, i) => {
                     const mc = ALL_ITEMS.find(c => c.id === `MOM-${i}`)
                     if (!mc) return null
@@ -222,7 +249,9 @@ export default function DashboardPage({
 
       <section className={s.missingTeamsSection}>
         <header className={s.sectionHead}>
-          <h3 className={s.sectionTitle}>📌 EQUIPOS CON MÁS FALTANTES</h3>
+          <span className={s.sectionNum}>03</span>
+          <h3 className={s.sectionTitle}>Equipos con más Faltantes</h3>
+          <span className={s.sectionRule} aria-hidden="true" />
           <button type="button" onClick={() => setTab('teams')} className={s.sectionLink}>
             Ver todos →
           </button>

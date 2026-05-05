@@ -40,8 +40,7 @@ export default function TeamCard({
       <div className={s.name}>{team.name}</div>
       {conf && <ConfBadge confederation={conf} size="xs" />}
       <div className={s.frac}>{have}/{total}</div>
-      <ProgressBar pct={pct} color={confColor} height={6} className={s.bar} />
-      {complete && <div className={s.completeBadge} aria-hidden="true">🏆</div>}
+      <ProgressBar pct={pct} color={complete ? 'var(--gold-3)' : confColor} height={6} className={s.bar} />
     </button>
   )
 }
