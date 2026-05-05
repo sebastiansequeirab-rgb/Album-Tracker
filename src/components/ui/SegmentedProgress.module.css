@@ -1,0 +1,211 @@
+/* =============================================================================
+   Segmented Progress Bar — broadcast scoreboard.
+   Cada segmento ocupa el % de width proporcional a (type.total / grand.total)
+   y se rellena con (type.have / type.total). Hover muestra tooltip.
+   Shimmer gold sweep + scanline sutil para feel "live broadcast".
+   ============================================================================= */
+
+.wrap {
+  position: relative;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.track {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 14px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.35) 100%);
+  border: 1px solid rgba(245, 200, 70, 0.12);
+  border-radius: 2px;
+  overflow: visible;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.7),
+    inset 0 -1px 0 rgba(245, 200, 70, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Segment ────────────────────────────────────────────────────────────── */
+
+.segment {
+  position: relative;
+  flex-shrink: 0;
+  height: 100%;
+  border-right: 1px solid rgba(0, 0, 0, 0.55);
+  cursor: default;
+  transition: filter 0.18s ease;
+}
+.segment:last-child { border-right: none; }
+
+/* hover hint sobre el track */
+.segment::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(245, 200, 70, 0);
+  transition: background 0.18s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+.segment:hover::before { background: rgba(245, 200, 70, 0.06); }
+.segment:hover { filter: brightness(1.12); }
+
+/* ── Fill ───────────────────────────────────────────────────────────────── */
+
+.fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--seg-color) 92%, white 8%) 0%,
+      var(--seg-color) 50%,
+      color-mix(in srgb, var(--seg-color) 60%, black 40%) 100%);
+  transition: width 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.20);
+}
+
+/* glow leading edge (cursor del fill) */
+.fillEdge {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  right: -5px;
+  width: 10px;
+  background:
+    radial-gradient(ellipse 70% 90% at 50% 50%, var(--seg-color) 0%, transparent 70%);
+  opacity: 0.95;
+  filter: blur(1.5px);
+  pointer-events: none;
+}
+
+/* ── Shimmer sweep (gold sheen periodic) ────────────────────────────────── */
+
+.shimmer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -35%;
+  width: 30%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 250, 200, 0.18) 50%,
+    transparent 100%);
+  transform: skewX(-22deg);
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  animation: shimmerSweep 9s ease-in-out infinite;
+}
+@keyframes shimmerSweep {
+  0%   { left: -35%; }
+  60%  { left: 100%; }
+  100% { left: 100%; }
+}
+
+/* scanline horizontal sutil — feel CRT broadcast */
+.scanline {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 100%);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* ── Tooltip ────────────────────────────────────────────────────────────── */
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translate(-50%, 6px);
+  background: rgba(8, 12, 22, 0.96);
+  border: 1px solid rgba(245, 200, 70, 0.42);
+  border-left: 2px solid var(--seg-color);
+  padding: 9px 13px;
+  border-radius: 3px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(245, 200, 70, 0.42);
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.35));
+}
+.segment:hover .tooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.ttLabel {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.20em;
+  color: var(--seg-color);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--seg-color) 50%, transparent);
+}
+.ttFrac {
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+.ttFracDiv {
+  color: var(--text-faint);
+  margin: 0 2px;
+}
+.ttPct {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--gold-2);
+  text-transform: uppercase;
+}
+
+/* ── Mobile ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 540px) {
+  .track { height: 12px; }
+  .tooltip {
+    padding: 7px 10px;
+    font-size: 10px;
+  }
+  .ttLabel { font-size: 10px; }
+  .ttFrac  { font-size: 14px; }
+  .ttPct   { font-size: 9px; }
+}
+
+@media (hover: none) {
+  /* En touch, los tooltips se mantienen pero requieren tap para activar
+     (iOS Safari maneja esto con first-tap = hover, second-tap = activate).
+     No deshabilitamos: el feedback táctil es valioso para el coleccionista. */
+  .segment:hover { filter: none; }
+}

@@ -11,6 +11,7 @@ import DashboardPage from './pages/DashboardPage'
 import TeamsPage from './pages/TeamsPage'
 import CardsPage from './pages/CardsPage'
 import ProgressBar from './ui/ProgressBar'
+import SegmentedProgress from './ui/SegmentedProgress'
 import BulkUpdateModal from './ui/BulkUpdateModal'
 import s from './Tracker.module.css'
 
@@ -399,7 +400,21 @@ export default function Tracker({
               </div>
             </div>
           </div>
-          <ProgressBar pct={stats.pct} color="linear-gradient(90deg,#15803D,#4ADE80)" height={8} />
+          <SegmentedProgress
+            segments={Object.entries(TM)
+              .filter(([t]) => t !== 'Momentum')
+              .map(([type, m]) => {
+                const items = ALL_ITEMS.filter(c => c.type === type)
+                return {
+                  name: type,
+                  label: m.l,
+                  color: m.c,
+                  total: items.length,
+                  have: items.filter(c => gs(c.id) !== 'missing').length,
+                }
+              })
+              .filter(seg => seg.total > 0)}
+          />
           <div className={s.summaryRow}>
             <span className={s.sumHave}>{stats.have} <span className={s.sumLabel}>tengo</span></span>
             <span className={s.sumDup}>{stats.dup} <span className={s.sumLabel}>repetidas</span></span>
