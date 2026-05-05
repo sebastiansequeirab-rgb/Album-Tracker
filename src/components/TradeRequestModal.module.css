@@ -29,8 +29,10 @@
   padding: 38px 38px 0;
   width: 100%;
   max-width: 600px;
-  max-height: 92vh;
+  max-height: calc(100vh - 80px);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -155,8 +157,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   background: transparent;
   border: 1px solid rgba(245, 200, 70, 0.28);
   border-radius: 3px;
@@ -670,6 +672,12 @@
 
 /* ── Responsive ───────────────────────────────────────────────────────── */
 
+/* Mac large screens — slightly more breathing room */
+@media (min-width: 1440px) {
+  .card { max-width: 640px; padding: 40px 40px 0; }
+  .pickerList { max-height: 340px; }
+}
+
 @media (max-width: 768px) {
   .pickerList { max-height: 260px; }
 }
@@ -681,28 +689,64 @@
 }
 
 @media (max-width: 480px) {
-  .backdrop { padding: 0; align-items: flex-end; }
+  .backdrop {
+    padding: 0;
+    align-items: flex-end;
+    padding-top: env(safe-area-inset-top);
+  }
   .card {
-    padding: 28px 20px 0;
-    max-height: 95vh;
+    padding: 26px 16px 0;
+    max-height: 92vh;
     max-width: 100%;
+    width: 100%;
+    border-radius: 16px 16px 0 0;
     clip-path: polygon(
       0 0,
-      calc(100% - 12px) 0,
-      100% 12px,
+      calc(100% - 14px) 0,
+      100% 14px,
       100% 100%,
       0 100%
     );
     animation: trqSlideUp 0.28s var(--ease-out);
+    gap: 14px;
   }
+  /* mobile: brackets only on top corners (bottom is screen edge / sticky footer) */
+  .bl, .br { display: none; }
   .title { font-size: 16px; letter-spacing: 0.18em; }
-  .pickerList { max-height: 220px; }
-  .footer {
-    margin: 0 -20px;
-    padding: 14px 20px calc(20px + env(safe-area-inset-bottom));
+  .close { width: 44px; height: 44px; }
+
+  /* Picker tabs — broader tap target, scroll-snap if needed */
+  .pickerTabs {
+    padding: 5px;
+    -webkit-overflow-scrolling: touch;
   }
+  .pickerTab { padding: 13px 12px; min-height: 48px; }
+
+  .pickerList { max-height: 240px; padding: 5px; }
+  .pickerItem { padding: 12px 12px; min-height: 56px; }
+
+  .input, .select, .textarea {
+    font-size: 16px; /* prevents iOS zoom-on-focus */
+    padding: 14px 14px;
+  }
+  .inputBox { min-height: 48px; }
+
+  .timeBtn { padding: 12px 12px; min-height: 48px; font-size: 11px; }
+
+  .footer {
+    margin: 0 -16px;
+    padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
+  }
+  .cta { height: 54px; font-size: 15px; }
+
+  .filterRow { padding: 4px 0; min-height: 36px; }
+
   @keyframes trqSlideUp {
-    from { opacity: 0; transform: translateY(20px); }
+    from { opacity: 0; transform: translateY(28px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .backdrop, .bracket { animation: none !important; }
 }

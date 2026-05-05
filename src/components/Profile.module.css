@@ -123,6 +123,14 @@
 }
 .field:last-child { margin-bottom: 0; }
 
+/* 2-col field row on Mac (IG + WA side by side) — collapses to stacked on mobile */
+.fieldGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+.fieldGrid .field { margin-bottom: 0; }
+
 .fieldLabel {
   display: flex;
   align-items: baseline;
@@ -151,7 +159,7 @@
   border: 1px solid var(--p-field-border);
   border-left: 2px solid var(--gold-4);
   border-radius: 3px;
-  height: 50px;
+  height: 52px;
   padding: 0 14px;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
@@ -701,32 +709,58 @@
 }
 
 /* ── Responsive ───────────────────────────────────────────────────── */
+
+/* Mac large screens — slightly more comfortable padding */
+@media (min-width: 1440px) {
+  .panel { padding: 28px 28px 26px; }
+}
+
 @media (max-width: 720px) {
   .avatarGrid { grid-template-columns: repeat(8, 1fr); }
   .panel { padding: 20px 18px 18px; }
   .albumGrid { grid-template-columns: 1fr; }
   .mpRow { flex-direction: column; align-items: stretch; }
 
-  /* Sticky save on mobile */
+  /* fieldGrid (IG + WA) stacks on tablet/mobile */
+  .fieldGrid { grid-template-columns: 1fr; gap: 0; }
+  .fieldGrid .field { margin-bottom: var(--sp-3); }
+  .fieldGrid .field:last-child { margin-bottom: 0; }
+
+  /* Sticky save on mobile, with safe-area */
   .actions {
     position: sticky;
-    bottom: var(--sp-3);
+    bottom: 0;
     z-index: 5;
-    margin-top: var(--sp-4);
-    padding: 6px;
-    background: rgba(8, 12, 22, 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(245, 200, 70, 0.10);
-    border-radius: 4px;
+    margin: var(--sp-4) calc(-1 * var(--sp-3)) calc(-1 * var(--sp-3));
+    padding: var(--sp-3) var(--sp-3) calc(var(--sp-3) + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, transparent 0%, rgba(6, 10, 22, 0.96) 22%);
   }
 }
 
 @media (max-width: 480px) {
+  .wrap { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
   .avatarGrid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .avatarBtn { min-width: 56px; min-height: 56px; }
   .avatarEmoji { font-size: 32px; }
   .panel { padding: 18px 14px 16px; }
   .sectionTitle { letter-spacing: 0.24em; }
-  .saveBtn { height: 52px; font-size: 16px; letter-spacing: 0.20em; }
+  .saveBtn { height: 54px; font-size: 16px; letter-spacing: 0.20em; }
   .mpHead { flex-wrap: nowrap; }
+
+  /* Bigger toggle area on mobile */
+  .toggleRow { padding: 18px 16px; }
+  .switch { width: 52px; height: 30px; }
+  .switchKnob { width: 24px; height: 24px; }
+  .switchOn .switchKnob { transform: translateX(22px); }
+
+  /* Inputs at iOS-zoom-safe size */
+  .input { font-size: 16px; }
+  .inputBox { height: 54px; }
+
+  /* Album cards taller for tap */
+  .albumCard { padding: 16px; min-height: 64px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wrap, .saveBtn::before { animation: none !important; }
 }

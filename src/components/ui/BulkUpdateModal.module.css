@@ -28,8 +28,10 @@
   padding: 38px 38px 30px;
   width: 100%;
   max-width: 580px;
-  max-height: 92vh;
+  max-height: calc(100vh - 80px);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -154,8 +156,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   background: transparent;
   border: 1px solid rgba(245, 200, 70, 0.28);
   border-radius: 3px;
@@ -552,6 +554,11 @@
 
 /* ── Responsive ───────────────────────────────────────────────────────── */
 
+/* Mac large screens — slightly more breathing room */
+@media (min-width: 1440px) {
+  .card { max-width: 600px; padding: 40px 40px 32px; }
+}
+
 @media (max-width: 540px) {
   .card { padding: 32px 22px 24px; gap: 16px; }
   .title { font-size: 18px; letter-spacing: 0.22em; }
@@ -559,28 +566,50 @@
 }
 
 @media (max-width: 480px) {
-  .backdrop { padding: 0; align-items: flex-end; }
+  .backdrop {
+    padding: 0;
+    align-items: flex-end;
+    padding-top: env(safe-area-inset-top);
+  }
   .card {
-    padding: 28px 20px 24px;
+    padding: 26px 16px 20px;
     max-width: 100%;
-    max-height: 95vh;
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
     clip-path: polygon(
       0 0,
-      calc(100% - 12px) 0,
-      100% 12px,
+      calc(100% - 14px) 0,
+      100% 14px,
       100% 100%,
       0 100%
     );
     animation: bumSlideUp 0.28s var(--ease-out);
+    gap: 16px;
   }
+  /* mobile: brackets only on top corners (bottom is screen edge) */
+  .bl, .br { display: none; }
   .title { font-size: 16px; letter-spacing: 0.18em; }
-  .actions { grid-template-columns: repeat(3, 1fr); }
-  .actionBtn { font-size: 11px; padding: 10px 6px; }
+  .close { width: 44px; height: 44px; }
+  .actions { grid-template-columns: repeat(3, 1fr); padding: 5px; }
+  .actionBtn { font-size: 11px; padding: 13px 6px; min-height: 48px; }
+  .textarea { min-height: 100px; font-size: 14px; }
+  .preview { max-height: 200px; }
   .ctaStack {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: max(env(safe-area-inset-bottom), 8px);
+    margin: 0 -16px -20px;
+    padding-left: 16px;
+    padding-right: 16px;
+    background: linear-gradient(180deg, transparent 0%, rgba(6, 10, 22, 0.96) 22%);
   }
+  .cta { height: 54px; font-size: 15px; }
+  .ctaGhost { height: 48px; }
   @keyframes bumSlideUp {
-    from { opacity: 0; transform: translateY(20px); }
+    from { opacity: 0; transform: translateY(28px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .backdrop, .previewRow, .bracket { animation: none !important; }
 }

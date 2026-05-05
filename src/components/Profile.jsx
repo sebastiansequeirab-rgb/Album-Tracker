@@ -244,26 +244,28 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
           sub="Cuando alguien quiera proponer un trade, verá los datos que dejes acá. Llená al menos uno."
         />
 
-        <div className={s.field}>
-          <FieldLabel num="01">Instagram</FieldLabel>
-          <div className={s.inputBox}>
-            <span className={s.inputIcon}><IconInstagram /></span>
-            <span className={s.inputAt}>@</span>
-            <input className={s.input} type="text"
-              value={(profile.contact?.instagram || '').replace(/^@/, '')}
-              onChange={e => updContact('instagram', e.target.value.replace(/^@/, ''))}
-              placeholder="tu_usuario" />
+        <div className={s.fieldGrid}>
+          <div className={s.field}>
+            <FieldLabel num="01">Instagram</FieldLabel>
+            <div className={s.inputBox}>
+              <span className={s.inputIcon}><IconInstagram /></span>
+              <span className={s.inputAt}>@</span>
+              <input className={s.input} type="text"
+                value={(profile.contact?.instagram || '').replace(/^@/, '')}
+                onChange={e => updContact('instagram', e.target.value.replace(/^@/, ''))}
+                placeholder="tu_usuario" />
+            </div>
           </div>
-        </div>
 
-        <div className={s.field}>
-          <FieldLabel num="02">WhatsApp</FieldLabel>
-          <div className={s.inputBox}>
-            <span className={s.inputIcon}><IconWhatsapp /></span>
-            <input className={s.input} type="tel"
-              value={profile.contact?.whatsapp || ''}
-              onChange={e => updContact('whatsapp', e.target.value)}
-              placeholder="+58 412 1234567" />
+          <div className={s.field}>
+            <FieldLabel num="02">WhatsApp</FieldLabel>
+            <div className={s.inputBox}>
+              <span className={s.inputIcon}><IconWhatsapp /></span>
+              <input className={s.input} type="tel"
+                value={profile.contact?.whatsapp || ''}
+                onChange={e => updContact('whatsapp', e.target.value)}
+                placeholder="+58 412 1234567" />
+            </div>
           </div>
         </div>
 
