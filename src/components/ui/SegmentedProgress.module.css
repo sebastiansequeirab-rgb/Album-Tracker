@@ -11,6 +11,13 @@
   margin-top: 10px;
 }
 
+/* Taller track + no extra top margin when used as a hero/full-page bar */
+.wrapTall { margin-top: 0; }
+.wrapTall .track { height: 26px; }
+@media (max-width: 540px) {
+  .wrapTall .track { height: 20px; }
+}
+
 .track {
   position: relative;
   display: flex;

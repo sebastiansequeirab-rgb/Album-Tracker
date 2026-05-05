@@ -4,6 +4,7 @@ import Flag from '../Flag'
 import StatCard from '../ui/StatCard'
 import ConfBadge from '../ui/ConfBadge'
 import ProgressBar from '../ui/ProgressBar'
+import SegmentedProgress from '../ui/SegmentedProgress'
 import TeamCard from '../ui/TeamCard'
 import s from './DashboardPage.module.css'
 
@@ -50,6 +51,7 @@ export default function DashboardPage({
   setShowQuick,
   setTab,
   setSelTeam,
+  segments = [],
 }) {
   const upcoming = useMemo(() => {
     return [...teamStats]
@@ -66,6 +68,26 @@ export default function DashboardPage({
 
   return (
     <div className={s.page}>
+
+      {/* ── Hero: Collection Overview ─────────────────────────────────────── */}
+      {segments.length > 0 && (
+        <motion.section
+          className={s.hero}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <header className={s.heroHead}>
+            <span className={s.heroNum}>00</span>
+            <h2 className={s.heroTitle}>Colección</h2>
+            <span className={s.heroRule} aria-hidden="true" />
+            <span className={s.heroPct}>{stats.pct}%</span>
+            <span className={s.heroPctLabel}>completado</span>
+          </header>
+          <SegmentedProgress segments={segments} tall />
+        </motion.section>
+      )}
+
       <motion.div
         className={s.statsGrid}
         variants={listVariants}

@@ -11,7 +11,7 @@ import s from './SegmentedProgress.module.css'
  *   segments: [{ name, label, color, total, have }]
  *   animateOnMount: bool (default true) — fills crecen desde 0 al montar, staggered
  */
-export default function SegmentedProgress({ segments = [], animateOnMount = true }) {
+export default function SegmentedProgress({ segments = [], animateOnMount = true, tall = false }) {
   const grandTotal = segments.reduce((acc, seg) => acc + (seg.total || 0), 0)
   const grandHave  = segments.reduce((acc, seg) => acc + (seg.have  || 0), 0)
   const grandPct   = grandTotal ? (grandHave / grandTotal) * 100 : 0
@@ -27,7 +27,7 @@ export default function SegmentedProgress({ segments = [], animateOnMount = true
 
   return (
     <div
-      className={s.wrap}
+      className={`${s.wrap}${tall ? ` ${s.wrapTall}` : ''}`}
       role="progressbar"
       aria-valuenow={Math.round(grandPct)}
       aria-valuemin={0}

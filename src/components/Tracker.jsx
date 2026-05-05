@@ -11,7 +11,6 @@ import DashboardPage from './pages/DashboardPage'
 import TeamsPage from './pages/TeamsPage'
 import CardsPage from './pages/CardsPage'
 import ProgressBar from './ui/ProgressBar'
-import SegmentedProgress from './ui/SegmentedProgress'
 import BulkUpdateModal from './ui/BulkUpdateModal'
 import s from './Tracker.module.css'
 
@@ -305,6 +304,17 @@ export default function Tracker({
     return { ...t, tot: tc.length, have: h, pct: tc.length ? Math.round(h / tc.length * 100) : 0 }
   }), [col, ALL_ITEMS, cfg.teams])
 
+  const segments = useMemo(() =>
+    Object.entries(TM)
+      .filter(([t]) => t !== 'Momentum')
+      .map(([type, m]) => {
+        const items = ALL_ITEMS.filter(c => c.type === type)
+        return { name: type, label: m.l, color: m.c, total: items.length,
+                 have: items.filter(c => (col[c.id] || 'missing') !== 'missing').length }
+      })
+      .filter(seg => seg.total > 0),
+  [col, ALL_ITEMS, TM])
+
   const filtered = useMemo(() => ALL_ITEMS.filter(c => {
     const st = gs(c.id)
     if (fSt   !== 'all' && st !== fSt)       return false
@@ -400,21 +410,6 @@ export default function Tracker({
               </div>
             </div>
           </div>
-          <SegmentedProgress
-            segments={Object.entries(TM)
-              .filter(([t]) => t !== 'Momentum')
-              .map(([type, m]) => {
-                const items = ALL_ITEMS.filter(c => c.type === type)
-                return {
-                  name: type,
-                  label: m.l,
-                  color: m.c,
-                  total: items.length,
-                  have: items.filter(c => gs(c.id) !== 'missing').length,
-                }
-              })
-              .filter(seg => seg.total > 0)}
-          />
           <div className={s.summaryRow}>
             <span className={s.sumHave}>{stats.have} <span className={s.sumLabel}>tengo</span></span>
             <span className={s.sumDup}>{stats.dup} <span className={s.sumLabel}>repetidas</span></span>
@@ -431,7 +426,7 @@ export default function Tracker({
       <nav className={s.nav}>
         <div className={s.navInner}>
           {[
-            { id:'dashboard',   I: IconDash,     l:'Dashboard' },
+            { id:'dashboard',   I: IconDash,     l:'Home' },
             { id:'teams',       I: IconGlobe,    l:'Equipos' },
             { id:'cards',       I: IconCards,    l:'Cartas' },
             { id:'marketplace', I: IconExchange, l:'Marketplace', b: unread > 0 ? unread : stats.dup, dot: unread > 0 },
@@ -473,6 +468,7 @@ export default function Tracker({
                 setShowQuick={setShowQuick}
                 setTab={setTab}
                 setSelTeam={setSelTeam}
+                segments={segments}
               />
             </motion.div>
           )}
