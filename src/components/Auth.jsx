@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { supabase } from '../supabaseClient'
 import s from './Auth.module.css'
 
-// SVG icons inline (cero deps)
 const IconMail = (p) => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
     <rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" />
@@ -30,8 +29,13 @@ const IconArrow = (p) => (
     <path d="M5 12h14M13 5l7 7-7 7" />
   </svg>
 )
+const IconArrowLeft = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M19 12H5M11 5l-7 7 7 7" />
+  </svg>
+)
 const IconTrophy = (p) => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
     <path d="M6 9H4a2 2 0 0 1-2-2V5h4" /><path d="M18 9h2a2 2 0 0 0 2-2V5h-4" />
     <path d="M6 5v6a6 6 0 0 0 12 0V5" /><path d="M9 21h6" /><path d="M12 17v4" />
   </svg>
@@ -83,21 +87,49 @@ export default function Auth() {
     }
   }
 
+  const switchMode = () => {
+    setMode(m => m === 'login' ? 'signup' : 'login')
+    setErr(''); setOk('')
+  }
+
   return (
     <div className={s.wrap}>
       <div className={s.stage}>
 
         <div className={s.card}>
+          <span className={`${s.bracket} ${s.tl}`} />
+          <span className={`${s.bracket} ${s.tr}`} />
+          <span className={`${s.bracket} ${s.bl}`} />
+          <span className={`${s.bracket} ${s.br}`} />
+
+          <div className={s.confStrip} aria-hidden="true">
+            <div className={s.dots}>
+              <span className={`${s.dot} ${s.dot1}`} title="CONMEBOL" />
+              <span className={`${s.dot} ${s.dot2}`} title="UEFA" />
+              <span className={`${s.dot} ${s.dot3}`} title="CONCACAF" />
+              <span className={`${s.dot} ${s.dot4}`} title="CAF" />
+              <span className={`${s.dot} ${s.dot5}`} title="AFC" />
+              <span className={`${s.dot} ${s.dot6}`} title="OFC" />
+            </div>
+          </div>
+
           <div className={s.hero}>
-            <div className={s.heroTitle}>WORLD CUP 2026</div>
-            <div className={s.heroDivider} />
+            <h1 className={s.heroTitle}>
+              <span>WORLD CUP</span>
+              <span className={s.heroYear}>2026</span>
+            </h1>
+            <div className={s.heroDivider}>
+              <span className={s.dividerLine} />
+              <span className={s.dividerDiamond} />
+              <span className={`${s.dividerLine} ${s.dividerLineRight}`} />
+            </div>
             <div className={s.heroSubtitle}>Collection Tracker</div>
           </div>
 
           <div className={s.welcome}>
             <span className={s.welcomeIcon}><IconTrophy /></span>
             <span>Bienvenido,</span>
-            <span className={s.welcomeAccent}>coleccionista</span>
+            <em className={s.welcomeAccent}>coleccionista</em>
           </div>
 
           {err && <div className={s.err}>⚠️ {err}</div>}
@@ -105,7 +137,10 @@ export default function Auth() {
 
           <form onSubmit={handle} className={s.form}>
             <div className={s.field}>
-              <label className={s.label}>Correo electrónico</label>
+              <label className={s.label}>
+                <span className={s.labelNum}>01</span>
+                Correo electrónico
+              </label>
               <div className={s.inputBox}>
                 <span className={s.inputIcon}><IconMail /></span>
                 <input
@@ -121,7 +156,10 @@ export default function Auth() {
             </div>
 
             <div className={s.field}>
-              <label className={s.label}>Contraseña</label>
+              <label className={s.label}>
+                <span className={s.labelNum}>02</span>
+                Contraseña
+              </label>
               <div className={s.inputBox}>
                 <span className={s.inputIcon}><IconLock /></span>
                 <input
@@ -132,7 +170,7 @@ export default function Auth() {
                   autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                   value={pass}
                   onChange={e => setPass(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="••••••••••"
                 />
                 <button
                   type="button"
@@ -160,22 +198,21 @@ export default function Auth() {
               </div>
             )}
 
-            <button type="submit" disabled={load} className={s.cta}>
-              {load ? 'CARGANDO…' : (mode === 'login' ? 'INICIAR SESIÓN' : 'CREAR CUENTA')}
-              {!load && <IconArrow />}
-            </button>
+            <div className={s.ctaStack}>
+              <button type="submit" disabled={load} className={s.cta}>
+                {load ? 'CARGANDO…' : (mode === 'login' ? 'INICIAR SESIÓN' : 'CREAR CUENTA')}
+                {!load && <IconArrow />}
+              </button>
+              <button type="button" className={s.ctaGhost} onClick={switchMode}>
+                {mode === 'login'
+                  ? <><span className={s.plus} />CREAR CUENTA</>
+                  : <><IconArrowLeft />INICIAR SESIÓN</>}
+              </button>
+            </div>
           </form>
-
-          <div className={s.toggle}>
-            {mode === 'login' ? (
-              <>¿No tenés cuenta? <span onClick={() => setMode('signup')} className={s.toggleLink}>Regístrate</span></>
-            ) : (
-              <>¿Ya tenés cuenta? <span onClick={() => setMode('login')} className={s.toggleLink}>Iniciar sesión</span></>
-            )}
-          </div>
         </div>
-        {/* La barra de features (Álbum de stickers / Adrenalyn XL / Intercambia / Sigue tu progreso)
-            está baked-in en /login-bg.jpg, por eso no la renderizamos en HTML — se duplicaba */}
+        {/* Features bar (Álbum / Adrenalyn / Intercambia / Sigue tu progreso) está
+            baked-in en /login-bg.jpg, por eso no se renderiza en HTML */}
       </div>
     </div>
   )
