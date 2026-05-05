@@ -1,10 +1,20 @@
 import { useMemo } from 'react'
+import { motion } from 'framer-motion'
 import Flag from '../Flag'
 import StatCard from '../ui/StatCard'
 import ConfBadge from '../ui/ConfBadge'
 import ProgressBar from '../ui/ProgressBar'
 import TeamCard from '../ui/TeamCard'
 import s from './DashboardPage.module.css'
+
+const listVariants = {
+  hidden: { opacity: 1 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.04 } },
+}
+const itemVariants = {
+  hidden:  { opacity: 0, y: 8 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.16, 1, 0.3, 1] } },
+}
 
 const CONF_COLOR = {
   CONMEBOL: 'var(--conf-conmebol)',
@@ -44,12 +54,25 @@ export default function DashboardPage({
 
   return (
     <div className={s.page}>
-      <div className={s.statsGrid}>
-        <StatCard icon="📦" label="Total"     value={cfg.mainCount} color="var(--conf-uefa)" />
-        <StatCard icon="✅" label="Tengo"     value={stats.have}    color="var(--status-have)" />
-        <StatCard icon="❌" label="Faltan"    value={stats.miss}    color="var(--status-missing)" />
-        <StatCard icon="🔄" label="Repetidas" value={stats.dup}     color="var(--status-dup)" />
-      </div>
+      <motion.div
+        className={s.statsGrid}
+        variants={listVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div variants={itemVariants}>
+          <StatCard icon="📦" label="Total"     value={cfg.mainCount} color="var(--conf-uefa)" />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <StatCard icon="✅" label="Tengo"     value={stats.have}    color="var(--status-have)" />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <StatCard icon="❌" label="Faltan"    value={stats.miss}    color="var(--status-missing)" />
+        </motion.div>
+        <motion.div variants={itemVariants}>
+          <StatCard icon="🔄" label="Repetidas" value={stats.dup}     color="var(--status-dup)" />
+        </motion.div>
+      </motion.div>
 
       <button type="button" onClick={() => setShowQuick(true)} className={s.quickCta}>
         <div className={s.quickCtaCopy}>
@@ -103,12 +126,18 @@ export default function DashboardPage({
                   : 'Marcá tus primeras cartas para ver acá los equipos más cerca de completar.'}
               </div>
             ) : (
-              <div className={s.upcomingList}>
+              <motion.div
+                className={s.upcomingList}
+                variants={listVariants}
+                initial="hidden"
+                animate="visible"
+              >
                 {upcoming.map(t => {
                   const conf = String(t.conf || '').toUpperCase()
                   return (
-                    <button
+                    <motion.button
                       key={t.id}
+                      variants={itemVariants}
                       type="button"
                       onClick={() => { setTab('teams'); setSelTeam(t.id) }}
                       className={s.upcomingRow}
@@ -126,10 +155,10 @@ export default function DashboardPage({
                         />
                       </span>
                       <span className={s.upcomingFrac}>{t.have}/{t.tot}</span>
-                    </button>
+                    </motion.button>
                   )
                 })}
-              </div>
+              </motion.div>
             )}
           </section>
 

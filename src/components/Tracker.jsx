@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../supabaseClient'
 import { parseNumberList, MOMENTUM, ALBUM_CONFIG, ALBUM_ADRENALYN, ALBUM_TYPES } from '../data'
 import { ensureMyProfile, loadUnreadCount, subscribeToInbox } from '../lib/marketplace'
@@ -366,85 +367,111 @@ export default function Tracker({
       </nav>
 
       <main className={s.main}>
+        <AnimatePresence mode="wait" initial={false}>
+          {tab === 'dashboard' && (
+            <motion.div
+              key="dashboard"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <DashboardPage
+                cfg={cfg}
+                stats={stats}
+                momStats={momStats}
+                teamStats={teamStats}
+                ALL_ITEMS={ALL_ITEMS}
+                TM={TM}
+                MOMENTUM={MOMENTUM}
+                gs={gs}
+                toggle={toggle}
+                setShowQuick={setShowQuick}
+                setTab={setTab}
+                setSelTeam={setSelTeam}
+              />
+            </motion.div>
+          )}
 
-        {/* Dashboard */}
-        {tab === 'dashboard' && (
-          <div className={s.fade}>
-            <DashboardPage
-              cfg={cfg}
-              stats={stats}
-              momStats={momStats}
-              teamStats={teamStats}
-              ALL_ITEMS={ALL_ITEMS}
-              TM={TM}
-              MOMENTUM={MOMENTUM}
-              gs={gs}
-              toggle={toggle}
-              setShowQuick={setShowQuick}
-              setTab={setTab}
-              setSelTeam={setSelTeam}
+          {tab === 'teams' && (
+            <motion.div
+              key="teams"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <TeamsPage
+                teamStats={teamStats}
+                ALL_ITEMS={ALL_ITEMS}
+                TM={TM}
+                gs={gs}
+                toggle={toggle}
+                bulkUpdate={bulkUpdate}
+                selTeam={selTeam}
+                setSelTeam={setSelTeam}
+              />
+            </motion.div>
+          )}
+
+          {tab === 'cards' && (
+            <motion.div
+              key="cards"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <CardsPage
+                filtered={filtered}
+                ALL_ITEMS={ALL_ITEMS}
+                TM={TM}
+                q={q}         setQ={setQ}
+                fSt={fSt}     setFSt={setFSt}
+                fType={fType} setFType={setFType}
+                fTeam={fTeam} setFTeam={setFTeam}
+                gs={gs}
+                toggle={toggle}
+                bulkUpdate={bulkUpdate}
+                stats={stats}
+              />
+            </motion.div>
+          )}
+
+          {/* Marketplace: NO motion wrapper aquí — preservamos
+              ChatPanel useLayoutEffect scrollIntoView intacto y
+              evitamos doble render con su realtime + key remount. */}
+          {tab === 'marketplace' && (
+            <Marketplace
+              key="marketplace"
+              session={session}
+              albumType={albumType}
+              myCol={col}
+              myProfile={myProfile}
+              onGoToProfile={() => setTab('profile')}
+              onUnreadChange={() => {
+                loadUnreadCount(session.user.id).then(setUnread).catch(() => {})
+              }}
+              flash={flash}
             />
-          </div>
-        )}
+          )}
 
-        {/* Teams grid + drawer */}
-        {tab === 'teams' && (
-          <div className={s.fade}>
-            <TeamsPage
-              teamStats={teamStats}
-              ALL_ITEMS={ALL_ITEMS}
-              TM={TM}
-              gs={gs}
-              toggle={toggle}
-              bulkUpdate={bulkUpdate}
-              selTeam={selTeam}
-              setSelTeam={setSelTeam}
-            />
-          </div>
-        )}
-
-        {/* Cards browser */}
-        {tab === 'cards' && (
-          <div className={s.fade}>
-            <CardsPage
-              filtered={filtered}
-              ALL_ITEMS={ALL_ITEMS}
-              TM={TM}
-              q={q}         setQ={setQ}
-              fSt={fSt}     setFSt={setFSt}
-              fType={fType} setFType={setFType}
-              fTeam={fTeam} setFTeam={setFTeam}
-              gs={gs}
-              toggle={toggle}
-              bulkUpdate={bulkUpdate}
-              stats={stats}
-            />
-          </div>
-        )}
-
-        {/* Marketplace */}
-        {tab === 'marketplace' && (
-          <Marketplace
-            session={session}
-            albumType={albumType}
-            myCol={col}
-            myProfile={myProfile}
-            onGoToProfile={() => setTab('profile')}
-            onUnreadChange={() => {
-              loadUnreadCount(session.user.id).then(setUnread).catch(() => {})
-            }}
-            flash={flash}
-          />
-        )}
-
-        {/* Profile */}
-        {tab === 'profile' && (
-          <Profile
-            session={session}
-            onSaved={p => setMyProfile(p)}
-            onAlbumsChanged={onAlbumsChanged}
-          />
-        )}
+          {tab === 'profile' && (
+            <motion.div
+              key="profile"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <Profile
+                session={session}
+                onSaved={p => setMyProfile(p)}
+                onAlbumsChanged={onAlbumsChanged}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
       {/* Floating Quick Update Button */}
