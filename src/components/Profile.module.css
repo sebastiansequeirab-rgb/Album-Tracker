@@ -1,24 +1,33 @@
-.wrap { animation: fadeUp 0.22s ease; }
+/* ========================================================================
+   Profile — visual rebuild v2 (CSS-only, JSX preserves onAlbumsChanged
+   and onSaved callbacks for App.jsx + Tracker.jsx)
+   ======================================================================== */
+
+.wrap {
+  animation: fadeUp 0.22s ease;
+  padding-bottom: 96px;
+}
 
 .section {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--r-xl);
+  border-radius: var(--r-2xl);
   padding: var(--sp-5);
   margin-bottom: var(--sp-4);
+  position: relative;
 }
 
 .sectionTitle {
   font-family: var(--font-display);
-  font-size: 18px;
-  letter-spacing: 2px;
-  color: var(--accent);
+  font-size: 20px;
+  letter-spacing: 0.14em;
+  color: var(--gold-1);
   margin-bottom: var(--sp-1);
 }
 
 .sectionSub {
   font-size: 12px;
-  color: var(--text-faint);
+  color: var(--text-muted);
   margin-bottom: var(--sp-4);
 }
 
@@ -28,23 +37,29 @@
 
 .label {
   display: block;
+  font-family: var(--font-body);
   font-size: 11px;
   font-weight: 700;
   color: var(--text-dim);
-  letter-spacing: 1px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
   margin-bottom: 6px;
 }
 
 .input {
   width: 100%;
-  background: var(--bg-deep);
+  background: var(--bg-elevated);
   color: var(--text);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
-  padding: 11px 14px;
+  padding: 12px 14px;
+  font-family: var(--font-body);
   font-size: 14px;
-  transition: border-color var(--t-base);
+  outline: none;
+  transition: border-color var(--t-fast);
 }
+.input:focus { border-color: var(--gold-3); }
+.input::placeholder { color: var(--text-faint); }
 
 .inputPrefix {
   position: relative;
@@ -54,12 +69,15 @@
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--text-faint);
+  color: var(--gold-1);
   font-size: 14px;
   pointer-events: none;
+  font-family: var(--font-display);
+  letter-spacing: 0.05em;
 }
-.inputPrefix .input { padding-left: 28px; }
+.inputPrefix .input { padding-left: 30px; }
 
+/* ============================================================ Avatar grid */
 .avatarRow {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
@@ -68,60 +86,70 @@
 
 .avatarBtn {
   aspect-ratio: 1;
-  background: var(--bg-deep);
-  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
   border-radius: var(--r-md);
-  font-size: 22px;
+  font-size: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color var(--t-fast), transform var(--t-fast);
+  cursor: pointer;
+  transition: border-color var(--t-fast), transform var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
 }
-.avatarBtn:hover { border-color: var(--accent); transform: scale(1.05); }
+.avatarBtn:hover {
+  border-color: var(--gold-3);
+  background: var(--bg-hover);
+  transform: scale(1.06);
+}
 .avatarBtnActive {
-  border-color: var(--accent);
-  background: var(--accent-bg);
-  box-shadow: 0 0 0 2px var(--accent-soft);
+  border-color: var(--gold-3);
+  background: rgba(245, 200, 66, 0.10);
+  box-shadow: 0 0 0 2px var(--gold-3), var(--shadow-glow-gold);
 }
 
+/* ============================================================ Toggle row */
 .toggleRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-4);
   padding: var(--sp-4);
-  background: var(--bg-deep);
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
+  transition: background var(--t-fast), border-color var(--t-fast);
 }
-.toggleRow.toggleRowOn {
-  background: var(--have-bg);
-  border-color: var(--have-border);
+.toggleRowOn {
+  background: color-mix(in srgb, var(--status-have) 8%, var(--bg-elevated));
+  border-color: color-mix(in srgb, var(--status-have) 50%, var(--border));
 }
 
 .toggleBody { flex: 1; min-width: 0; }
 .toggleTitle {
-  font-size: 13px;
+  font-family: var(--font-body);
+  font-size: 14px;
   font-weight: 700;
   color: var(--text);
   margin-bottom: 4px;
 }
 .toggleHint {
-  font-size: 11px;
+  font-size: 11.5px;
   color: var(--text-muted);
   line-height: 1.5;
 }
 
 .switch {
   position: relative;
-  width: 48px;
+  width: 50px;
   height: 28px;
   flex-shrink: 0;
   background: var(--border-strong);
   border-radius: var(--r-pill);
   transition: background var(--t-fast);
+  cursor: pointer;
+  border: 0;
 }
-.switch.switchOn { background: var(--have-strong); }
+.switchOn { background: var(--status-have); box-shadow: 0 0 12px var(--status-have-glow); }
 .switchKnob {
   position: absolute;
   top: 3px;
@@ -131,9 +159,11 @@
   background: white;
   border-radius: 50%;
   transition: transform var(--t-fast);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
-.switch.switchOn .switchKnob { transform: translateX(20px); }
+.switchOn .switchKnob { transform: translateX(22px); }
 
+/* ============================================================ Actions */
 .actions {
   display: flex;
   gap: var(--sp-3);
@@ -142,56 +172,63 @@
 
 .saveBtn {
   flex: 1;
-  background: var(--accent-grad);
-  color: #000;
-  padding: 12px;
+  background: linear-gradient(135deg, var(--gold-2), var(--gold-4));
+  color: #1A1308;
+  padding: 14px;
+  border: 0;
   border-radius: var(--r-md);
+  font-family: var(--font-body);
   font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  transition: opacity var(--t-base);
+  font-weight: 900;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform var(--t-fast), box-shadow var(--t-fast);
+  box-shadow: 0 8px 24px var(--gold-glow);
+}
+.saveBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px var(--gold-glow);
 }
 .saveBtn:disabled {
   background: var(--border);
   color: var(--text-faint);
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .savedHint {
   text-align: center;
   font-size: 12px;
-  color: var(--have);
+  color: var(--status-have);
   margin-top: var(--sp-3);
   font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 .errorHint {
   text-align: center;
   font-size: 12px;
-  color: var(--error);
+  color: var(--status-missing);
   margin-top: var(--sp-3);
   font-weight: 700;
 }
 
-@media (max-width: 480px) {
-  .avatarRow { grid-template-columns: repeat(6, 1fr); }
-  .section { padding: var(--sp-4); }
-}
-
-/* Meeting points editor */
+/* ============================================================ Meeting points editor */
 .mpEmpty {
   font-size: 12px;
   color: var(--text-faint);
-  background: var(--bg-deep);
+  background: var(--bg-elevated);
   border: 1px dashed var(--border-strong);
   border-radius: var(--r-md);
-  padding: 14px;
+  padding: 16px;
   text-align: center;
   margin-bottom: var(--sp-3);
+  font-style: italic;
 }
 
 .mpCard {
-  background: var(--bg-deep);
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   padding: var(--sp-3);
@@ -199,7 +236,9 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  transition: border-color var(--t-fast);
 }
+.mpCard:hover { border-color: var(--border-strong); }
 
 .mpRow {
   display: flex;
@@ -210,8 +249,8 @@
 
 .mpRemove {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--r-sm);
   background: transparent;
   border: 1px solid var(--border);
@@ -225,24 +264,50 @@
   transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
 }
 .mpRemove:hover {
-  color: var(--error);
-  border-color: var(--error);
-  background: var(--error-bg);
+  color: var(--status-missing);
+  border-color: var(--status-missing);
+  background: var(--status-missing-dim);
 }
 
 .mpAdd {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   background: transparent;
-  border: 1px dashed var(--border-strong);
+  border: 1px dashed var(--gold-4);
   border-radius: var(--r-md);
-  color: var(--accent);
+  color: var(--gold-1);
+  font-family: var(--font-body);
   font-size: 13px;
   font-weight: 700;
+  letter-spacing: 0.05em;
   cursor: pointer;
   transition: border-color var(--t-fast), background var(--t-fast);
 }
 .mpAdd:hover {
-  border-color: var(--accent);
-  background: var(--accent-bg);
+  border-color: var(--gold-3);
+  background: rgba(245, 200, 66, 0.08);
+}
+
+/* ============================================================ Responsive */
+@media (max-width: 720px) {
+  .avatarRow { grid-template-columns: repeat(6, 1fr); }
+  .section { padding: var(--sp-4); }
+
+  /* Sticky save button on mobile */
+  .actions {
+    position: sticky;
+    bottom: var(--sp-3);
+    z-index: 5;
+    margin-top: var(--sp-4);
+    padding: var(--sp-2);
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--r-pill);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .avatarRow { grid-template-columns: repeat(4, 1fr); }
 }
