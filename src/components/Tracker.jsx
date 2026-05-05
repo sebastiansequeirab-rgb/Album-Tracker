@@ -14,6 +14,65 @@ import ProgressBar from './ui/ProgressBar'
 import BulkUpdateModal from './ui/BulkUpdateModal'
 import s from './Tracker.module.css'
 
+const IconAlbum = (p) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+  </svg>
+)
+const IconBolt = (p) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" {...p}>
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+  </svg>
+)
+const IconReset = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+    <path d="M3 3v5h5" />
+  </svg>
+)
+const IconDash = (p) => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <rect x="3" y="3"  width="7" height="7" />
+    <rect x="14" y="3"  width="7" height="7" />
+    <rect x="3" y="14" width="7" height="7" />
+    <rect x="14" y="14" width="7" height="7" />
+  </svg>
+)
+const IconGlobe = (p) => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <line x1="2" y1="12" x2="22" y2="12" />
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+  </svg>
+)
+const IconCards = (p) => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <rect x="3" y="6"  width="13" height="15" rx="1.5" />
+    <path d="M8 6V4.5a1.5 1.5 0 0 1 1.5-1.5h9A1.5 1.5 0 0 1 20 4.5v13a1.5 1.5 0 0 1-1.5 1.5H16" />
+  </svg>
+)
+const IconExchange = (p) => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <polyline points="17 1 21 5 17 9" />
+    <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+    <polyline points="7 23 3 19 7 15" />
+    <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+  </svg>
+)
+const IconUser = (p) => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+)
+const IconPencil = (p) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+  </svg>
+)
+
 export default function Tracker({
   session,
   albumType = ALBUM_ADRENALYN,
@@ -314,7 +373,12 @@ export default function Tracker({
         <div className={s.headerInner}>
           <div className={s.headerRow}>
             <div className={s.brand}>
-              <div className={s.brandTitle} style={{ color: cfg.accent }}>{cfg.icon} {cfg.label.toUpperCase()}</div>
+              <div className={s.brandTitle} style={{ color: cfg.accent }}>
+                <span className={s.brandIcon} aria-hidden="true">
+                  {albumType === ALBUM_ADRENALYN ? <IconBolt /> : <IconAlbum />}
+                </span>
+                {cfg.label.toUpperCase()}
+              </div>
               <div className={s.brandSub}>{cfg.subtitle} · {session.user.email}</div>
             </div>
             <div className={s.headerActions}>
@@ -325,8 +389,10 @@ export default function Tracker({
                   onChange={onSwitchAlbum}
                 />
               )}
-              <button onClick={() => setShowReset(true)} title="Resetear" className={s.iconBtn}>⟲</button>
-              <button onClick={() => supabase.auth.signOut()} title="Cerrar sesión" className={s.iconBtn}>Salir</button>
+              <button onClick={() => setShowReset(true)} title="Resetear" className={s.iconBtn} aria-label="Resetear">
+                <IconReset />
+              </button>
+              <button onClick={() => supabase.auth.signOut()} title="Cerrar sesión" className={`${s.iconBtn} ${s.iconBtnText}`}>Salir</button>
               <div className={s.pctBlock}>
                 <div className={`${s.pctValue} ${stats.pct >= 100 ? s.pctValueDone : s.pctValueGoing}`} style={{ color: stats.pct >= 100 ? cfg.accent : undefined }}>{stats.pct}%</div>
                 <div className={s.pctLabel}>DE {cfg.mainCount}</div>
@@ -335,10 +401,10 @@ export default function Tracker({
           </div>
           <ProgressBar pct={stats.pct} color="linear-gradient(90deg,#15803D,#4ADE80)" height={8} />
           <div className={s.summaryRow}>
-            <span className={s.sumHave}>✅ {stats.have}</span>
-            <span className={s.sumDup}>🔄 {stats.dup}</span>
-            <span className={s.sumMiss}>❌ {stats.miss}</span>
-            {cfg.showMomentum && <span className={s.sumMom}>💎 {momStats.have}/{momStats.tot}</span>}
+            <span className={s.sumHave}>{stats.have} <span className={s.sumLabel}>tengo</span></span>
+            <span className={s.sumDup}>{stats.dup} <span className={s.sumLabel}>repetidas</span></span>
+            <span className={s.sumMiss}>{stats.miss} <span className={s.sumLabel}>faltan</span></span>
+            {cfg.showMomentum && <span className={s.sumMom}>{momStats.have}/{momStats.tot} <span className={s.sumLabel}>momentum</span></span>}
             <span className={s.sumTotal}>
               {cfg.mainCount}{cfg.extraCount > 0 ? ` + ${cfg.extraCount} Momentum` : ''}
             </span>
@@ -350,19 +416,22 @@ export default function Tracker({
       <nav className={s.nav}>
         <div className={s.navInner}>
           {[
-            { id:'dashboard',   i:'📊', l:'Dashboard' },
-            { id:'teams',       i:'🌍', l:'Equipos' },
-            { id:'cards',       i:'🃏', l:'Cartas' },
-            { id:'marketplace', i:'🤝', l:'Marketplace', b: unread > 0 ? unread : stats.dup, dot: unread > 0 },
-            { id:'profile',     i:'👤', l:'Perfil' },
-          ].map(t => (
-            <button key={t.id} onClick={() => { setTab(t.id); setSelTeam(null) }}
-              className={`${s.navBtn} ${tab === t.id ? s.navBtnActive : ''}`}>
-              <span className={s.navIcon}>{t.i}</span>
-              <span className={s.navLabel}>{t.l}</span>
-              {t.b > 0 && <span className={`${s.navBadge} ${t.dot ? s.navBadgeAlert : ''}`}>{t.b}</span>}
-            </button>
-          ))}
+            { id:'dashboard',   I: IconDash,     l:'Dashboard' },
+            { id:'teams',       I: IconGlobe,    l:'Equipos' },
+            { id:'cards',       I: IconCards,    l:'Cartas' },
+            { id:'marketplace', I: IconExchange, l:'Marketplace', b: unread > 0 ? unread : stats.dup, dot: unread > 0 },
+            { id:'profile',     I: IconUser,     l:'Perfil' },
+          ].map(t => {
+            const Icon = t.I
+            return (
+              <button key={t.id} onClick={() => { setTab(t.id); setSelTeam(null) }}
+                className={`${s.navBtn} ${tab === t.id ? s.navBtnActive : ''}`}>
+                <span className={s.navIcon} aria-hidden="true"><Icon /></span>
+                <span className={s.navLabel}>{t.l}</span>
+                {t.b > 0 && <span className={`${s.navBadge} ${t.dot ? s.navBadgeAlert : ''}`}>{t.b}</span>}
+              </button>
+            )
+          })}
         </div>
       </nav>
 
@@ -475,8 +544,9 @@ export default function Tracker({
       </main>
 
       {/* Floating Quick Update Button */}
-      <button onClick={() => setShowQuick(true)} className={s.fab}>
-        <span>✏️</span><span className={s.fabLabel}>ACTUALIZAR</span>
+      <button onClick={() => setShowQuick(true)} className={s.fab} aria-label="Actualización rápida">
+        <span className={s.fabIcon} aria-hidden="true"><IconPencil /></span>
+        <span className={s.fabLabel}>ACTUALIZAR</span>
       </button>
     </div>
   )
