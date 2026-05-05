@@ -2,6 +2,56 @@ import { useState, useMemo, useEffect } from 'react'
 import { createTradeRequest } from '../lib/marketplace'
 import s from './TradeRequestModal.module.css'
 
+/* ── Inline SVG icons (no emojis in chrome) ──────────────────────────── */
+const IconHandshake = (p) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M11 17l-2 2-3-3 4-4 3 3" />
+    <path d="M13 7l2-2 3 3-4 4-3-3" />
+    <path d="M5.5 14L3 11.5 5 9.5l2.5 2.5" />
+    <path d="M18.5 10L21 12.5 19 14.5 16.5 12" />
+    <path d="M12 12l3 3" />
+  </svg>
+)
+const IconClose = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M18 6L6 18M6 6l12 12" />
+  </svg>
+)
+const IconPin = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+)
+const IconClock = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+)
+const IconChat = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+)
+const IconCheck = (p) => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M20 6L9 17l-5-5" />
+  </svg>
+)
+const IconStar = (p) => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" {...p}>
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+  </svg>
+)
+const IconAlert = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    <line x1="12" y1="9"  x2="12" y2="13" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
+  </svg>
+)
+
 export default function TradeRequestModal({
   open,
   onClose,
@@ -141,7 +191,7 @@ export default function TradeRequestModal({
         message: message.trim() || null,
       }
       const created = await createTradeRequest(payload)
-      flash?.('🤝 Solicitud enviada — abriendo chat…', '#FCD34D')
+      flash?.('Solicitud enviada — abriendo chat…', '#FCD34D')
       onSent?.(created)
       onClose?.()
     } catch (e) {
@@ -160,35 +210,59 @@ export default function TradeRequestModal({
   return (
     <div className={s.backdrop} onClick={onClose}>
       <div className={s.card} onClick={e => e.stopPropagation()}>
-        <div className={s.head}>
-          <div>
-            <div className={s.title}>🤝 PROPONER TRADE</div>
-            <div className={s.sub}>A {targetProfile?.display_name || 'Coleccionista'}</div>
-          </div>
-          <button onClick={onClose} className={s.close} aria-label="Cerrar">×</button>
-        </div>
+        <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
 
-        {/* Tabs picker */}
-        <div className={s.pickerTabs}>
+        <header className={s.head}>
+          <div className={s.headTitleRow}>
+            <span className={s.headIcon} aria-hidden="true"><IconHandshake /></span>
+            <div className={s.headCopy}>
+              <h2 className={s.title}>PROPONER TRADE</h2>
+              <div className={s.headRule} aria-hidden="true" />
+            </div>
+          </div>
+          <button onClick={onClose} className={s.close} aria-label="Cerrar">
+            <IconClose />
+          </button>
+        </header>
+
+        <p className={s.sub}>
+          A <span className={s.subAccent}>{targetProfile?.display_name || 'Coleccionista'}</span>
+        </p>
+
+        {/* Tabs picker — broadcast pill */}
+        <div className={s.pickerTabs} role="tablist">
           <button
             type="button"
+            role="tab"
+            aria-selected={pickerTab === 'offered'}
             onClick={() => setPickerTab('offered')}
             className={`${s.pickerTab} ${pickerTab === 'offered' ? s.pickerTabActive : ''}`}>
-            OFREZCO <span className={s.pickerTabCount}>{offered.size}</span>
+            <span>OFRECES</span>
+            <span className={s.pickerTabCount}>{offered.size}</span>
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={pickerTab === 'wanted'}
             onClick={() => setPickerTab('wanted')}
             className={`${s.pickerTab} ${pickerTab === 'wanted' ? s.pickerTabActive : ''}`}>
-            PIDO <span className={s.pickerTabCount}>{wanted.size}</span>
+            <span>PIDES</span>
+            <span className={s.pickerTabCount}>{wanted.size}</span>
           </button>
         </div>
 
         <label className={s.filterRow}>
+          <span className={`${s.checkbox} ${onlyMatches ? s.checkboxOn : ''}`} aria-hidden="true">
+            {onlyMatches && <IconCheck />}
+          </span>
           <input
             type="checkbox"
             checked={onlyMatches}
             onChange={e => setOnlyMatches(e.target.checked)}
+            className={s.checkboxInput}
           />
           <span>Solo mostrar matches (lo que cierra el trade)</span>
         </label>
@@ -215,12 +289,18 @@ export default function TradeRequestModal({
                   type="button"
                   onClick={() => onTogglePick(c.id)}
                   className={`${s.pickerItem} ${isPicked ? s.pickerItemPicked : ''}`}>
-                  <span className={s.pickerCheck}>{isPicked ? '☑' : '☐'}</span>
-                  <span className={s.pickerFlag}>{c.flag}</span>
+                  <span className={`${s.pickerCheck} ${isPicked ? s.pickerCheckOn : ''}`} aria-hidden="true">
+                    {isPicked && <IconCheck />}
+                  </span>
+                  <span className={s.pickerFlag} aria-hidden="true">{c.flag}</span>
                   <div className={s.pickerBody}>
                     <div className={s.pickerName}>
-                      {c.name}
-                      {isMatch && <span className={s.pickerMatch}>★ matchea</span>}
+                      <span className={s.pickerNameText}>{c.name}</span>
+                      {isMatch && (
+                        <span className={s.pickerMatch}>
+                          <IconStar aria-hidden="true" /> MATCH
+                        </span>
+                      )}
                     </div>
                     <div className={s.pickerMeta}>{c.team} · {c.type}</div>
                   </div>
@@ -231,88 +311,125 @@ export default function TradeRequestModal({
           )}
         </div>
 
-        {/* Meeting point + hora + mensaje */}
-        <div className={s.field}>
-          <label className={s.label}>📍 PUNTO DE ENCUENTRO</label>
-          <select className={s.input} value={meetingPointId} onChange={e => setMeetingPointId(e.target.value)}>
-            <option value="default">— Sin definir aún —</option>
-            {targetPoints.map(mp => (
-              <option key={mp.id} value={mp.id}>{mp.name}{mp.hint ? ` (${mp.hint})` : ''}</option>
-            ))}
-            <option value="other">Otro (escribir)</option>
-          </select>
+        {/* Meeting point */}
+        <section className={s.field}>
+          <div className={s.label}>
+            <span className={s.labelNum}>01</span>
+            <span className={s.labelIcon} aria-hidden="true"><IconPin /></span>
+            <span className={s.labelText}>PUNTO DE ENCUENTRO</span>
+          </div>
+          <div className={s.inputBox}>
+            <select
+              className={s.select}
+              value={meetingPointId}
+              onChange={e => setMeetingPointId(e.target.value)}>
+              <option value="default">— Sin definir aún —</option>
+              {targetPoints.map(mp => (
+                <option key={mp.id} value={mp.id}>{mp.name}{mp.hint ? ` (${mp.hint})` : ''}</option>
+              ))}
+              <option value="other">Otro (escribir)</option>
+            </select>
+          </div>
           {meetingPointId === 'other' && (
-            <input
-              className={s.input}
-              type="text"
-              maxLength={120}
-              value={meetingPointFree}
-              onChange={e => setMeetingPointFree(e.target.value)}
-              placeholder="Ej: Sambil Caracas, planta baja"
-              style={{ marginTop: 8 }}
-            />
+            <div className={s.inputBox} style={{ marginTop: 8 }}>
+              <input
+                className={s.input}
+                type="text"
+                maxLength={120}
+                value={meetingPointFree}
+                onChange={e => setMeetingPointFree(e.target.value)}
+                placeholder="Ej: Sambil Caracas, planta baja"
+              />
+            </div>
           )}
-        </div>
+        </section>
 
-        <div className={s.field}>
-          <label className={s.label}>⏰ HORA</label>
+        {/* Hora */}
+        <section className={s.field}>
+          <div className={s.label}>
+            <span className={s.labelNum}>02</span>
+            <span className={s.labelIcon} aria-hidden="true"><IconClock /></span>
+            <span className={s.labelText}>HORA</span>
+          </div>
           <div className={s.timeToggle}>
             <button
               type="button"
               onClick={() => setTimeMode('label')}
               className={`${s.timeBtn} ${timeMode === 'label' ? s.timeBtnActive : ''}`}>
-              Periodo libre
+              PERIODO LIBRE
             </button>
             <button
               type="button"
               onClick={() => setTimeMode('exact')}
               className={`${s.timeBtn} ${timeMode === 'exact' ? s.timeBtnActive : ''}`}>
-              Hora exacta
+              HORA EXACTA
             </button>
           </div>
           {timeMode === 'label' && (
-            <input
-              className={s.input}
-              type="text"
-              maxLength={80}
-              value={timeLabel}
-              onChange={e => setTimeLabel(e.target.value)}
-              placeholder="Ej: Mañana en la tarde, sábado AM"
-              style={{ marginTop: 8 }}
-            />
+            <div className={s.inputBox} style={{ marginTop: 8 }}>
+              <input
+                className={s.input}
+                type="text"
+                maxLength={80}
+                value={timeLabel}
+                onChange={e => setTimeLabel(e.target.value)}
+                placeholder="Ej: Mañana en la tarde, sábado AM"
+              />
+            </div>
           )}
           {timeMode === 'exact' && (
-            <input
-              className={s.input}
-              type="datetime-local"
-              value={timeExact}
-              onChange={e => setTimeExact(e.target.value)}
-              style={{ marginTop: 8 }}
-            />
+            <div className={s.inputBox} style={{ marginTop: 8 }}>
+              <input
+                className={s.input}
+                type="datetime-local"
+                value={timeExact}
+                onChange={e => setTimeExact(e.target.value)}
+              />
+            </div>
           )}
-        </div>
+        </section>
 
-        <div className={s.field}>
-          <label className={s.label}>💬 MENSAJE (opcional)</label>
-          <textarea
-            className={s.textarea}
-            maxLength={500}
-            value={message}
-            onChange={e => setMessage(e.target.value)}
-            placeholder="Una nota corta para coordinar el trade…"
-          />
+        {/* Mensaje */}
+        <section className={s.field}>
+          <div className={s.label}>
+            <span className={s.labelNum}>03</span>
+            <span className={s.labelIcon} aria-hidden="true"><IconChat /></span>
+            <span className={s.labelText}>MENSAJE (OPCIONAL)</span>
+          </div>
+          <div className={s.inputBox}>
+            <textarea
+              className={s.textarea}
+              maxLength={500}
+              value={message}
+              onChange={e => setMessage(e.target.value)}
+              placeholder="Una nota corta para coordinar el trade…"
+            />
+          </div>
           <div className={s.charCount}>{message.length}/500</div>
-        </div>
+        </section>
 
-        {err && <div className={s.err}>⚠️ {err}</div>}
+        {err && (
+          <div className={s.err}>
+            <span aria-hidden="true"><IconAlert /></span>
+            <span>{err}</span>
+          </div>
+        )}
 
         {/* Footer fijo: contador + CTA */}
         <div className={s.footer}>
           <div className={s.footerCount}>
-            <strong>{wanted.size}</strong> pides · <strong>{offered.size}</strong> ofreces
+            <span className={s.footerCountItem}>
+              <strong>{wanted.size}</strong>
+              <span>PIDES</span>
+            </span>
+            <span className={s.footerCountSep} aria-hidden="true">·</span>
+            <span className={s.footerCountItem}>
+              <strong>{offered.size}</strong>
+              <span>OFRECES</span>
+            </span>
           </div>
           <button onClick={onSend} disabled={sending} className={s.cta}>
-            {sending ? 'Enviando…' : 'Enviar solicitud'}
+            {sending ? 'ENVIANDO…' : 'ENVIAR SOLICITUD'}
           </button>
         </div>
       </div>
