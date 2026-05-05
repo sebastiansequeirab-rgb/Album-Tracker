@@ -6,6 +6,27 @@ import s from './TeamsPage.module.css'
 
 const CONF_ORDER = ['CONMEBOL', 'UEFA', 'CONCACAF', 'CAF', 'AFC', 'OFC']
 
+const CONF_COLOR = {
+  CONMEBOL: 'var(--conf-conmebol)',
+  UEFA:     'var(--conf-uefa)',
+  CONCACAF: 'var(--conf-concacaf)',
+  CAF:      'var(--conf-caf)',
+  AFC:      'var(--conf-afc)',
+  OFC:      'var(--conf-ofc)',
+}
+
+const IconSearch = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <circle cx="11" cy="11" r="8" />
+    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+)
+const IconChevron = (p) => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+)
+
 export default function TeamsPage({
   teamStats,
   ALL_ITEMS,
@@ -53,19 +74,23 @@ export default function TeamsPage({
   return (
     <div className={s.page}>
       <div className={s.filterBar}>
-        <input
-          type="search"
-          placeholder="🔍 Buscar país…"
-          value={q}
-          onChange={e => setQ(e.target.value)}
-          className={s.search}
-        />
+        <div className={s.searchWrap}>
+          <span className={s.searchIcon} aria-hidden="true"><IconSearch /></span>
+          <input
+            type="search"
+            placeholder="Buscar país…"
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            className={s.search}
+            aria-label="Buscar país"
+          />
+        </div>
         <div className={s.confPills} role="tablist" aria-label="Filtrar por confederación">
           <button
             type="button"
             role="tab"
             aria-selected={activeConf === 'all'}
-            className={`${s.pill} ${activeConf === 'all' ? s.pillActive : ''}`}
+            className={`${s.pill} ${activeConf === 'all' ? s.pillActiveAll : ''}`}
             onClick={() => setActiveConf('all')}
           >
             Todas
@@ -76,6 +101,7 @@ export default function TeamsPage({
               type="button"
               role="tab"
               aria-selected={activeConf === c}
+              style={{ '--pill-color': CONF_COLOR[c] }}
               className={`${s.pill} ${activeConf === c ? s.pillActive : ''}`}
               onClick={() => setActiveConf(c)}
             >
@@ -83,25 +109,32 @@ export default function TeamsPage({
             </button>
           ))}
         </div>
-        <select
-          value={sort}
-          onChange={e => setSort(e.target.value)}
-          className={s.sort}
-          aria-label="Ordenar"
-        >
-          <option value="alpha">A → Z</option>
-          <option value="progress">Más completos</option>
-          <option value="remaining">Más faltantes</option>
-        </select>
+        <div className={s.sortWrap}>
+          <select
+            value={sort}
+            onChange={e => setSort(e.target.value)}
+            className={s.sort}
+            aria-label="Ordenar"
+          >
+            <option value="alpha">A → Z</option>
+            <option value="progress">Más completos</option>
+            <option value="remaining">Más faltantes</option>
+          </select>
+          <span className={s.sortChev} aria-hidden="true"><IconChevron /></span>
+        </div>
       </div>
 
       {grouped ? (
-        Object.entries(grouped).map(([conf, list]) =>
+        Object.entries(grouped).map(([conf, list], idx) =>
           list.length === 0 ? null : (
             <section key={conf} className={s.confGroup}>
               <header className={s.confGroupHead}>
+                <span className={s.confGroupNum} style={{ color: CONF_COLOR[conf] }}>
+                  {String(idx + 1).padStart(2, '0')}
+                </span>
                 <ConfBadge confederation={conf} />
-                <span className={s.confCount}>
+                <span className={s.confGroupRule} aria-hidden="true" style={{ '--rule-color': CONF_COLOR[conf] }} />
+                <span className={s.confGroupCount}>
                   {list.length} {list.length === 1 ? 'equipo' : 'equipos'}
                 </span>
               </header>

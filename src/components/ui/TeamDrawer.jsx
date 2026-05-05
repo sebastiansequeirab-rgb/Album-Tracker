@@ -14,6 +14,23 @@ const CONF_COLOR = {
   OFC:      'var(--conf-ofc)',
 }
 
+const IconBack = (p) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M19 12H5M11 5l-7 7 7 7" />
+  </svg>
+)
+const IconCheck = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+)
+const IconX = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+)
+
 export default function TeamDrawer({
   team,
   ALL_ITEMS,
@@ -59,10 +76,16 @@ export default function TeamDrawer({
   return (
     <>
       <div className={s.backdrop} onClick={onClose} />
-      <aside className={s.drawer} role="dialog" aria-modal="true" aria-label={`Detalle ${team.name}`}>
+      <aside
+        className={s.drawer}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Detalle ${team.name}`}
+        style={{ '--drawer-conf': confColor }}
+      >
         <header className={s.head}>
           <button type="button" onClick={onClose} className={s.closeBtn} aria-label="Cerrar">
-            ←
+            <IconBack />
           </button>
           <div className={s.headFlag}>
             <Flag fifa={team.id} emoji={team.flag} size={56} alt={team.name} />
@@ -71,7 +94,7 @@ export default function TeamDrawer({
             <h2 className={s.title}>{team.name}</h2>
             <div className={s.meta}>
               {conf && <ConfBadge confederation={conf} size="xs" />}
-              <span className={s.frac}>{have}/{cards.length}</span>
+              <span className={s.frac}>{have}<span className={s.fracDiv}>/</span>{cards.length}</span>
               <span className={s.pct} style={{ color: confColor }}>{pct}%</span>
             </div>
             <ProgressBar pct={pct} color={confColor} height={6} className={s.bar} />
@@ -86,7 +109,7 @@ export default function TeamDrawer({
               disabled={allHave}
               className={`${s.bulkBtn} ${s.bulkBtnHave}`}
             >
-              ✅ Marcar todas
+              <IconCheck /> Marcar todas
             </button>
             <button
               type="button"
@@ -94,21 +117,22 @@ export default function TeamDrawer({
               disabled={allMissing}
               className={`${s.bulkBtn} ${s.bulkBtnClear}`}
             >
-              ❌ Desmarcar todas
+              <IconX /> Desmarcar todas
             </button>
           </div>
         )}
 
         <div className={s.body}>
-          {byType.map(({ type, m, cards: list }) => {
+          {byType.map(({ type, m, cards: list }, idx) => {
             const h = list.filter(c => gs(c.id) !== 'missing').length
             return (
               <section key={type} className={s.typeGroup}>
                 <header className={s.typeHead}>
-                  <span className={s.typeLabel} style={{ color: m.c }}>
-                    <span aria-hidden="true">{m.e}</span> {String(m.l).toUpperCase()}
-                  </span>
-                  <span className={s.typeCount}>({h}/{list.length})</span>
+                  <span className={s.typeNum} style={{ color: m.c }}>{String(idx + 1).padStart(2, '0')}</span>
+                  <span className={s.typeMarker} style={{ background: m.c }} aria-hidden="true" />
+                  <span className={s.typeLabel} style={{ color: m.c }}>{String(m.l).toUpperCase()}</span>
+                  <span className={s.typeRule} style={{ '--rule-color': m.c }} aria-hidden="true" />
+                  <span className={s.typeCount}>{h}/{list.length}</span>
                 </header>
                 <div className={s.grid}>
                   {list.map(c => (
