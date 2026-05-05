@@ -1,0 +1,139 @@
+/* =============================================================================
+   TypeDonut — SVG segmented donut chart for collection-type breakdown.
+   Each arc segment = one card type. Fill level = have/total for that type.
+   Center shows overall % + counts. Compact legend below.
+   ============================================================================= */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  width: 100%;
+}
+
+/* ── SVG chart ──────────────────────────────────────────────────────────── */
+
+.chartWrap {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* Center text inside the donut */
+.centerPct {
+  font-family: var(--font-display);
+  font-size: 42px;
+  letter-spacing: 0.04em;
+  fill: var(--gold-2);
+  filter: drop-shadow(0 0 14px var(--gold-glow));
+}
+.centerCount {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.10em;
+  fill: var(--text-secondary);
+}
+.centerLabel {
+  font-family: var(--font-body);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  fill: var(--text-faint);
+}
+
+/* ── Legend ─────────────────────────────────────────────────────────────── */
+
+.legend {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 20px;
+}
+
+/* Single column for 6 or fewer types */
+.legend:has(.legendItem:nth-child(-n+6):last-child) {
+  grid-template-columns: 1fr;
+  max-width: 260px;
+}
+
+.legendItem {
+  display: grid;
+  grid-template-columns: 8px 1fr auto 44px;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+}
+
+.legendSwatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.legendFrac {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.legendSlash {
+  color: var(--text-faint);
+  margin: 0 1px;
+}
+
+.legendBar {
+  height: 4px;
+  background: rgba(245, 200, 70, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.legendBarFill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  width: 0;
+}
+
+/* ── Mobile ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .chartWrap { max-width: 220px; }
+  .centerPct { font-size: 36px; }
+  .centerCount { font-size: 12px; }
+  .legend { gap: 5px 14px; }
+  .legendLabel { font-size: 9.5px; letter-spacing: 0.08em; }
+  .legendFrac { font-size: 10px; }
+  .legendBar { width: 36px; }
+  .legendItem { grid-template-columns: 8px 1fr auto 36px; gap: 5px; }
+}
+
+@media (max-width: 400px) {
+  .chartWrap { max-width: 200px; }
+  .legend { grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .legendLabel { font-size: 9px; }
+  .legendBar { display: none; }
+  .legendItem { grid-template-columns: 8px 1fr auto; }
+}

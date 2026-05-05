@@ -1,7 +1,6 @@
 /* =============================================================================
-   Dashboard — broadcast × vault rebuild.
-   Chamfered panels, broadcast section headers (NN / TITLE), gold rule trails,
-   bigger numerals, rank badge en Próximos a Completar.
+   Dashboard (Home) — broadcast × vault.
+   TypeDonut chart hero → Quick CTA → Próximos → Raras/Momentum → Equipos.
    ============================================================================= */
 
 .page {
@@ -11,97 +10,22 @@
   padding-bottom: var(--sp-6);
 }
 
-/* ===== Hero — Collection Overview ===== */
-.hero {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
-
-.heroHead {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 2px 12px;
-  border-bottom: 1px solid rgba(245, 200, 70, 0.08);
-}
-
-.heroNum {
-  font-family: var(--font-display);
-  font-size: 14px;
-  letter-spacing: 0.14em;
-  color: var(--gold-5);
-  flex-shrink: 0;
-}
-
-.heroTitle {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 15px;
-  letter-spacing: 0.32em;
-  color: var(--text);
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.heroRule {
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(245, 200, 70, 0.18), transparent);
-  align-self: center;
-  min-width: 12px;
-}
-
-.heroPct {
-  font-family: var(--font-display);
-  font-size: 26px;
-  letter-spacing: 0.06em;
-  color: var(--gold-2);
-  line-height: 1;
-  flex-shrink: 0;
-  text-shadow: 0 0 18px var(--gold-glow);
-}
-
-.heroPctLabel {
-  font-family: var(--font-body);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  flex-shrink: 0;
-  align-self: flex-end;
-  padding-bottom: 2px;
-}
-
-@media (max-width: 720px) {
-  .heroHead { gap: 10px; padding: 0 2px 10px; }
-  .heroTitle { font-size: 13px; letter-spacing: 0.22em; }
-  .heroPct { font-size: 20px; }
-  .heroPctLabel { display: none; }
-}
-
-/* Mac (≥1440px): aprovechá el espacio sin romper el container global.
-   En vez de salir del container (.main usa container-max=980), inflamos
-   gaps internos + padding de panels para que la página respire. */
 @media (min-width: 1440px) {
   .page { gap: var(--sp-6); }
-  .statsGrid { gap: var(--sp-4); }
-}
-
-/* ===== Stats Row ===== */
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--sp-3);
 }
 
 @media (max-width: 720px) {
-  .page { gap: var(--sp-3); }
-  .statsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
+  .page { gap: var(--sp-4); }
 }
 
-/* ===== Quick Update Banner — bigger, broadcast feel ===== */
+/* ===== Donut chart section ===== */
+.donutSection {
+  display: flex;
+  justify-content: center;
+  padding: var(--sp-2) 0;
+}
+
+/* ===== Quick Update Banner ===== */
 .quickCta {
   position: relative;
   display: flex;
@@ -209,19 +133,6 @@
   background: rgba(10, 10, 10, 0.08);
 }
 
-/* ===== Two columns — equal height (panels stretch to match the taller side) ===== */
-.cols {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-4);
-  align-items: stretch;
-}
-.colStack { display: flex; flex-direction: column; gap: var(--sp-4); }
-
-@media (max-width: 880px) {
-  .cols { grid-template-columns: 1fr; }
-}
-
 /* ===== Panel ===== */
 .panel {
   position: relative;
@@ -300,47 +211,7 @@
   letter-spacing: 0.02em;
 }
 
-/* ===== Por Tipo rows — distribuye para llenar el panel cuando este es alto ===== */
-.rows {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-  justify-content: space-around;
-}
-.typeRow { display: flex; flex-direction: column; gap: 6px; }
-.typeRowHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  font-size: 13px;
-}
-.typeRowLabel {
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  letter-spacing: 0.02em;
-}
-.typeRowCount {
-  font-family: var(--font-display);
-  font-size: 14px;
-  letter-spacing: 0.06em;
-  color: var(--gold-2);
-}
-
-/* type marker — colored square that replaces type emoji */
-.typeMarker {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  box-shadow: 0 0 10px currentColor, 0 0 20px color-mix(in srgb, currentColor 40%, transparent);
-  flex-shrink: 0;
-}
-
-/* ===== Próximos a Completar — leaderboard rows con rank ===== */
+/* ===== Próximos a Completar — leaderboard rows ===== */
 .upcomingList { display: flex; flex-direction: column; gap: 6px; }
 .upcomingRow {
   position: relative;
@@ -403,7 +274,6 @@
   .upcomingRow {
     grid-template-columns: 24px auto 1fr auto auto;
     gap: var(--sp-2);
-    /* min-height ≥44 for touch target */
     min-height: 48px;
     padding: 10px 12px 10px 10px;
   }
@@ -412,7 +282,16 @@
   .upcomingFrac { min-width: 40px; font-size: 13px; }
 }
 
-/* ===== Raras / Momentum (panel secundario, sin numero) ===== */
+/* ===== Raras / Momentum ===== */
+.typeMarker {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  box-shadow: 0 0 10px currentColor, 0 0 20px color-mix(in srgb, currentColor 40%, transparent);
+  flex-shrink: 0;
+}
+
 .rarePanel { padding: 18px 22px; }
 .rareTitle {
   font-family: var(--font-display);
@@ -579,15 +458,11 @@
   .quickCtaIcon { width: 32px; height: 32px; }
   .quickCtaTitle { font-size: 17px; letter-spacing: 0.12em; }
   .quickCtaSub { font-size: 11px; }
-  /* Touch target ≥44 — bump arrow circle on mobile */
   .quickCtaArrow { width: 44px; height: 44px; }
   .panel { padding: 18px 16px 16px; }
   .panelHead, .sectionHead { padding-bottom: 12px; gap: 10px; }
   .panelTitle, .sectionTitle { font-size: 13px; letter-spacing: 0.24em; }
   .panelNum, .sectionNum { font-size: 13px; }
-  .rows { gap: 10px; }
-  .typeRowHeader { font-size: 12.5px; }
-  .typeRowCount { font-size: 13px; }
 }
 
 @media (max-width: 380px) {
@@ -598,7 +473,6 @@
   .quickCtaArrow { width: 40px; height: 40px; }
 }
 
-/* Reduce-motion respect */
 @media (prefers-reduced-motion: reduce) {
   .quickCta::before,
   .quickCta:hover::before,

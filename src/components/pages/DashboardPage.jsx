@@ -1,10 +1,9 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import Flag from '../Flag'
-import StatCard from '../ui/StatCard'
 import ConfBadge from '../ui/ConfBadge'
 import ProgressBar from '../ui/ProgressBar'
-import SegmentedProgress from '../ui/SegmentedProgress'
+import TypeDonut from '../ui/TypeDonut'
 import TeamCard from '../ui/TeamCard'
 import s from './DashboardPage.module.css'
 
@@ -69,45 +68,19 @@ export default function DashboardPage({
   return (
     <div className={s.page}>
 
-      {/* ── Hero: Collection Overview ─────────────────────────────────────── */}
+      {/* ── 00 Donut chart — type breakdown at a glance ───────────────────── */}
       {segments.length > 0 && (
         <motion.section
-          className={s.hero}
+          className={s.donutSection}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
         >
-          <header className={s.heroHead}>
-            <span className={s.heroNum}>00</span>
-            <h2 className={s.heroTitle}>Colección</h2>
-            <span className={s.heroRule} aria-hidden="true" />
-            <span className={s.heroPct}>{stats.pct}%</span>
-            <span className={s.heroPctLabel}>completado</span>
-          </header>
-          <SegmentedProgress segments={segments} tall />
+          <TypeDonut segments={segments} />
         </motion.section>
       )}
 
-      <motion.div
-        className={s.statsGrid}
-        variants={listVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <motion.div variants={itemVariants}>
-          <StatCard label="Total"     value={cfg.mainCount} color="var(--conf-uefa)" />
-        </motion.div>
-        <motion.div variants={itemVariants}>
-          <StatCard label="Tengo"     value={stats.have}    color="var(--status-have)" />
-        </motion.div>
-        <motion.div variants={itemVariants}>
-          <StatCard label="Faltan"    value={stats.miss}    color="var(--status-missing)" />
-        </motion.div>
-        <motion.div variants={itemVariants}>
-          <StatCard label="Repetidas" value={stats.dup}     color="var(--status-dup)" />
-        </motion.div>
-      </motion.div>
-
+      {/* ── Quick Update CTA ─────────────────────────────────────────────── */}
       <button type="button" onClick={() => setShowQuick(true)} className={s.quickCta}>
         <span className={s.quickCtaIcon} aria-hidden="true"><IconPencil /></span>
         <div className={s.quickCtaCopy}>
@@ -117,161 +90,131 @@ export default function DashboardPage({
         <div className={s.quickCtaArrow} aria-hidden="true"><IconArrow /></div>
       </button>
 
-      <div className={s.cols}>
-        <section className={s.panel}>
-          <header className={s.panelHead}>
-            <span className={s.panelNum}>01</span>
-            <h3 className={s.panelTitle}>Por Tipo</h3>
-            <span className={s.panelRule} aria-hidden="true" />
-          </header>
-          <div className={s.rows}>
-            {Object.entries(TM)
-              .filter(([t]) => t !== 'Momentum')
-              .map(([type, m]) => {
+      {/* ── 01 Próximos a Completar ──────────────────────────────────────── */}
+      <section className={s.panel}>
+        <header className={s.panelHead}>
+          <span className={s.panelNum}>01</span>
+          <h3 className={s.panelTitle}>Próximos a Completar</h3>
+          <span className={s.panelRule} aria-hidden="true" />
+          {upcoming.length > 0 && (
+            <button type="button" onClick={() => setTab('teams')} className={s.panelLink}>
+              Ver todos →
+            </button>
+          )}
+        </header>
+        {upcoming.length === 0 ? (
+          <div className={s.empty}>
+            {teamStats.some(t => t.pct === 100)
+              ? '¡Todos completos! Empezá uno nuevo desde Equipos.'
+              : 'Marcá tus primeras cartas para ver acá los equipos más cerca de completar.'}
+          </div>
+        ) : (
+          <motion.div
+            className={s.upcomingList}
+            variants={listVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {upcoming.map((t, i) => {
+              const conf = String(t.conf || '').toUpperCase()
+              const rank = String(i + 1).padStart(2, '0')
+              return (
+                <motion.button
+                  key={t.id}
+                  variants={itemVariants}
+                  type="button"
+                  onClick={() => { setTab('teams'); setSelTeam(t.id) }}
+                  className={s.upcomingRow}
+                >
+                  <span className={s.upcomingRank}>{rank}</span>
+                  <span className={s.upcomingFlag}>
+                    <Flag fifa={t.id} emoji={t.flag} size={22} alt={t.name} />
+                  </span>
+                  <span className={s.upcomingName}>{t.name}</span>
+                  {conf && <ConfBadge confederation={conf} size="xs" />}
+                  <span className={s.upcomingBarWrap}>
+                    <ProgressBar
+                      pct={t.pct}
+                      color={CONF_COLOR[conf] || 'var(--accent)'}
+                      height={7}
+                    />
+                  </span>
+                  <span className={s.upcomingFrac}>{t.have}/{t.tot}</span>
+                </motion.button>
+              )
+            })}
+          </motion.div>
+        )}
+      </section>
+
+      {/* ── Raras / Momentum (conditional) ──────────────────────────────── */}
+      {(cfg.showRare || cfg.showMomentum) && (
+        <section className={`${s.panel} ${s.rarePanel}`}>
+          {cfg.showRare && (
+            <>
+              <div className={s.rareTitle}>
+                <span className={s.rareTitleDot} aria-hidden="true" />
+                Raras / Ultra Raras
+              </div>
+              {cfg.rareTypes.map(type => {
                 const tc = ALL_ITEMS.filter(c => c.type === type)
-                const h  = tc.filter(c => gs(c.id) !== 'missing').length
-                const p  = tc.length ? Math.round(h / tc.length * 100) : 0
+                if (!tc.length) return null
+                const h = tc.filter(c => gs(c.id) !== 'missing').length
                 return (
-                  <div key={type} className={s.typeRow}>
-                    <div className={s.typeRowHeader}>
-                      <span className={s.typeRowLabel} style={{ color: m.c }}>
-                        <span className={s.typeMarker} style={{ background: m.c }} aria-hidden="true" />
-                        {m.l}
-                      </span>
-                      <span className={s.typeRowCount}>{h}/{tc.length}</span>
-                    </div>
-                    <ProgressBar pct={p} color={m.c} height={8} />
+                  <div key={type} className={s.rareRow}>
+                    <span className={s.rareRowName}>
+                      <span className={s.typeMarker} style={{ background: TM[type]?.c }} aria-hidden="true" />
+                      {TM[type]?.l}
+                    </span>
+                    <span className={`${s.rareRowValue} ${h === tc.length ? s.rareRowComplete : ''}`}>
+                      {h}/{tc.length}
+                    </span>
                   </div>
                 )
               })}
-          </div>
-        </section>
-
-        <div className={s.colStack}>
-          <section className={s.panel}>
-            <header className={s.panelHead}>
-              <span className={s.panelNum}>02</span>
-              <h3 className={s.panelTitle}>Próximos a Completar</h3>
-              <span className={s.panelRule} aria-hidden="true" />
-              {upcoming.length > 0 && (
-                <button type="button" onClick={() => setTab('teams')} className={s.panelLink}>
-                  Ver todos →
-                </button>
-              )}
-            </header>
-            {upcoming.length === 0 ? (
-              <div className={s.empty}>
-                {teamStats.some(t => t.pct === 100)
-                  ? '¡Todos completos! Empezá uno nuevo desde Equipos.'
-                  : 'Marcá tus primeras cartas para ver acá los equipos más cerca de completar.'}
-              </div>
-            ) : (
-              <motion.div
-                className={s.upcomingList}
-                variants={listVariants}
-                initial="hidden"
-                animate="visible"
-              >
-                {upcoming.map((t, i) => {
-                  const conf = String(t.conf || '').toUpperCase()
-                  const rank = String(i + 1).padStart(2, '0')
-                  return (
-                    <motion.button
-                      key={t.id}
-                      variants={itemVariants}
-                      type="button"
-                      onClick={() => { setTab('teams'); setSelTeam(t.id) }}
-                      className={s.upcomingRow}
-                    >
-                      <span className={s.upcomingRank}>{rank}</span>
-                      <span className={s.upcomingFlag}>
-                        <Flag fifa={t.id} emoji={t.flag} size={22} alt={t.name} />
-                      </span>
-                      <span className={s.upcomingName}>{t.name}</span>
-                      {conf && <ConfBadge confederation={conf} size="xs" />}
-                      <span className={s.upcomingBarWrap}>
-                        <ProgressBar
-                          pct={t.pct}
-                          color={CONF_COLOR[conf] || 'var(--accent)'}
-                          height={7}
-                        />
-                      </span>
-                      <span className={s.upcomingFrac}>{t.have}/{t.tot}</span>
-                    </motion.button>
-                  )
-                })}
-              </motion.div>
-            )}
-          </section>
-
-          {(cfg.showRare || cfg.showMomentum) && (
-            <section className={`${s.panel} ${s.rarePanel}`}>
-              {cfg.showRare && (
-                <>
-                  <div className={s.rareTitle}>
-                    <span className={s.rareTitleDot} aria-hidden="true" />
-                    Raras / Ultra Raras
-                  </div>
-                  {cfg.rareTypes.map(type => {
-                    const tc = ALL_ITEMS.filter(c => c.type === type)
-                    if (!tc.length) return null
-                    const h = tc.filter(c => gs(c.id) !== 'missing').length
-                    return (
-                      <div key={type} className={s.rareRow}>
-                        <span className={s.rareRowName}>
-                          <span className={s.typeMarker} style={{ background: TM[type]?.c }} aria-hidden="true" />
-                          {TM[type]?.l}
-                        </span>
-                        <span className={`${s.rareRowValue} ${h === tc.length ? s.rareRowComplete : ''}`}>
-                          {h}/{tc.length}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </>
-              )}
-
-              {cfg.showMomentum && (
-                <div className={s.momentumWrap}>
-                  <div className={s.momentumLabel}>
-                    <span className={s.momentumLabelDot} aria-hidden="true" />
-                    Momentum
-                  </div>
-                  {MOMENTUM.map((p, i) => {
-                    const mc = ALL_ITEMS.find(c => c.id === `MOM-${i}`)
-                    if (!mc) return null
-                    const status = gs(mc.id)
-                    const on = status !== 'missing'
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => toggle(mc.id)}
-                        className={`${s.momentumRow} ${on ? s.momentumRowOn : ''}`}
-                      >
-                        <span aria-hidden="true">{p.flag}</span>
-                        <span className={`${s.momentumName} ${on ? s.momentumNameOn : ''}`}>{p.name}</span>
-                        <span
-                          className={s.momentumDot}
-                          style={{
-                            background: status === 'have' ? '#A855F7'
-                                       : status === 'duplicate' ? '#F59E0B'
-                                       : '#4C1D95',
-                          }}
-                        />
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </section>
+            </>
           )}
-        </div>
-      </div>
 
+          {cfg.showMomentum && (
+            <div className={s.momentumWrap}>
+              <div className={s.momentumLabel}>
+                <span className={s.momentumLabelDot} aria-hidden="true" />
+                Momentum
+              </div>
+              {MOMENTUM.map((p, i) => {
+                const mc = ALL_ITEMS.find(c => c.id === `MOM-${i}`)
+                if (!mc) return null
+                const status = gs(mc.id)
+                const on = status !== 'missing'
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => toggle(mc.id)}
+                    className={`${s.momentumRow} ${on ? s.momentumRowOn : ''}`}
+                  >
+                    <span aria-hidden="true">{p.flag}</span>
+                    <span className={`${s.momentumName} ${on ? s.momentumNameOn : ''}`}>{p.name}</span>
+                    <span
+                      className={s.momentumDot}
+                      style={{
+                        background: status === 'have' ? '#A855F7'
+                                   : status === 'duplicate' ? '#F59E0B'
+                                   : '#4C1D95',
+                      }}
+                    />
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ── 02 Equipos con más Faltantes ─────────────────────────────────── */}
       <section className={s.missingTeamsSection}>
         <header className={s.sectionHead}>
-          <span className={s.sectionNum}>03</span>
+          <span className={s.sectionNum}>02</span>
           <h3 className={s.sectionTitle}>Equipos con más Faltantes</h3>
           <span className={s.sectionRule} aria-hidden="true" />
           <button type="button" onClick={() => setTab('teams')} className={s.sectionLink}>
