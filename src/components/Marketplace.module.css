@@ -1,6 +1,11 @@
+/* ========================================================================
+   Marketplace v2 — visual rebuild (CSS only; JSX preserves load-bearing
+   patterns: modales hoisted, tradeCtx desacoplado, key remount, etc.)
+   ======================================================================== */
+
 .wrap { animation: fadeUp 0.22s ease; }
 
-/* ============================================================== Sub-tabs */
+/* ============================================================ Sub-tabs */
 .subnav {
   display: flex;
   gap: 6px;
@@ -12,38 +17,42 @@
 
 .subnavBtn {
   flex-shrink: 0;
-  padding: 8px 14px;
+  padding: 9px 16px;
   border-radius: var(--r-pill);
-  background: var(--bg-card);
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
   color: var(--text-muted);
+  font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   display: flex;
   align-items: center;
   gap: 6px;
   white-space: nowrap;
+  cursor: pointer;
   transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast);
 }
 .subnavBtn:hover {
   color: var(--text);
   border-color: var(--border-strong);
+  background: var(--bg-hover);
 }
 .subnavBtnActive {
-  background: var(--accent-bg);
-  border-color: var(--accent-deep);
-  color: var(--accent);
+  background: linear-gradient(135deg, var(--gold-3), var(--accent-strong));
+  border-color: var(--gold-3);
+  color: #1A1308;
 }
 .subnavBadge {
-  background: var(--accent-deep);
-  color: #000;
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
   border-radius: var(--r-pill);
   padding: 1px 7px;
   font-size: 10px;
   font-weight: 800;
 }
 
-/* ============================================================== Empty state */
+/* ============================================================ Empty state */
 .empty {
   text-align: center;
   padding: 60px 20px;
@@ -52,7 +61,7 @@
 .emptyTitle {
   font-family: var(--font-display);
   font-size: 22px;
-  letter-spacing: 2px;
+  letter-spacing: 0.12em;
   color: var(--text-faint);
   margin-bottom: 8px;
 }
@@ -65,32 +74,37 @@
 }
 .emptyCta {
   margin-top: 18px;
-  background: var(--accent-grad);
-  color: #000;
+  background: linear-gradient(135deg, var(--gold-2), var(--gold-4));
+  color: #1A1308;
   padding: 10px 20px;
   border-radius: var(--r-md);
   font-size: 13px;
   font-weight: 700;
+  border: 0;
+  cursor: pointer;
+  transition: transform var(--t-fast), box-shadow var(--t-fast);
 }
+.emptyCta:hover { transform: translateY(-1px); box-shadow: var(--shadow-glow-gold); }
 
-/* ============================================================== Users grid */
+/* ============================================================ Users grid (favoritos) */
 .usersGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--sp-3);
 }
 
 .userCard {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--r-xl);
+  border-radius: var(--r-2xl);
   padding: var(--sp-4);
-  transition: transform var(--t-base), border-color var(--t-base);
+  transition: transform var(--t-base), border-color var(--t-base), box-shadow var(--t-base);
   cursor: pointer;
 }
 .userCard:hover {
-  transform: translateY(-3px);
-  border-color: var(--accent-soft);
+  transform: translateY(-2px);
+  border-color: var(--gold-3);
+  box-shadow: var(--shadow-glow-gold);
 }
 
 .userCardHead {
@@ -100,10 +114,11 @@
   margin-bottom: var(--sp-3);
 }
 .userAvatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--bg-elevated);
+  width: 46px;
+  height: 46px;
+  border-radius: var(--r-pill);
+  background: var(--bg-elevated-2);
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -112,12 +127,15 @@
 }
 .userMeta { flex: 1; min-width: 0; }
 .userName {
-  font-size: 14px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color var(--t-fast);
 }
 .userSub {
   font-size: 11px;
@@ -141,19 +159,19 @@
   font-weight: 700;
 }
 .matchPillThey {
-  background: var(--have-bg);
-  border-color: var(--have-border);
-  color: var(--have);
+  background: var(--status-have-dim);
+  border-color: color-mix(in srgb, var(--status-have) 50%, transparent);
+  color: var(--status-have);
 }
 .matchPillI {
-  background: var(--accent-bg);
-  border-color: var(--accent-deep);
-  color: var(--accent);
+  background: rgba(245, 200, 66, 0.10);
+  border-color: var(--gold-4);
+  color: var(--gold-1);
 }
 .matchLabel {
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.08em;
   color: var(--text-faint);
   margin-bottom: 2px;
   text-transform: uppercase;
@@ -163,24 +181,24 @@
   display: inline-block;
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.06em;
   padding: 2px 7px;
   border-radius: var(--r-pill);
   margin-top: 4px;
   text-transform: uppercase;
 }
 .friendBadgeAccepted {
-  background: var(--have-bg);
-  color: var(--have);
-  border: 1px solid var(--have-border);
+  background: var(--status-have-dim);
+  color: var(--status-have);
+  border: 1px solid color-mix(in srgb, var(--status-have) 40%, transparent);
 }
 .friendBadgePending {
-  background: var(--accent-bg);
-  color: var(--accent);
-  border: 1px solid var(--accent-deep);
+  background: rgba(245, 200, 66, 0.10);
+  color: var(--gold-1);
+  border: 1px solid var(--gold-4);
 }
 
-/* ============================================================== Drill-down */
+/* ============================================================ Drill-down trader */
 .detailHead {
   display: flex;
   align-items: center;
@@ -190,62 +208,86 @@
   border: 1px solid var(--border);
   border-radius: var(--r-2xl);
   padding: var(--sp-5);
+  position: relative;
+  overflow: hidden;
+}
+.detailHead::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, var(--gold-glow) 0%, transparent 60%);
+  pointer-events: none;
+  opacity: 0.5;
 }
 .detailAvatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: var(--bg-elevated);
+  width: 68px;
+  height: 68px;
+  border-radius: var(--r-pill);
+  background: var(--bg-elevated-2);
+  border: 1px solid var(--gold-4);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 36px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
-.detailBody { flex: 1; min-width: 0; }
+.detailBody { flex: 1; min-width: 0; position: relative; z-index: 1; }
 .detailName {
   font-family: var(--font-display);
-  font-size: 26px;
-  letter-spacing: 2px;
+  font-size: 28px;
+  letter-spacing: 0.08em;
   color: var(--text);
   line-height: 1;
 }
 .detailSub {
   font-size: 12px;
-  color: var(--text-faint);
+  color: var(--text-muted);
   margin-top: 4px;
 }
 .detailActions {
   display: flex;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
   flex-wrap: wrap;
 }
 .btnPrimary {
-  background: var(--accent-grad);
-  color: #000;
-  padding: 9px 16px;
+  background: linear-gradient(135deg, var(--gold-2), var(--gold-4));
+  color: #1A1308;
+  border: 0;
+  padding: 10px 18px;
   border-radius: var(--r-md);
+  font-family: var(--font-body);
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: transform var(--t-fast), box-shadow var(--t-fast);
+  box-shadow: 0 4px 14px var(--gold-glow);
 }
+.btnPrimary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px var(--gold-glow); }
 .btnSecondary {
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
-  color: var(--text-muted);
-  padding: 9px 16px;
+  color: var(--text);
+  padding: 10px 18px;
   border-radius: var(--r-md);
+  font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast);
 }
-.btnSecondary:hover { border-color: var(--accent-soft); color: var(--text); }
+.btnSecondary:hover { border-color: var(--gold-3); color: var(--gold-1); background: var(--bg-hover); }
 
 .matchSection { margin-bottom: var(--sp-5); }
 .matchSectionTitle {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  color: var(--text-strong);
   margin-bottom: var(--sp-3);
   display: flex;
   align-items: center;
@@ -257,6 +299,8 @@
   padding: 1px 8px;
   border-radius: var(--r-pill);
   font-size: 11px;
+  font-family: var(--font-body);
+  font-weight: 700;
 }
 .matchEmptyText {
   color: var(--text-hint);
@@ -270,7 +314,7 @@
 
 .cardsList {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 6px;
 }
 
@@ -282,7 +326,9 @@
   display: flex;
   align-items: center;
   gap: 9px;
+  transition: border-color var(--t-fast), background var(--t-fast);
 }
+.miniCard:hover { border-color: var(--border-strong); }
 .miniCardFlag { font-size: 18px; flex-shrink: 0; }
 .miniCardBody { flex: 1; min-width: 0; }
 .miniCardName {
@@ -300,15 +346,59 @@
 }
 .miniCardNum {
   background: var(--bg-elevated);
-  color: var(--accent);
+  color: var(--gold-1);
   font-size: 10px;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: var(--r-xs);
   flex-shrink: 0;
+  font-family: var(--font-display);
+  letter-spacing: 0.05em;
 }
 
-/* ============================================================== Mi lista (old Intercambio) */
+/* miniCard variant: pickable (button-style) */
+.miniCardPickable {
+  width: 100%;
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-family: inherit;
+}
+.miniCardPickable:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-elevated);
+}
+.miniCardPicked {
+  border-color: var(--gold-3);
+  background: rgba(245, 200, 66, 0.08);
+  box-shadow: 0 0 0 1px var(--gold-3) inset, var(--shadow-glow-gold);
+}
+
+.miniCardCheck {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--text-faint);
+  margin-right: 4px;
+  transition: color var(--t-fast);
+}
+.miniCardPicked .miniCardCheck { color: var(--gold-1); }
+
+.miniCardMatchBadge {
+  display: inline-block;
+  background: var(--status-have-dim);
+  color: var(--status-have);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  margin-left: 8px;
+  vertical-align: middle;
+  border: 1px solid color-mix(in srgb, var(--status-have) 35%, transparent);
+}
+
+/* ============================================================ Mi lista */
 .myListHead {
   display: flex;
   justify-content: space-between;
@@ -320,15 +410,15 @@
 .myListTitle {
   font-family: var(--font-display);
   font-size: 22px;
-  letter-spacing: 2px;
-  color: var(--accent-strong);
+  letter-spacing: 0.12em;
+  color: var(--gold-1);
 }
 .myListSub {
   font-size: 12px;
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
-/* ============================================================== Friend requests */
+/* ============================================================ Friend requests */
 .requestList {
   display: flex;
   flex-direction: column;
@@ -349,38 +439,47 @@
   flex-shrink: 0;
 }
 .btnAccept {
-  background: var(--have-bg);
-  border: 1px solid var(--have-border);
-  color: var(--have);
-  padding: 7px 14px;
+  background: var(--status-have-dim);
+  border: 1px solid color-mix(in srgb, var(--status-have) 50%, transparent);
+  color: var(--status-have);
+  padding: 8px 14px;
   border-radius: var(--r-md);
   font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
 }
+.btnAccept:hover { border-color: var(--status-have); background: color-mix(in srgb, var(--status-have) 18%, transparent); }
 .btnReject {
-  background: var(--error-bg);
-  border: 1px solid var(--error);
-  color: var(--error-soft);
-  padding: 7px 14px;
+  background: var(--status-missing-dim);
+  border: 1px solid color-mix(in srgb, var(--status-missing) 50%, transparent);
+  color: var(--status-missing);
+  padding: 8px 14px;
   border-radius: var(--r-md);
   font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
 }
+.btnReject:hover { border-color: var(--status-missing); background: color-mix(in srgb, var(--status-missing) 18%, transparent); }
 
-/* ============================================================== Trade modal */
+/* ============================================================ Trade modal (genérico) */
 .modalBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  z-index: 1000;
+  background: rgba(6, 8, 15, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1100;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--sp-4);
+  animation: fadeUp 0.18s ease;
 }
 .modalCard {
-  background: linear-gradient(180deg, var(--bg-card), #0A0F1E);
-  border: 1px solid var(--accent-soft);
+  background: linear-gradient(180deg, var(--bg-card), var(--bg-deep));
+  border: 1px solid var(--gold-4);
   border-radius: var(--r-2xl);
   padding: var(--sp-5);
   width: 100%;
@@ -388,7 +487,7 @@
   max-height: 90vh;
   overflow-y: auto;
   animation: modalIn 0.22s ease;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-lg), var(--shadow-glow-gold);
 }
 
 .contactList {
@@ -401,15 +500,12 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
-  background: var(--bg);
+  padding: 11px 14px;
+  background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
 }
-.contactIcon {
-  font-size: 18px;
-  flex-shrink: 0;
-}
+.contactIcon { font-size: 18px; flex-shrink: 0; }
 .contactValue {
   flex: 1;
   font-size: 13px;
@@ -420,20 +516,22 @@
   text-overflow: ellipsis;
 }
 .contactCopy {
-  background: var(--bg-elevated);
+  background: var(--bg-card);
   border: 1px solid var(--border-strong);
   color: var(--text-muted);
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: var(--r-sm);
   font-size: 11px;
   font-weight: 700;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: color var(--t-fast), border-color var(--t-fast);
 }
-.contactCopy:hover { color: var(--accent); border-color: var(--accent-deep); }
+.contactCopy:hover { color: var(--gold-1); border-color: var(--gold-3); }
 
 .messageBox {
   width: 100%;
-  background: var(--bg);
+  background: var(--bg-elevated);
   color: var(--text);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
@@ -443,7 +541,10 @@
   resize: vertical;
   min-height: 140px;
   margin-top: var(--sp-2);
+  outline: none;
+  transition: border-color var(--t-fast);
 }
+.messageBox:focus { border-color: var(--gold-3); }
 
 .modalHead {
   display: flex;
@@ -454,30 +555,33 @@
 .modalTitle {
   font-family: var(--font-display);
   font-size: 22px;
-  letter-spacing: 2px;
-  color: var(--accent);
+  letter-spacing: 0.12em;
+  color: var(--gold-1);
 }
 .modalSub {
   font-size: 12px;
-  color: var(--text-faint);
+  color: var(--text-muted);
   margin-top: 2px;
 }
 .modalClose {
+  background: transparent;
+  border: 0;
   color: var(--text-faint);
   font-size: 24px;
   line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color var(--t-fast);
 }
+.modalClose:hover { color: var(--text); }
 
 @media (max-width: 768px) {
-  /* Sub-tabs: full-bleed scroll on phones */
   .subnav {
     margin-left: calc(var(--sp-3) * -1);
     margin-right: calc(var(--sp-3) * -1);
     padding-left: var(--sp-3);
     padding-right: var(--sp-3);
   }
-
-  /* Trade modal → bottom sheet */
   .modalBackdrop {
     align-items: flex-end;
     padding: 0;
@@ -488,7 +592,7 @@
     width: 100%;
     max-height: 88vh;
     padding: var(--sp-4) var(--sp-4) calc(var(--sp-4) + env(safe-area-inset-bottom));
-    animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slideUp 0.28s var(--ease-out);
   }
 }
 
@@ -496,34 +600,32 @@
   .usersGrid { grid-template-columns: 1fr; }
   .cardsList { grid-template-columns: 1fr; }
   .detailHead { padding: var(--sp-4); }
-  .detailAvatar { width: 52px; height: 52px; font-size: 28px; }
+  .detailAvatar { width: 56px; height: 56px; font-size: 28px; }
   .detailName { font-size: 22px; }
-  .subnavBtn { padding: 7px 12px; font-size: 11px; }
+  .subnavBtn { padding: 8px 14px; font-size: 11px; }
 }
 
-/* ============================================================ Marketplace v2 */
-
-/* Botón "estado activado" (favorito puesto) */
+/* ============================================================ Action buttons */
 .btnAccent {
-  background: var(--accent-grad);
-  color: #000;
-  border: none;
+  background: linear-gradient(135deg, var(--gold-2), var(--gold-4));
+  color: #1A1308;
+  border: 0;
   border-radius: var(--r-md);
-  padding: 8px 14px;
+  padding: 9px 16px;
   font-size: 12px;
   font-weight: 800;
+  letter-spacing: 0.04em;
   cursor: pointer;
-  transition: transform var(--t-fast);
+  transition: transform var(--t-fast), box-shadow var(--t-fast);
 }
-.btnAccent:hover { transform: translateY(-1px); }
+.btnAccent:hover { transform: translateY(-1px); box-shadow: var(--shadow-glow-gold); }
 
-/* Estrella de favoritar en el card del perfil */
 .favStar {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-faint);
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: var(--r-pill);
   font-size: 18px;
   cursor: pointer;
@@ -533,30 +635,33 @@
   transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
   flex-shrink: 0;
 }
-.favStar:hover { color: var(--accent); border-color: var(--accent-deep); }
+.favStar:hover { color: var(--gold-1); border-color: var(--gold-3); background: var(--bg-hover); }
 .favStarOn {
-  color: var(--accent);
-  border-color: var(--accent-deep);
-  background: var(--accent-bg);
+  color: var(--gold-1);
+  border-color: var(--gold-3);
+  background: rgba(245, 200, 66, 0.10);
+  box-shadow: 0 0 12px var(--gold-glow);
 }
 
-/* Drill-down sub-tabs (sus dups / mis dups) */
+/* ============================================================ Drill-down sub-tabs (sus dups / mis dups) */
 .drillTabs {
   display: flex;
-  gap: 6px;
-  margin: 14px 0 10px;
+  gap: 4px;
+  margin: 14px 0 12px;
   border-bottom: 1px solid var(--border);
 }
 .drillTab {
   flex: 1;
-  padding: 10px 12px;
+  padding: 11px 12px;
   background: transparent;
-  border: none;
+  border: 0;
   border-bottom: 2px solid transparent;
   color: var(--text-muted);
+  font-family: var(--font-body);
   font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -566,11 +671,11 @@
 }
 .drillTab:hover { color: var(--text); }
 .drillTabActive {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+  color: var(--gold-1);
+  border-bottom-color: var(--gold-3);
 }
 
-/* Filtro "solo matches" del drill-down */
+/* Filtro "solo matches" */
 .filterRow {
   display: flex;
   align-items: center;
@@ -579,83 +684,45 @@
   color: var(--text-muted);
   cursor: pointer;
   margin-bottom: 12px;
+  user-select: none;
 }
 .filterRow input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: var(--accent);
+  accent-color: var(--gold-3);
   cursor: pointer;
 }
 
-/* Counter de selecciones */
+/* Counter */
 .pickCounter {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-family: var(--font-body);
   font-size: 13px;
   color: var(--text-muted);
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 1px solid var(--gold-4);
   border-radius: var(--r-md);
-  padding: 8px 14px;
+  padding: 9px 14px;
   margin-bottom: 12px;
 }
 .pickCounter strong {
-  color: var(--accent);
-  font-weight: 900;
-}
-.pickDot {
-  color: var(--text-faint);
-  font-weight: 900;
-}
-
-/* miniCard variant: pickable (button-style) */
-.miniCardPickable {
-  width: 100%;
-  text-align: left;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  font-family: inherit;
-}
-.miniCardPickable:hover {
-  border-color: var(--border-strong);
-  background: var(--bg-elevated);
-}
-.miniCardPicked {
-  border-color: var(--accent-deep);
-  background: var(--accent-bg);
-  box-shadow: 0 0 0 1px var(--accent-deep) inset;
-}
-
-.miniCardCheck {
-  flex-shrink: 0;
-  font-size: 18px;
-  color: var(--text-faint);
-  margin-right: 4px;
-}
-.miniCardPicked .miniCardCheck { color: var(--accent); }
-
-.miniCardMatchBadge {
-  display: inline-block;
-  background: rgba(74, 222, 128, 0.12);
-  color: var(--have);
-  font-size: 9px;
+  color: var(--gold-1);
   font-weight: 800;
-  letter-spacing: 0.5px;
-  padding: 1px 6px;
-  border-radius: var(--r-pill);
-  margin-left: 8px;
-  vertical-align: middle;
+  font-family: var(--font-display);
+  letter-spacing: 0.05em;
 }
+.pickDot { color: var(--text-faint); font-weight: 800; }
 
 /* ============================================================ Listings */
 .listingsBlock {
   margin-bottom: var(--sp-5);
   padding: var(--sp-4);
   background: var(--bg-card);
-  border: 1px solid var(--accent-soft);
-  border-radius: var(--r-lg);
+  border: 1px solid var(--gold-4);
+  border-radius: var(--r-2xl);
+  position: relative;
 }
 
 .listingsHead {
@@ -668,8 +735,8 @@
 .listingsTitle {
   font-family: var(--font-display);
   font-size: 18px;
-  letter-spacing: 1.5px;
-  color: var(--accent);
+  letter-spacing: 0.10em;
+  color: var(--gold-1);
 }
 .listingsSub {
   font-size: 11px;
@@ -681,24 +748,26 @@
   color: var(--text-faint);
   font-style: italic;
   text-align: center;
-  padding: 16px;
+  padding: 20px;
 }
 
 .listingsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--sp-3);
 }
 
 .listingCard {
   background: var(--bg-deep);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   padding: var(--sp-3);
   display: flex;
   flex-direction: column;
   gap: 10px;
+  transition: border-color var(--t-fast);
 }
+.listingCard:hover { border-color: var(--gold-4); }
 
 .listingHead {
   display: flex;
@@ -710,9 +779,9 @@
   font-size: 12px;
   color: var(--text-strong);
   background: var(--bg-card);
-  padding: 8px 10px;
+  padding: 9px 11px;
   border-radius: var(--r-sm);
-  border-left: 2px solid var(--accent);
+  border-left: 2px solid var(--gold-3);
   line-height: 1.4;
   font-style: italic;
 }
@@ -725,17 +794,17 @@
 
 .listingChip {
   font-size: 10px;
-  background: rgba(74, 222, 128, 0.10);
-  color: var(--have);
-  padding: 3px 7px;
+  background: var(--status-have-dim);
+  color: var(--status-have);
+  padding: 3px 8px;
   border-radius: var(--r-pill);
   font-weight: 600;
-  border: 1px solid rgba(74, 222, 128, 0.25);
+  border: 1px solid color-mix(in srgb, var(--status-have) 35%, transparent);
 }
 .listingChipWant {
-  background: rgba(252, 211, 77, 0.10);
-  color: var(--accent);
-  border-color: rgba(252, 211, 77, 0.25);
+  background: rgba(245, 200, 66, 0.10);
+  color: var(--gold-1);
+  border-color: var(--gold-4);
 }
 .listingChipMore {
   font-size: 10px;
@@ -745,14 +814,12 @@
 }
 
 /* ============================================================ Bandeja */
-.tradeSection {
-  margin-bottom: var(--sp-4);
-}
+.tradeSection { margin-bottom: var(--sp-4); }
 .tradeSectionTitle {
   font-family: var(--font-display);
   font-size: 14px;
-  letter-spacing: 2px;
-  color: var(--accent);
+  letter-spacing: 0.14em;
+  color: var(--gold-1);
   margin-bottom: var(--sp-2);
   display: flex;
   align-items: center;
@@ -762,13 +829,15 @@
 .tradeRow {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   padding: var(--sp-3);
   margin-bottom: var(--sp-2);
   display: flex;
   flex-direction: column;
   gap: 10px;
+  transition: border-color var(--t-fast);
 }
+.tradeRow:hover { border-color: var(--border-strong); }
 
 .tradeRowHead {
   display: flex;
@@ -783,7 +852,7 @@
   font-size: 12px;
   color: var(--text-strong);
   background: var(--bg-deep);
-  padding: 10px;
+  padding: 10px 12px;
   border-radius: var(--r-sm);
 }
 .tradeLine strong {
@@ -796,8 +865,8 @@
   font-size: 12px;
   color: var(--text);
   font-style: italic;
-  border-left: 2px solid var(--accent);
-  padding: 4px 8px;
+  border-left: 2px solid var(--gold-3);
+  padding: 4px 10px;
   margin-top: 4px;
 }
 
@@ -821,14 +890,18 @@
 .banner {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-2xl);
   padding: var(--sp-4);
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  transition: border-color var(--t-fast), transform var(--t-fast);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
+  position: relative;
 }
-.banner:hover { border-color: var(--accent-soft); }
+.banner:hover {
+  border-color: var(--gold-4);
+  box-shadow: var(--shadow-md);
+}
 
 .bannerHead {
   display: flex;
@@ -845,14 +918,14 @@
   align-items: center;
   gap: 12px;
   background: transparent;
-  border: none;
+  border: 0;
   padding: 0;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
   min-width: 0;
 }
-.bannerAuthor:hover .userName { color: var(--accent); }
+.bannerAuthor:hover .userName { color: var(--gold-1); }
 
 .bannerSection {
   display: flex;
@@ -862,8 +935,8 @@
 
 .bannerSectionTitle {
   font-family: var(--font-display);
-  font-size: 14px;
-  letter-spacing: 1.5px;
+  font-size: 13px;
+  letter-spacing: 0.12em;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -873,7 +946,7 @@
   background: var(--bg-deep);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  padding: 10px 12px;
+  padding: 11px 13px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -887,7 +960,7 @@
   font-size: 12.5px;
   color: var(--text);
   font-style: italic;
-  border-left: 2px solid var(--accent);
+  border-left: 2px solid var(--gold-3);
   padding-left: 10px;
   margin-top: 4px;
 }
@@ -903,15 +976,16 @@
   flex: 1;
   min-width: 120px;
   padding: 11px 14px;
+  font-family: var(--font-body);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
+  letter-spacing: 0.03em;
   border-radius: var(--r-md);
   cursor: pointer;
-  transition: transform var(--t-fast);
+  transition: transform var(--t-fast), box-shadow var(--t-fast);
 }
 .bannerActions > button:hover { transform: translateY(-1px); }
 
-/* User actions row in cards */
 .userActions {
   display: flex;
   gap: 6px;
