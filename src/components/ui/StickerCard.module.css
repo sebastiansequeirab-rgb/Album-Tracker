@@ -55,6 +55,13 @@
     0 12px 26px rgba(0, 0, 0, 0.45),
     0 0 22px var(--card-glow, transparent);
 }
+.card:active {
+  transform: translateY(0);
+  transition-duration: 0.05s;
+}
+@media (hover: none) {
+  .card:hover { transform: none; box-shadow: none; }
+}
 
 /* ── Status states ──────────────────────────────────────────────────────── */
 
@@ -215,7 +222,24 @@
 /* ── Hide meta team/num inline on smaller cards if needed ───────────────── */
 
 @media (max-width: 540px) {
-  .card { min-height: 116px; padding: 22px 12px 36px 14px; }
+  .card { min-height: 118px; padding: 22px 12px 36px 14px; }
   .name { font-size: 12.5px; }
   .meta { font-size: 10.5px; }
+  .chip { font-size: 9px; padding: 2px 5px; top: 7px; right: 7px; }
+  .dot { top: 9px; left: 11px; }
+  .statusChip {
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    padding: 2px 6px 2px 5px;
+    bottom: 7px;
+    right: 7px;
+    gap: 3px;
+  }
+}
+@media (max-width: 380px) {
+  .card { min-height: 110px; padding: 20px 10px 34px 12px; }
+  .name { font-size: 12px; }
+  .meta { font-size: 10px; }
+  .num { font-size: 11px; }
+  .statusChip { font-size: 8.5px; }
 }

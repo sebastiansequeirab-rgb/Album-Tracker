@@ -33,8 +33,17 @@
   overflow: hidden;
 }
 
+/* Mac ultra-wide: bump width para llenar mejor pantallas grandes */
+@media (min-width: 1600px) {
+  .drawer { width: 540px; }
+}
+
 @media (max-width: 720px) {
-  .drawer { width: 100vw; border-left: 0; border-top: 2px solid var(--drawer-conf, var(--gold-3)); }
+  .drawer {
+    width: 100vw;
+    border-left: 0;
+    border-top: 2px solid var(--drawer-conf, var(--gold-3));
+  }
 }
 
 /* ===== Head ===== */
@@ -46,24 +55,34 @@
   padding: 18px;
   border-bottom: 1px solid rgba(245, 200, 70, 0.08);
 }
+@media (max-width: 720px) {
+  .head {
+    padding: 14px 14px 14px calc(14px + env(safe-area-inset-left));
+    gap: 12px;
+  }
+}
 
 .closeBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   background: rgba(8, 12, 22, 0.6);
   border: 1px solid rgba(245, 200, 70, 0.18);
   border-radius: 3px;
   color: var(--text);
   cursor: pointer;
+  flex-shrink: 0;
   transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast);
 }
 .closeBtn:hover {
   color: var(--gold-1);
   border-color: rgba(245, 200, 70, 0.42);
   background: rgba(245, 200, 70, 0.08);
+}
+@media (max-width: 720px) {
+  .closeBtn { width: 44px; height: 44px; }
 }
 
 .headFlag {
@@ -88,12 +107,20 @@
   color: var(--text);
   line-height: 1;
   text-transform: uppercase;
+  word-break: break-word;
+}
+@media (max-width: 720px) {
+  .title { font-size: 22px; letter-spacing: 0.08em; }
+}
+@media (max-width: 380px) {
+  .title { font-size: 20px; }
 }
 
 .meta {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
   font-size: 12px;
   color: var(--text-secondary);
 }
@@ -130,6 +157,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  min-height: 40px;
   padding: 10px 12px;
   background: rgba(10, 16, 30, 0.6);
   border: 1px solid rgba(245, 200, 70, 0.10);
@@ -146,6 +174,9 @@
 }
 .bulkBtn:hover { background: rgba(20, 28, 48, 0.78); }
 .bulkBtn:disabled { opacity: 0.42; cursor: not-allowed; }
+@media (max-width: 720px) {
+  .bulkBtn { min-height: 44px; font-size: 12.5px; }
+}
 
 .bulkBtnHave { --bulk-color: var(--status-have); }
 .bulkBtnHave:not(:disabled):hover {
@@ -167,10 +198,17 @@
 .body {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 22px;
+}
+@media (max-width: 720px) {
+  .body {
+    padding: 14px 14px calc(72px + env(safe-area-inset-bottom));
+  }
 }
 
 .typeGroup {
@@ -228,6 +266,9 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+@media (min-width: 1600px) {
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @keyframes backdropFade {

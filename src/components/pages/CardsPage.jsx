@@ -114,8 +114,10 @@ export default function CardsPage({
   if (fTeam !== 'all') activePills.push({ key: 'team', label: fTeam,                                     onRemove: () => setFTeam('all') })
   if (q)               activePills.push({ key: 'q',    label: `“${q}”`,                        onRemove: () => setQ('') })
 
+  const bulkActive = selectMode && selected.size > 0
+
   return (
-    <div className={s.page}>
+    <div className={`${s.page} ${bulkActive ? s.pageBulkActive : ''}`}>
       {/* ── Filter bar (sticky, broadcast field styling) ──────────────── */}
       <div className={s.filterBar}>
         <label className={s.search} aria-label="Buscar">
@@ -260,7 +262,7 @@ export default function CardsPage({
       )}
 
       {/* ── Bulk action bar (sticky bottom, chamfered) ────────────────── */}
-      {selectMode && selected.size > 0 && (
+      {bulkActive && (
         <div className={s.bulkBar} role="toolbar" aria-label="Acciones bulk">
           <span className={s.bulkCount}>
             <span className={s.bulkCountValue}>{selected.size}</span>
