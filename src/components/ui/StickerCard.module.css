@@ -1,3 +1,10 @@
+/* =============================================================================
+   StickerCard — broadcast × vault rebuild (v3).
+   Chamfered TR + BL (8px), status-color left bar, status dot TL, type chip TR,
+   bottom-right status chip (clickable target via parent button).
+   Crossfade 150ms between status states.
+   ============================================================================= */
+
 .card {
   position: relative;
   display: flex;
@@ -5,80 +12,130 @@
   align-items: stretch;
   gap: 4px;
   width: 100%;
-  min-height: 92px;
-  padding: 22px var(--sp-3) var(--sp-3);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--bg-card);
+  min-height: 124px;
+  padding: 24px 14px 38px 16px;
+  background: linear-gradient(180deg, rgba(15, 22, 38, 0.78) 0%, rgba(8, 12, 22, 0.92) 100%);
+  border: 1px solid rgba(245, 200, 70, 0.08);
+  border-left: 2px solid var(--card-bar, rgba(245, 200, 70, 0.18));
+  border-radius: 3px;
   cursor: pointer;
   font-family: var(--font-body);
   text-align: left;
   color: inherit;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
   transition:
-    background var(--t-status),
-    border-color var(--t-status),
-    box-shadow var(--t-status);
+    background var(--t-status, 0.15s ease),
+    border-color var(--t-status, 0.15s ease),
+    box-shadow 0.18s ease,
+    transform 0.14s ease;
+  overflow: hidden;
+}
+
+/* Subtle radial glow at bottom-left in status color, like a stage light */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 50% at 20% 100%, var(--card-glow, transparent) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .card:hover {
-  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  border-color: rgba(245, 200, 70, 0.18);
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.45),
+    0 0 22px var(--card-glow, transparent);
 }
+
+/* ── Status states ──────────────────────────────────────────────────────── */
 
 .missing {
-  background: var(--bg-card);
-  border-color: var(--border);
+  --card-bar: rgba(245, 200, 70, 0.10);
+  --card-glow: transparent;
+  filter: saturate(0.85);
+  opacity: 0.92;
 }
-.missing .name { color: var(--text-muted); }
+.missing .name { color: var(--text-strong); }
 
 .have {
+  --card-bar: var(--status-have);
+  --card-glow: rgba(34, 197, 94, 0.18);
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--status-have) 9%, var(--bg-card)) 0%,
-    var(--bg-card) 100%
+    color-mix(in srgb, var(--status-have) 8%, rgba(15, 22, 38, 0.85)) 0%,
+    rgba(8, 12, 22, 0.95) 100%
   );
-  border-color: color-mix(in srgb, var(--status-have) 50%, var(--border));
-  box-shadow: var(--shadow-glow-have);
+  border-color: color-mix(in srgb, var(--status-have) 24%, rgba(245, 200, 70, 0.08));
 }
 .have .name { color: var(--text); }
 
 .duplicate {
+  --card-bar: var(--status-dup);
+  --card-glow: rgba(245, 158, 11, 0.18);
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--status-dup) 11%, var(--bg-card)) 0%,
-    var(--bg-card) 100%
+    color-mix(in srgb, var(--status-dup) 9%, rgba(15, 22, 38, 0.85)) 0%,
+    rgba(8, 12, 22, 0.95) 100%
   );
-  border-color: color-mix(in srgb, var(--status-dup) 55%, var(--border));
-  box-shadow: var(--shadow-glow-dup);
+  border-color: color-mix(in srgb, var(--status-dup) 28%, rgba(245, 200, 70, 0.08));
 }
 .duplicate .name { color: var(--text); }
 
+/* ── Selected (bulk-mode highlight) ─────────────────────────────────────── */
+
 .selected {
-  outline: 2px solid var(--gold-3);
+  outline: 1.5px solid var(--gold-3);
   outline-offset: 2px;
+  box-shadow:
+    0 0 0 1px rgba(245, 200, 70, 0.25),
+    0 0 22px var(--gold-glow);
 }
 .selected .name { color: var(--gold-1); }
 
+/* ── Top decorations ────────────────────────────────────────────────────── */
+
 .dot {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 10px;
+  left: 12px;
+  z-index: 2;
 }
 
 .chip {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
 }
 
+/* ── Body ───────────────────────────────────────────────────────────────── */
+
 .name {
+  position: relative;
+  z-index: 1;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.25;
-  margin-top: 2px;
+  margin-top: 6px;
   word-break: break-word;
+  letter-spacing: 0.01em;
 }
 
 .meta {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -92,25 +149,73 @@
 .team {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   min-width: 0;
 }
 
 .flag {
   font-size: 12px;
   line-height: 1;
+  flex-shrink: 0;
+}
+
+.teamSep {
+  color: var(--text-faint);
+  font-size: 10px;
 }
 
 .teamName {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
 .num {
   font-family: var(--font-display);
   font-size: 12px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
   flex-shrink: 0;
+}
+
+/* ── Bottom-right status chip ───────────────────────────────────────────── */
+
+.statusChip {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px 3px 6px;
+  border: 1px solid var(--card-bar, rgba(245, 200, 70, 0.18));
+  border-radius: 999px;
+  background: rgba(6, 10, 22, 0.65);
+  font-family: var(--font-body);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--card-bar, var(--text-muted));
+  white-space: nowrap;
+  pointer-events: none; /* clicks fall through to the parent button */
+  transition: opacity var(--t-status, 0.15s ease), border-color var(--t-status, 0.15s ease), color var(--t-status, 0.15s ease);
+}
+
+.missing .statusChip { color: var(--text-muted); border-color: rgba(148, 163, 184, 0.18); }
+.have .statusChip    { color: var(--status-have); }
+.duplicate .statusChip { color: var(--status-dup); }
+
+.statusChip svg {
+  flex-shrink: 0;
+}
+
+/* ── Hide meta team/num inline on smaller cards if needed ───────────────── */
+
+@media (max-width: 540px) {
+  .card { min-height: 116px; padding: 22px 12px 36px 14px; }
+  .name { font-size: 12.5px; }
+  .meta { font-size: 10.5px; }
 }
