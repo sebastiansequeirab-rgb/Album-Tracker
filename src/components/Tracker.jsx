@@ -6,6 +6,7 @@ import AlbumSwitcher from './AlbumSwitcher'
 import Flag from './Flag'
 import Marketplace from './Marketplace'
 import Profile from './Profile'
+import DashboardPage from './pages/DashboardPage'
 import s from './Tracker.module.css'
 
 export default function Tracker({
@@ -425,136 +426,20 @@ export default function Tracker({
         {/* Dashboard */}
         {tab === 'dashboard' && (
           <div className={s.fade}>
-            <div className={s.statsGrid}>
-              {[
-                { l:'Total',     v:cfg.mainCount, c:'#60A5FA', e:'📦' },
-                { l:'Tengo',     v:stats.have,    c:'#4ADE80', e:'✅' },
-                { l:'Faltan',    v:stats.miss,    c:'#F87171', e:'❌' },
-                { l:'Repetidas', v:stats.dup,     c:'#F59E0B', e:'🔄' },
-              ].map(stat => (
-                <div key={stat.l} className={s.statCard}>
-                  <div className={s.statEmoji}>{stat.e}</div>
-                  <div className={s.statValue} style={{ color: stat.c }}>{stat.v}</div>
-                  <div className={s.statLabel}>{stat.l}</div>
-                </div>
-              ))}
-            </div>
-
-            <div onClick={() => setShowQuick(true)} className={s.quickCta} style={{ cursor:'pointer' }}>
-              <div>
-                <div className={s.quickCtaTitle}>✏️ ACTUALIZACIÓN RÁPIDA</div>
-                <div className={s.quickCtaSub}>Pega varios números en bulk · Ej: "1, 3, 5-10"</div>
-              </div>
-              <div className={s.quickCtaArrow}>→</div>
-            </div>
-
-            <div className={s.dashboardCols}>
-              <div className={s.panel}>
-                <div className={s.panelTitle}>POR TIPO</div>
-                {Object.entries(TM).filter(([t]) => t !== 'Momentum').map(([type, m]) => {
-                  const tc = ALL_ITEMS.filter(c => c.type === type)
-                  const h  = tc.filter(c => gs(c.id) !== 'missing').length
-                  const p  = tc.length ? Math.round(h / tc.length * 100) : 0
-                  return (
-                    <div key={type} className={s.typeRow}>
-                      <div className={s.typeRowHeader}>
-                        <span className={s.typeRowLabel} style={{ color: m.c }}>{m.e} {m.l}</span>
-                        <span className={s.typeRowCount}>{h}/{tc.length}</span>
-                      </div>
-                      <Bar pct={p} color={m.c} h={5} />
-                    </div>
-                  )
-                })}
-              </div>
-
-              <div className={s.panelStack}>
-                <div className={s.panel}>
-                  <div className={s.panelTitle}>CONFEDERACIÓN</div>
-                  {['CONMEBOL','UEFA','CONCACAF','CAF','AFC','OFC'].map(cf => {
-                    const ct = cfg.teams.filter(t => t.conf === cf)
-                    const cc = ALL_ITEMS.filter(c => ct.some(t => t.name === c.team))
-                    const h  = cc.filter(c => gs(c.id) !== 'missing').length
-                    const p  = cc.length ? Math.round(h / cc.length * 100) : 0
-                    if (!cc.length) return null
-                    return (
-                      <div key={cf} className={s.confRow}>
-                        <div className={s.confRowHeader}>
-                          <span className={s.confLabel} style={{ color: CC[cf] }}>{cf}</span>
-                          <span className={s.confPct}>{p}%</span>
-                        </div>
-                        <Bar pct={p} color={CC[cf]} h={7} />
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {(cfg.showRare || cfg.showMomentum) && (
-                  <div className={s.rarePanel}>
-                    {cfg.showRare && (
-                      <>
-                        <div className={s.rareTitle}>🥇 RARAS / ULTRA RARAS</div>
-                        {cfg.rareTypes.map(type => {
-                          const tc = ALL_ITEMS.filter(c => c.type === type)
-                          if (!tc.length) return null
-                          const h  = tc.filter(c => gs(c.id) !== 'missing').length
-                          return (
-                            <div key={type} className={s.rareRow}>
-                              <span className={s.rareRowName}>{TM[type]?.e} {TM[type]?.l}</span>
-                              <span className={`${s.rareRowValue} ${h === tc.length ? s.rareRowComplete : s.rareRowGoing}`}>
-                                {h}/{tc.length}
-                              </span>
-                            </div>
-                          )
-                        })}
-                      </>
-                    )}
-
-                    {cfg.showMomentum && (
-                      <div className={s.momentumWrap}>
-                        <div className={s.momentumLabel}>💎 MOMENTUM</div>
-                        {MOMENTUM.map((p, i) => {
-                          const mc = ALL_ITEMS.find(c => c.id === `MOM-${i}`)
-                          if (!mc) return null
-                          const status = gs(mc.id)
-                          const on = status !== 'missing'
-                          return (
-                            <div key={i} onClick={() => toggle(mc.id)}
-                              className={`${s.momentumRow} ${on ? s.momentumRowOn : ''}`}
-                              style={{ cursor: 'pointer' }}>
-                              <span>{p.flag}</span>
-                              <span className={`${s.momentumName} ${on ? s.momentumNameOn : ''}`}>{p.name}</span>
-                              <div className={s.momentumDot} style={{
-                                background: status === 'have' ? '#A855F7'
-                                           : status === 'duplicate' ? '#F59E0B'
-                                           : '#4C1D95'
-                              }} />
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className={s.missingTeams}>
-              <div className={s.missingTeamsTitle}>📌 EQUIPOS CON MÁS FALTANTES</div>
-              <div className={s.missingTeamsGrid}>
-                {teamStats.sort((a,b) => (b.tot - b.have) - (a.tot - a.have)).slice(0,12).map(t => (
-                  <div key={t.id} onClick={() => { setTab('teams'); setSelTeam(t.id) }}
-                    className={s.missingTeamCard} style={{ cursor:'pointer' }}>
-                    <span className={s.missingTeamFlag}>
-                      <Flag fifa={t.id} emoji={t.flag} size={28} alt={t.name} />
-                    </span>
-                    <div className={s.missingTeamBody}>
-                      <div className={s.missingTeamName}>{t.name}</div>
-                      <div className={s.missingTeamCount}>Faltan {t.tot - t.have}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <DashboardPage
+              cfg={cfg}
+              stats={stats}
+              momStats={momStats}
+              teamStats={teamStats}
+              ALL_ITEMS={ALL_ITEMS}
+              TM={TM}
+              MOMENTUM={MOMENTUM}
+              gs={gs}
+              toggle={toggle}
+              setShowQuick={setShowQuick}
+              setTab={setTab}
+              setSelTeam={setSelTeam}
+            />
           </div>
         )}
 
