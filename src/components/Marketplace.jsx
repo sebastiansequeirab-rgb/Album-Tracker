@@ -927,7 +927,7 @@ function ListingBanner({ listing, author, itemsById, myCol, isFavorite, busyAcce
     <div className={`${s.banner} ${isPerfectMatch ? s.bannerMatch : ''}`}>
       {isPerfectMatch && (
         <div className={s.matchBadge}>
-          <IconSparkle size={12}/> <span>MATCH</span>
+          <IconSparkle size={12}/> <span>Match Perfecto</span>
         </div>
       )}
 

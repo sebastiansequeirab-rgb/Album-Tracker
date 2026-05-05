@@ -366,6 +366,9 @@
 .threadScroll {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;     /* momentum scroll on iOS */
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
   padding: 18px 16px;
   display: flex;
   flex-direction: column;
@@ -431,13 +434,14 @@
 .bubbleRowSystem { justify-content: center; }
 
 .bubble {
-  max-width: 78%;
+  max-width: 65%;
   padding: 10px 13px;
   border-radius: 3px;
   display: flex;
   flex-direction: column;
   gap: 4px;
   word-wrap: break-word;
+  overflow-wrap: anywhere;
   position: relative;
 }
 
@@ -449,11 +453,13 @@
 }
 
 .bubbleMine {
-  background: rgba(245, 200, 70, 0.10);
-  border: 1px solid rgba(245, 200, 70, 0.32);
-  border-left: 2px solid var(--gold-3);
+  background: linear-gradient(180deg, rgba(245, 200, 70, 0.16) 0%, rgba(230, 168, 23, 0.10) 100%);
+  border: 1px solid rgba(245, 200, 70, 0.36);
+  border-left: 2px solid var(--gold-2);
   color: var(--gold-1);
-  box-shadow: 0 6px 18px rgba(245, 200, 70, 0.14);
+  box-shadow:
+    0 6px 18px rgba(245, 200, 70, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 /* System messages preserved per spec: dashed border, muted, italic */
@@ -492,15 +498,29 @@
 .bubbleMine .bubbleTime { color: var(--gold-3); opacity: 0.85; }
 .bubbleSystem .bubbleTime { align-self: flex-end; }
 
-/* ============================================================ Composer */
+/* ============================================================ Composer
+   Gold left bar accent + circular gold send button per broadcast spec.
+   Mobile: respect iPhone home-indicator safe area. */
 .composer {
   display: flex;
   align-items: flex-end;
   gap: 10px;
-  padding: 12px;
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
   background: linear-gradient(180deg, rgba(15, 22, 38, 0.65) 0%, rgba(22, 33, 58, 0.85) 100%);
   border-top: 1px solid rgba(245, 200, 70, 0.18);
   flex-shrink: 0;
+  position: relative;
+}
+.composer::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--gold-3) 0%, transparent 100%);
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .composerInput {
@@ -566,10 +586,85 @@
   filter: none;
 }
 
+/* ============================================================ Responsive
+   - ≥1440 Mac: keep bubble at 65% for readability
+   - ≤768 tablet: bubbles ≈72%
+   - ≤540 iPhone: full immersive thread, ≥44px tap targets, safe-area composer
+*/
+@media (min-width: 1440px) {
+  .threadView { height: clamp(560px, 70vh, 760px); }
+  .listView { min-height: 360px; }
+  .bubble { max-width: 60%; }
+}
+
+@media (max-width: 768px) {
+  .bubble { max-width: 72%; }
+  .listView { padding: 4px; }
+  .listHeader { padding: 12px 14px; margin: -4px -4px 4px; }
+}
+
 @media (max-width: 540px) {
-  .threadView { height: clamp(420px, 75vh, 720px); }
-  .bubble { max-width: 86%; }
+  /* Thread view becomes immersive on phone — fill the available viewport
+     after Tracker header and bottom nav. The bottom nav fixed height + safe
+     area are already accounted for in the Tracker shell padding. */
+  .threadView {
+    height: clamp(440px, calc(100vh - 220px), 760px);
+    border-left-width: 0;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+    clip-path: none;
+  }
+  .listView {
+    border-left-width: 0;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+    clip-path: none;
+    padding: 4px;
+    min-height: 280px;
+  }
+  .threadHead {
+    padding: 12px 12px;
+    gap: 10px;
+  }
   .threadHeadName { font-size: 16px; letter-spacing: 0.06em; }
-  .listHeader { gap: 9px; }
+  .threadHeadSub { font-size: 9.5px; }
+  .threadAvatar { width: 40px; height: 40px; font-size: 20px; }
+
+  /* Back button must be a clear tap target on phone */
+  .backBtn { width: 44px; height: 44px; }
+
+  /* Bubbles: 78% per spec on phone for chat density */
+  .bubble { max-width: 78%; padding: 11px 13px; }
+  .bubbleContent { font-size: 13.5px; line-height: 1.5; }
+
+  /* List header tighter */
+  .listHeader { gap: 9px; padding: 12px 14px; }
   .listHeaderTitle { font-size: 13px; letter-spacing: 0.24em; }
+
+  /* Thread items: bigger tap target and a touch more spacing */
+  .threadItem { padding: 13px 12px; gap: 11px; min-height: 64px; }
+  .threadItemAvatar { width: 44px; height: 44px; font-size: 22px; }
+  .threadItemName { font-size: 14px; }
+  .threadItemPreview { font-size: 12px; }
+
+  /* Composer: ≥44px send + safe area + textarea */
+  .composer { padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px)); }
+  .composerInput { font-size: 14px; padding: 12px 13px; }
+  .composerSend { width: 46px; height: 46px; }
+
+  /* Empty state: no overflow on phone */
+  .listEmpty { padding: 36px 16px; }
+  .listEmptyTitle { font-size: 18px; letter-spacing: 0.16em; }
+  .listEmptyText { font-size: 12px; }
+  .listRetry { min-height: 44px; padding: 11px 18px; }
+
+  .threadEmpty { padding: 28px 14px; }
+  .threadEmptyTitle { font-size: 16px; }
+}
+
+/* Compact iPhone (≤414px) — fine-tune density */
+@media (max-width: 414px) {
+  .threadHead { padding: 11px 10px; }
+  .threadHeadBody { min-width: 0; }
+  .threadHeadName { font-size: 15px; }
+  .composer { gap: 8px; }
+  .composerSend { width: 44px; height: 44px; }
 }

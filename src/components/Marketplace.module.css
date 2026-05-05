@@ -18,6 +18,20 @@
   0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.30), inset 0 0 0 2px var(--status-have); }
   50%      { box-shadow: 0 0 28px 4px rgba(34, 197, 94, 0.20), inset 0 0 0 2px var(--status-have); }
 }
+@keyframes mkBadgePulse {
+  0%, 100% {
+    box-shadow:
+      0 4px 12px rgba(34, 197, 94, 0.35),
+      0 0 0 0 rgba(74, 222, 128, 0.55);
+    transform: translateY(0);
+  }
+  50% {
+    box-shadow:
+      0 6px 18px rgba(34, 197, 94, 0.55),
+      0 0 0 6px rgba(74, 222, 128, 0);
+    transform: translateY(0.5px);
+  }
+}
 
 .wrap {
   animation: mkFadeUp 0.22s var(--ease-out);
@@ -26,19 +40,35 @@
   gap: var(--sp-3);
 }
 
-/* ============================================================ Sub-tabs */
+/* ============================================================ Sub-tabs
+   Sticky under the Tracker header (desktop top:90px, mobile bottom-nav fixed
+   so on mobile the subnav can be sticky to the top of the main without
+   colliding with header — header height ≈48px on phone). Add a soft glass
+   bg so content scrolling underneath doesn't bleed through. */
 .subnav {
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  padding-bottom: 4px;
-  margin-bottom: 6px;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 16px;
+  padding: 6px 2px 8px;
+  margin-bottom: 4px;
+  position: sticky;
+  top: 90px;                              /* desktop: just under Tracker header */
+  z-index: 50;
+  background: linear-gradient(180deg, rgba(6, 8, 15, 0.92) 0%, rgba(6, 8, 15, 0.78) 78%, rgba(6, 8, 15, 0) 100%);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
 }
 .subnav::-webkit-scrollbar { display: none; }
+.subnavBtn { scroll-snap-align: start; }
 
 .subnavBtn {
   flex-shrink: 0;
-  padding: 9px 16px;
+  min-height: 40px;
+  padding: 10px 16px;
   background: rgba(15, 22, 38, 0.55);
   border: 1px solid rgba(245, 200, 70, 0.10);
   border-left: 2px solid rgba(245, 200, 70, 0.16);
@@ -219,10 +249,18 @@
 .skeleton {
   height: 180px;
   border-radius: 3px;
-  background: linear-gradient(90deg, rgba(15, 22, 38, 0.45) 0%, rgba(20, 28, 48, 0.65) 50%, rgba(15, 22, 38, 0.45) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(15, 22, 38, 0.50) 0%,
+    rgba(28, 38, 62, 0.78) 40%,
+    rgba(245, 200, 70, 0.10) 50%,
+    rgba(28, 38, 62, 0.78) 60%,
+    rgba(15, 22, 38, 0.50) 100%
+  );
   background-size: 200% 100%;
-  animation: skelShimmer 1.6s linear infinite;
-  border: 1px solid rgba(245, 200, 70, 0.08);
+  animation: skelShimmer 1.8s linear infinite;
+  border: 1px solid rgba(245, 200, 70, 0.10);
+  border-left: 2px solid rgba(245, 200, 70, 0.20);
   clip-path: polygon(
     0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px)
   );
@@ -236,7 +274,7 @@
 .backLink {
   align-self: flex-start;
   background: transparent;
-  border: 0;
+  border: 1px solid transparent;
   color: var(--gold-2);
   font-family: var(--font-body);
   font-size: 12px;
@@ -244,15 +282,23 @@
   letter-spacing: 0.10em;
   text-transform: uppercase;
   cursor: pointer;
-  padding: 6px 10px;
+  padding: 8px 12px;
+  min-height: 36px;
   border-radius: 3px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: color var(--t-fast), background var(--t-fast);
+  transition: color var(--t-fast), background var(--t-fast), border-color var(--t-fast);
   margin-bottom: 4px;
 }
-.backLink:hover { color: var(--gold-1); background: rgba(245, 200, 70, 0.06); }
+.backLink:hover {
+  color: var(--gold-1);
+  background: rgba(245, 200, 70, 0.06);
+  border-color: rgba(245, 200, 70, 0.18);
+}
+@media (max-width: 540px) {
+  .backLink { min-height: 44px; padding: 10px 12px; }
+}
 
 /* ============================================================ Users grid (favoritos) */
 .usersGrid {
@@ -968,8 +1014,8 @@
   background: transparent;
   border: 1px solid rgba(245, 200, 70, 0.18);
   color: var(--text-muted);
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 3px;
   cursor: pointer;
   display: inline-flex;
@@ -977,6 +1023,9 @@
   justify-content: center;
   transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast), transform var(--t-fast);
   flex-shrink: 0;
+}
+@media (max-width: 540px) {
+  .favStar { width: 44px; height: 44px; }
 }
 .favStar:hover { color: var(--gold-2); border-color: var(--gold-3); background: rgba(245, 200, 70, 0.06); }
 .favStarOn {
@@ -1141,11 +1190,19 @@
   background: color-mix(in srgb, var(--status-missing) 18%, transparent);
 }
 
-/* ============================================================ Banners (listings desglosados) */
+/* ============================================================ Banners (listings desglosados)
+   Stack vertical full-width by default. On Mac wide we cap the banner width
+   so paragraphs stay readable, but keep the column flow (per spec: full-width
+   feed). max-width: var(--container-max) inherits from the .main wrapper of
+   the Tracker — explicit cap below as belt-and-suspenders. */
 .bannerList {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
+  max-width: 880px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
 }
 
 .banner {
@@ -1174,15 +1231,19 @@
   border-color: var(--status-have) !important;
   border-left-color: var(--status-have) !important;
   animation: mkMatchPulse 2.4s ease-in-out infinite;
+  padding-top: calc(var(--sp-4) + 24px);   /* leave room for the absolute badge ribbon */
+}
+@media (max-width: 540px) {
+  .bannerMatch { padding-top: calc(var(--sp-3) + 24px); }
 }
 
 .matchBadge {
   position: absolute;
-  top: -1px;
-  right: 14px;
-  background: linear-gradient(180deg, #4ADE80 0%, #22C55E 100%);
+  top: 10px;
+  left: 12px;
+  background: linear-gradient(180deg, #6EE7A1 0%, #22C55E 100%);
   color: #052E16;
-  padding: 5px 12px 5px 10px;
+  padding: 5px 11px 5px 9px;
   font-family: var(--font-display);
   font-size: 11px;
   letter-spacing: 0.20em;
@@ -1190,11 +1251,16 @@
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  border-radius: 0 0 3px 3px;
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.40);
+  gap: 6px;
+  border-radius: 3px;
+  box-shadow:
+    0 4px 12px rgba(34, 197, 94, 0.40),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
   z-index: 2;
+  animation: mkBadgePulse 1.8s ease-in-out infinite;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
 }
+.matchBadge svg { color: #052E16; filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.4)); }
 
 .bannerHead {
   display: flex;
@@ -1439,13 +1505,43 @@
   text-transform: uppercase;
 }
 
-/* ============================================================ Responsive */
+/* ============================================================ Responsive
+   Breakpoints:
+   - ≥1440 Mac wide
+   - ≤768 mobile-tablet (Tracker bottom-nav becomes fixed)
+   - ≤540 phone (375-414 iPhone target)
+*/
+
+/* ---------- Mac wide (≥1440px) — give the Marketplace some breathing room.
+   The Tracker.main already caps at --container-max (980px) so we don't grow,
+   we just polish density. */
+@media (min-width: 1440px) {
+  .wrap { gap: 18px; }
+  .subnav { gap: 8px; }
+  .subnavBtn { padding: 10px 18px; font-size: 12.5px; }
+  .sectionTitle { font-size: 15px; }
+  .bannerActions > button { min-width: 160px; }
+  .usersGrid {
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 16px;
+  }
+  .cardsList {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+  .drillTabs { gap: 6px; }
+}
+
+/* ---------- Tablet & mobile (≤768px) — Tracker bottom-nav becomes fixed,
+   so the sticky subnav offset must reset (no top:90px desktop header). */
 @media (max-width: 768px) {
   .subnav {
     margin-left: calc(var(--sp-3) * -1);
     margin-right: calc(var(--sp-3) * -1);
     padding-left: var(--sp-3);
     padding-right: var(--sp-3);
+    /* Subnav stays sticky but anchored under the smaller mobile header.
+       Tracker mobile header is ~48px, plus iPhone notch safe-area. */
+    top: calc(48px + env(safe-area-inset-top, 0px));
   }
   .modalBackdrop {
     align-items: flex-end;
@@ -1461,20 +1557,111 @@
   }
   .sectionHead { gap: 10px; }
   .sectionTitle { font-size: 13px; letter-spacing: 0.24em; }
+
+  /* Drill-down trader head: stack avatar above body to use vertical space */
+  .detailHead {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 14px;
+  }
+  .detailActions { width: 100%; }
+  .detailActions > button { flex: 1 1 calc(50% - 4px); min-height: 44px; }
 }
 
+/* ---------- iPhone (375-414px) — full edge-to-edge polish */
 @media (max-width: 540px) {
+  .wrap { gap: 12px; }
   .usersGrid { grid-template-columns: 1fr; }
   .cardsList { grid-template-columns: 1fr; }
-  .detailHead { padding: 18px; gap: 14px; }
+  .detailHead { padding: 16px; gap: 12px; }
   .detailAvatar { width: 56px; height: 56px; font-size: 28px; }
-  .detailName { font-size: 22px; }
-  .subnavBtn { padding: 8px 12px; font-size: 11px; letter-spacing: 0.06em; }
-  .banner { padding: var(--sp-3); }
-  .bannerActions { flex-direction: column; }
-  .bannerActions > button { min-width: 0; }
-  .matchBadge { right: 10px; padding: 4px 9px; font-size: 10px; }
-  .btnPrimary, .btnGhost { padding: 10px 14px; font-size: 12px; letter-spacing: 0.14em; }
+  .detailName { font-size: 22px; line-height: 1.05; }
+  .detailSub { font-size: 11px; }
+
+  /* Subnav: tighter, scroll-snap on first/last keep visible */
+  .subnavBtn {
+    padding: 9px 14px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    min-height: 40px;
+  }
+
+  /* Drill tabs: full-width 2-col, ≥44px touch */
+  .drillTabs { margin: 4px 0 10px; }
+  .drillTab { padding: 14px 8px; min-height: 48px; font-size: 10.5px; letter-spacing: 0.14em; }
+
+  /* Banner: tighter padding, full-width 1-col actions stack */
+  .banner { padding: var(--sp-3); gap: var(--sp-2); }
+  .bannerHead { padding-bottom: 10px; gap: 10px; }
+  .bannerSection { gap: 6px; }
+  .bannerSectionTitle { font-size: 10.5px; letter-spacing: 0.20em; gap: 7px; }
+  .bannerInfo { padding: 9px 11px; gap: 5px; }
+  .bannerInfoLine { font-size: 12px; gap: 8px; }
+  .bannerNote { font-size: 12px; }
+
+  /* Banner action row: stacked but each button is full-width and ≥44px */
+  .bannerActions { flex-direction: column; gap: 6px; padding-top: 12px; }
+  .bannerActions > button {
+    min-width: 0;
+    width: 100%;
+    min-height: 44px;
+    padding: 12px 14px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+  }
+
+  /* User card actions row: 2 cols, big tap targets */
+  .userActions > button { min-height: 44px; padding: 11px 8px; font-size: 11px; }
+
+  /* MATCH badge: still pulse, tighter on phone */
+  .matchBadge { left: 10px; top: 8px; padding: 4px 9px; font-size: 10px; letter-spacing: 0.16em; }
+
+  /* Generic gold + ghost buttons: ≥44px tap target on mobile */
+  .btnPrimary, .btnGhost, .btnAccent {
+    min-height: 44px;
+    padding: 12px 16px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+  }
+  .btnAccept, .btnReject { min-height: 40px; padding: 10px 14px; font-size: 11px; }
+
+  /* Trade row: tighter, message wraps */
+  .tradeRow { padding: var(--sp-3); gap: 8px; }
+  .tradeRowBody { padding: 9px 10px; }
+  .tradeLine { font-size: 11.5px; flex-wrap: wrap; }
+  .tradeMessage { font-size: 12px; padding: 4px 9px; }
+
+  /* Filter row: more breathing on phone */
+  .filterRow { padding: 4px 0; font-size: 12.5px; }
+
+  /* Pick counter: keep readable on phone */
+  .pickCounter { padding: 10px 14px; font-size: 11px; }
+  .pickCounter strong { font-size: 16px; }
+
+  /* Mini cards: a touch more padding to feel native */
+  .miniCard { padding: 10px 11px; }
+  .miniCardName { font-size: 12.5px; }
+
+  /* Mi lista: tighter category groups */
+  .catTitle { font-size: 12px; letter-spacing: 0.22em; gap: 8px; }
+  .teamGroup { padding: 11px 12px; }
+
+  /* Empty states: less vertical air on phone */
+  .empty { padding: 38px 18px; }
+  .emptyIcon { width: 68px; height: 68px; }
+  .emptyTitle { font-size: 18px; letter-spacing: 0.16em; }
+  .emptyText { font-size: 12px; }
+  .emptyCta { min-height: 44px; padding: 12px 22px; }
+
+  /* Section header rule shrinks */
+  .sectionRule { min-width: 8px; }
+}
+
+/* ---------- Compact phones (≤414px) — keep everything tappable */
+@media (max-width: 414px) {
+  .bannerSectionTitle .matchCount { padding: 1px 6px; }
+  .miniCardNum { padding: 2px 7px; font-size: 10.5px; }
 }
 
 @media (max-width: 480px) {
