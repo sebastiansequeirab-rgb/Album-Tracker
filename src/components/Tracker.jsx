@@ -415,9 +415,9 @@ export default function Tracker({
             <span className={s.sumDup}>{stats.dup} <span className={s.sumLabel}>repetidas</span></span>
             <span className={s.sumMiss}>{stats.miss} <span className={s.sumLabel}>faltan</span></span>
             {cfg.showMomentum && <span className={s.sumMom}>{momStats.have}/{momStats.tot} <span className={s.sumLabel}>momentum</span></span>}
-            <span className={s.sumTotal}>
-              {cfg.mainCount}{cfg.extraCount > 0 ? ` + ${cfg.extraCount} Momentum` : ''}
-            </span>
+            {cfg.extraCount > 0 && (
+              <span className={s.sumTotal}>+ {cfg.extraCount} Momentum</span>
+            )}
           </div>
         </div>
       </header>
@@ -554,11 +554,13 @@ export default function Tracker({
         </AnimatePresence>
       </main>
 
-      {/* Floating Quick Update Button */}
-      <button onClick={() => setShowQuick(true)} className={s.fab} aria-label="Actualización rápida">
-        <span className={s.fabIcon} aria-hidden="true"><IconPencil /></span>
-        <span className={s.fabLabel}>ACTUALIZAR</span>
-      </button>
+      {/* Floating Quick Update Button — hidden on Home (has inline CTA) */}
+      {tab !== 'dashboard' && (
+        <button onClick={() => setShowQuick(true)} className={s.fab} aria-label="Actualización rápida">
+          <span className={s.fabIcon} aria-hidden="true"><IconPencil /></span>
+          <span className={s.fabLabel}>ACTUALIZAR</span>
+        </button>
+      )}
     </div>
   )
 }

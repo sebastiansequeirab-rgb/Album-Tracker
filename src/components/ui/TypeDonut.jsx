@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import s from './TypeDonut.module.css'
 
-const R   = 80
-const SW  = 22
-const CX  = 112
-const GAP = 3.5
-const CIRC = 2 * Math.PI * R  // ≈ 502.65
+const R    = 82
+const SW   = 24
+const CX   = 114    // R + SW/2 + ~8px padding
+const GAP  = 3
+const CIRC = 2 * Math.PI * R  // ≈ 515.22
 
 export default function TypeDonut({ segments = [] }) {
   const grandTotal = segments.reduce((a, seg) => a + seg.total, 0)
@@ -14,43 +14,54 @@ export default function TypeDonut({ segments = [] }) {
 
   const [armed, setArmed] = useState(false)
   useEffect(() => {
-    const t = setTimeout(() => setArmed(true), 120)
+    const t = setTimeout(() => setArmed(true), 100)
     return () => clearTimeout(t)
   }, [])
 
   if (!grandTotal) return null
 
-  // Build arc data sorted by total descending so big types get clean segments
+  // Build arc offsets — start from top (−90° = already in viewBox rotation)
   let offset = 0
   const arcs = segments.map((seg, i) => {
     const allocated = (seg.total / grandTotal) * CIRC
-    const segLen    = Math.max(2, allocated - GAP)
+    const segLen    = Math.max(3, allocated - GAP)
     const haveLen   = seg.total ? (seg.have / seg.total) * segLen : 0
     const arc = { seg, i, allocated, segLen, haveLen, offset }
     offset += allocated
     return arc
   })
 
+  // Legend columns: 2 cols for 8+ types
+  const legendCols = segments.length >= 8 ? '1fr 1fr' : '1fr'
+
   return (
     <div className={s.wrap}>
-      {/* ── SVG donut ───────────────────────────────────────────── */}
+      {/* ── SVG donut ─────────────────────────────────────────── */}
       <div className={s.chartWrap}>
         <svg
           className={s.svg}
           viewBox={`0 0 ${CX * 2} ${CX * 2}`}
           role="img"
-          aria-label={`Colección ${grandPct}% completada (${grandHave}/${grandTotal})`}
+          aria-label={`Colección ${grandPct}% completada — ${grandHave} de ${grandTotal} cartas`}
         >
+          {/* Outer glow ring — atmosphere behind all arcs */}
+          <circle
+            cx={CX} cy={CX} r={R}
+            fill="none"
+            strokeWidth={SW + 8}
+            stroke="rgba(245,200,70,0.04)"
+          />
+
           <g transform={`rotate(-90 ${CX} ${CX})`}>
             {arcs.map(({ seg, i, segLen, haveLen, offset: off }) => (
               <g key={seg.name}>
-                {/* Background arc — unfilled portion */}
+                {/* Background arc — empty/unfilled portion */}
                 <circle
                   cx={CX} cy={CX} r={R}
                   fill="none"
                   strokeWidth={SW}
                   stroke={seg.color}
-                  strokeOpacity={0.15}
+                  strokeOpacity={0.18}
                   strokeDasharray={`${segLen} ${CIRC - segLen}`}
                   strokeDashoffset={-off}
                   strokeLinecap="butt"
@@ -66,48 +77,41 @@ export default function TypeDonut({ segments = [] }) {
                   strokeLinecap="butt"
                   style={{
                     transition: `stroke-dasharray 1.3s cubic-bezier(0.16,1,0.3,1) ${i * 0.06}s`,
-                    filter: `drop-shadow(0 0 6px ${seg.color}88)`,
+                    filter: `drop-shadow(0 0 5px ${seg.color})`,
                   }}
                 />
               </g>
             ))}
           </g>
 
+          {/* Subtle inner border ring */}
+          <circle
+            cx={CX} cy={CX} r={R - SW / 2 - 1}
+            fill="none"
+            strokeWidth={1}
+            stroke="rgba(245,200,70,0.08)"
+          />
+
           {/* Center text */}
-          <text
-            x={CX} y={CX - 10}
-            textAnchor="middle"
-            dominantBaseline="auto"
-            className={s.centerPct}
-          >
+          <text x={CX} y={CX - 12} textAnchor="middle" dominantBaseline="middle" className={s.centerPct}>
             {grandPct}%
           </text>
-          <text
-            x={CX} y={CX + 14}
-            textAnchor="middle"
-            dominantBaseline="auto"
-            className={s.centerCount}
-          >
-            {grandHave} / {grandTotal}
+          <text x={CX} y={CX + 14} textAnchor="middle" dominantBaseline="middle" className={s.centerCount}>
+            {grandHave.toLocaleString('es')} / {grandTotal.toLocaleString('es')}
           </text>
-          <text
-            x={CX} y={CX + 30}
-            textAnchor="middle"
-            dominantBaseline="auto"
-            className={s.centerLabel}
-          >
+          <text x={CX} y={CX + 32} textAnchor="middle" dominantBaseline="middle" className={s.centerLabel}>
             CARTAS
           </text>
         </svg>
       </div>
 
       {/* ── Legend ──────────────────────────────────────────────── */}
-      <div className={s.legend} aria-hidden="true">
-        {segments.map(seg => {
+      <div className={s.legend} style={{ gridTemplateColumns: legendCols }} aria-hidden="true">
+        {segments.map((seg, i) => {
           const pct = seg.total ? Math.round(seg.have / seg.total * 100) : 0
           return (
             <div key={seg.name} className={s.legendItem}>
-              <span className={s.legendSwatch} style={{ background: seg.color, boxShadow: `0 0 6px ${seg.color}88` }} />
+              <span className={s.legendSwatch} style={{ background: seg.color, boxShadow: `0 0 6px ${seg.color}` }} />
               <span className={s.legendLabel}>{seg.label}</span>
               <span className={s.legendFrac} style={{ color: seg.color }}>
                 {seg.have}<span className={s.legendSlash}>/</span>{seg.total}
@@ -118,8 +122,8 @@ export default function TypeDonut({ segments = [] }) {
                   style={{
                     width: armed ? `${pct}%` : '0%',
                     background: seg.color,
-                    transition: `width 1.1s cubic-bezier(0.16,1,0.3,1) ${segments.indexOf(seg) * 0.05}s`,
-                    boxShadow: `0 0 6px ${seg.color}66`,
+                    transition: `width 1.1s cubic-bezier(0.16,1,0.3,1) ${i * 0.05}s`,
+                    boxShadow: pct > 0 ? `0 0 6px ${seg.color}88` : 'none',
                   }}
                 />
               </span>
