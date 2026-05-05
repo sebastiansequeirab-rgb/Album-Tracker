@@ -52,6 +52,12 @@
 }
 .duplicate .name { color: var(--text); }
 
+.selected {
+  outline: 2px solid var(--gold-3);
+  outline-offset: 2px;
+}
+.selected .name { color: var(--gold-1); }
+
 .dot {
   position: absolute;
   top: 8px;

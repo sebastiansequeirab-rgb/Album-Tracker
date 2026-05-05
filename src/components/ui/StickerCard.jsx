@@ -10,6 +10,7 @@ export default function StickerCard({
   status = 'missing',
   onToggle,
   showTeam = true,
+  selected = false,
   className = '',
 }) {
   if (!card) return null
@@ -24,8 +25,9 @@ export default function StickerCard({
     <button
       type="button"
       onClick={handleClick}
-      className={`${s.card} ${variant} ${className}`}
+      className={`${s.card} ${variant} ${selected ? s.selected : ''} ${className}`}
       aria-label={`#${card.num} ${card.name}, estado ${status}`}
+      aria-pressed={selected || undefined}
     >
       <StatusDot status={dotStatus} size={8} className={s.dot} />
       {card.type && <TypeChip type={card.type} className={s.chip} />}

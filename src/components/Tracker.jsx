@@ -8,6 +8,8 @@ import Marketplace from './Marketplace'
 import Profile from './Profile'
 import DashboardPage from './pages/DashboardPage'
 import TeamsPage from './pages/TeamsPage'
+import CardsPage from './pages/CardsPage'
+import ProgressBar from './ui/ProgressBar'
 import s from './Tracker.module.css'
 
 export default function Tracker({
@@ -262,36 +264,6 @@ export default function Tracker({
     </div>
   )
 
-  const Bar = ({ pct, color = '#4ADE80', h = 6 }) => (
-    <div className={s.bar} style={{ height: h }}>
-      <div className={s.barFill} style={{ width: `${pct}%`, background: color }} />
-    </div>
-  )
-
-  const Pill = ({ card }) => {
-    const status = gs(card.id)
-    const st = ST[status]
-    const m  = TM[card.type] || { e:'?', l:'?', c:'#666' }
-    return (
-      <div onClick={() => toggle(card.id)}
-        className={s.pill}
-        style={{ background: st.bg, borderColor: st.bd, cursor: 'pointer' }}>
-        <div className={s.pillDot} style={{ background: st.dot }} />
-        <div className={s.pillBody}>
-          <div className={s.pillName} style={{ color: status === 'missing' ? '#64748B' : st.tx }}>
-            {card.name}
-          </div>
-          <div className={s.pillMeta} style={{ color: m.c }}>
-            {m.e} {m.l} · <span className={s.pillMetaNum}>#{card.num}</span>
-          </div>
-        </div>
-        <div className={s.pillTag} style={{ color: st.tx, background: st.tag, borderColor: st.bd }}>
-          {st.l}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className={s.app}>
       {/* Save banner — pops top-right when saving/saved/error */}
@@ -405,7 +377,7 @@ export default function Tracker({
               </div>
             </div>
           </div>
-          <Bar pct={stats.pct} color="linear-gradient(90deg,#15803D,#4ADE80)" h={8} />
+          <ProgressBar pct={stats.pct} color="linear-gradient(90deg,#15803D,#4ADE80)" height={8} />
           <div className={s.summaryRow}>
             <span className={s.sumHave}>✅ {stats.have}</span>
             <span className={s.sumDup}>🔄 {stats.dup}</span>
@@ -479,26 +451,19 @@ export default function Tracker({
         {/* Cards browser */}
         {tab === 'cards' && (
           <div className={s.fade}>
-            <div className={s.filtersRow}>
-              <input placeholder="🔍 Jugador, equipo o número…" value={q} onChange={e => setQ(e.target.value)}
-                className={s.searchInput} />
-              {[
-                { val:fSt,   set:setFSt,   opts:[['all','Todos los estados'],['missing','❌ Faltan'],['have','✅ Tengo'],['duplicate','🔄 Repetidas']] },
-                { val:fType, set:setFType, opts:[['all','Todos los tipos'], ...Object.entries(TM).map(([t,m]) => [t, `${m.e} ${m.l}`])] },
-                { val:fTeam, set:setFTeam, opts:[['all','Todos los equipos'], ...[...new Set(ALL_ITEMS.map(c => c.team))].sort().map(t => [t,t])] },
-              ].map((f, i) => (
-                <select key={i} value={f.val} onChange={e => f.set(e.target.value)} className={s.select}>
-                  {f.opts.map(([v,l]) => <option key={v} value={v}>{l}</option>)}
-                </select>
-              ))}
-            </div>
-            <div className={s.filterHint}>{filtered.length} cartas · toca para cambiar estado</div>
-            <div className={s.cardsGrid}>
-              {filtered.slice(0, 420).map(c => <Pill key={c.id} card={c} />)}
-            </div>
-            {filtered.length > 420 && (
-              <div className={s.moreHint}>Mostrando 420 de {filtered.length} · Usa filtros para refinar</div>
-            )}
+            <CardsPage
+              filtered={filtered}
+              ALL_ITEMS={ALL_ITEMS}
+              TM={TM}
+              q={q}         setQ={setQ}
+              fSt={fSt}     setFSt={setFSt}
+              fType={fType} setFType={setFType}
+              fTeam={fTeam} setFTeam={setFTeam}
+              gs={gs}
+              toggle={toggle}
+              bulkUpdate={bulkUpdate}
+              stats={stats}
+            />
           </div>
         )}
 
