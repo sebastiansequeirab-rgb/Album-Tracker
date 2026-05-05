@@ -224,18 +224,20 @@
   .selectBtn { grid-column: 1 / -1; }
 }
 @media (max-width: 720px) {
+  /* 2-column grid: search full-width, 3 selects fill 2 cols, button full-width */
   .filterBar {
-    grid-template-columns: 1fr;
-    gap: 10px;
-    padding: 12px 14px;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+    padding: 10px 12px;
   }
-  .search { grid-column: 1; height: 48px; }
-  .selectBtn { grid-column: 1; height: 48px; font-size: 12.5px; letter-spacing: 0.18em; }
-  .field { grid-column: 1; min-width: 0; }
-  .selectWrap { height: 48px; }
-  .select { font-size: 13.5px; }
+  .search    { grid-column: 1 / -1; height: 44px; }
+  .selectBtn { grid-column: 1 / -1; height: 44px; font-size: 12px; letter-spacing: 0.16em; }
+  .field     { grid-column: span 1; min-width: 0; }
+  /* Hide the 01/02/03 numbered labels — placeholder text serves as label on mobile */
+  .fieldLabel { display: none; }
+  .selectWrap { height: 42px; }
+  .select     { font-size: 12.5px; padding: 0 26px 0 10px; }
   .searchInput { font-size: 14px; }
-  .fieldLabel { font-size: 9.5px; letter-spacing: 0.28em; }
 }
 
 /* ===== Active filter pills (lower-third style) ================================ */

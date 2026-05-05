@@ -68,6 +68,17 @@ export default function SegmentedProgress({ segments = [], animateOnMount = true
         <span className={s.shimmer} aria-hidden="true" />
         <span className={s.scanline} aria-hidden="true" />
       </div>
+
+      {/* Legend — colored swatch + type name */}
+      <div className={s.legend} aria-hidden="true">
+        {segments.map(seg => (
+          <span key={seg.name} className={s.legendItem} style={{ '--seg-color': seg.color }}>
+            <span className={s.legendSwatch} />
+            <span className={s.legendLabel}>{seg.label}</span>
+            <span className={s.legendFrac}>{seg.have}/{seg.total}</span>
+          </span>
+        ))}
+      </div>
     </div>
   )
 }

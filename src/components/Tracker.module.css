@@ -1100,8 +1100,10 @@
   }
   .pctValue { font-size: 28px; }
   .pctLabel { font-size: 9px; }
-  .summaryRow { gap: 12px; font-size: 14px; }
-  .sumLabel { font-size: 9px; letter-spacing: 0.18em; }
+  .summaryRow { gap: 10px; font-size: 13px; flex-wrap: nowrap; overflow: hidden; }
+  .sumLabel { font-size: 8.5px; letter-spacing: 0.14em; }
+  /* Hide total count on mobile — the % in pctValue already shows it */
+  .sumTotal { display: none; }
   .iconBtn {
     padding: 6px 10px;
     min-width: 38px;

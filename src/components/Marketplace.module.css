@@ -183,7 +183,7 @@
 /* ============================================================ Empty state */
 .empty {
   text-align: center;
-  padding: 48px 20px;
+  padding: 36px 20px 32px;
   position: relative;
   background: linear-gradient(180deg, rgba(15, 22, 38, 0.55) 0%, rgba(8, 12, 22, 0.70) 100%);
   border: 1px solid rgba(245, 200, 70, 0.10);
@@ -245,9 +245,9 @@
 .emptyCta:hover { transform: translateY(-1px); filter: brightness(1.06); }
 
 /* ============================================================ Skeleton (loading) */
-.skeletonStack { display: flex; flex-direction: column; gap: var(--sp-3); }
+.skeletonStack { display: flex; flex-direction: column; gap: var(--sp-2); }
 .skeleton {
-  height: 180px;
+  height: 96px;
   border-radius: 3px;
   background: linear-gradient(
     90deg,
