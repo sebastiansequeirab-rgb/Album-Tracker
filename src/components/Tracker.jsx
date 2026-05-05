@@ -10,6 +10,7 @@ import DashboardPage from './pages/DashboardPage'
 import TeamsPage from './pages/TeamsPage'
 import CardsPage from './pages/CardsPage'
 import ProgressBar from './ui/ProgressBar'
+import BulkUpdateModal from './ui/BulkUpdateModal'
 import s from './Tracker.module.css'
 
 export default function Tracker({
@@ -280,62 +281,16 @@ export default function Tracker({
       )}
 
       {/* Quick Update Modal */}
-      {showQuick && (
-        <div className={s.modalBackdrop} onClick={() => setShowQuick(false)}>
-          <div className={s.modalCard} onClick={e => e.stopPropagation()}>
-            <div className={s.modalHead}>
-              <div>
-                <div className={s.modalTitle}>✏️ ACTUALIZACIÓN RÁPIDA</div>
-                <div className={s.modalSub}>Pega o escribe los números que quieres actualizar</div>
-              </div>
-              <button onClick={() => setShowQuick(false)} className={s.modalClose}>×</button>
-            </div>
-
-            <textarea value={quickText} onChange={e => setQuickText(e.target.value)}
-              placeholder="Ej: 1, 3, 4-7, 10, 15-20"
-              className={s.textarea} />
-
-            <div className={s.modalHint}>
-              💡 Acepta comas, espacios o saltos de línea. Rangos con "-".
-              {quickText && <span className={s.modalHintMatch}>→ {matchedCards.length} cartas coinciden</span>}
-            </div>
-
-            <div className={s.actionGrid}>
-              {[
-                { v:'have',      l:'✅ Tengo',    cls: s.actionBtnActiveHave },
-                { v:'duplicate', l:'🔄 Repetida', cls: s.actionBtnActiveDup },
-                { v:'missing',   l:'❌ Falta',    cls: s.actionBtnActiveMiss },
-              ].map(b => (
-                <button key={b.v} onClick={() => setQuickAction(b.v)}
-                  className={`${s.actionBtn} ${quickAction === b.v ? b.cls : ''}`}>
-                  {b.l}
-                </button>
-              ))}
-            </div>
-
-            {matchedCards.length > 0 && matchedCards.length <= 20 && (
-              <div className={s.matchPreview}>
-                {matchedCards.map(c => (
-                  <div key={c.id} className={s.matchPreviewRow}>
-                    <span className={s.matchPreviewNum}>#{c.num}</span>
-                    <span>{c.flag}</span>
-                    <span className={s.matchPreviewName}>{c.name}</span>
-                    <span className={s.matchPreviewTeam}>{c.team}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {matchedCards.length > 20 && (
-              <div className={s.matchPreviewBulk}>📋 {matchedCards.length} cartas afectadas</div>
-            )}
-
-            <button onClick={applyQuickUpdate} disabled={matchedCards.length === 0}
-              className={`${s.applyBtn} ${matchedCards.length === 0 ? s.applyBtnDisabled : ''}`}>
-              APLICAR A {matchedCards.length} CARTA{matchedCards.length !== 1 ? 'S' : ''}
-            </button>
-          </div>
-        </div>
-      )}
+      <BulkUpdateModal
+        open={showQuick}
+        onClose={() => setShowQuick(false)}
+        quickText={quickText}
+        setQuickText={setQuickText}
+        quickAction={quickAction}
+        setQuickAction={setQuickAction}
+        matchedCards={matchedCards}
+        onApply={applyQuickUpdate}
+      />
 
       {/* Reset Modal */}
       {showReset && (
