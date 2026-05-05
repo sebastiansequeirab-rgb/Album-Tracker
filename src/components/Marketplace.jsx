@@ -14,6 +14,68 @@ import CreatePublicListingModal from './CreatePublicListingModal'
 import ChatPanel from './ChatPanel'
 import s from './Marketplace.module.css'
 
+/* ──────────────────────────────────────────────────────────────────────────
+   SVG icons — broadcast × vault. Inline, currentColor for theming.
+   Avatar emojis NOT replaced (user identity); Flag emojis NOT touched.
+   ────────────────────────────────────────────────────────────────────────── */
+const Svg = ({ size = 16, sw = 2, children, ...p }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" {...p}>
+    {children}
+  </svg>
+)
+const IconGlobe   = (p) => <Svg {...p}><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></Svg>
+const IconStar    = (p) => <Svg {...p}><path d="M12 2l3 7 7 .8-5.2 4.7 1.5 7.1L12 17.8 5.7 21.6 7.2 14.5 2 9.8 9 9z"/></Svg>
+const IconChat    = (p) => <Svg {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></Svg>
+const IconInbox   = (p) => <Svg {...p}><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></Svg>
+const IconList    = (p) => <Svg {...p}><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></Svg>
+const IconPlus    = (p) => <Svg sw={2.5} {...p}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Svg>
+const IconHandshake = (p) => <Svg {...p}><path d="M11 17l2 2a1 1 0 1 0 3-3"/><path d="M14 14l3 3a1 1 0 0 0 3-3l-7-7-3 3"/><path d="M3 7l4-4 4 4-4 4-4-4z"/><path d="M7 11l-4 4 3 3 4-4"/></Svg>
+const IconCheck   = (p) => <Svg sw={2.5} {...p}><polyline points="20 6 9 17 4 12"/></Svg>
+const IconX       = (p) => <Svg sw={2.5} {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></Svg>
+const IconPin     = (p) => <Svg {...p}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></Svg>
+const IconClock   = (p) => <Svg {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Svg>
+const IconQuote   = (p) => <Svg {...p}><path d="M3 21c3 0 7-1 7-8V5c0-1-1-2-2-2H4c-1 0-2 1-2 2v6c0 1 1 2 2 2h3"/><path d="M14 21c3 0 7-1 7-8V5c0-1-1-2-2-2h-4c-1 0-2 1-2 2v6c0 1 1 2 2 2h3"/></Svg>
+const IconArrowUp   = (p) => <Svg sw={2.5} {...p}><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></Svg>
+const IconArrowDown = (p) => <Svg sw={2.5} {...p}><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></Svg>
+const IconArrowLeft = (p) => <Svg sw={2.5} {...p}><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></Svg>
+const IconSparkle = (p) => <Svg {...p}><path d="M12 3l1.8 5.4L19 10l-5.2 1.6L12 17l-1.8-5.4L5 10l5.2-1.6L12 3z"/><path d="M19 17l.8 2L22 19.8 19.8 20 19 22l-.8-2L16 19.8 18.2 19z"/></Svg>
+const IconCopy    = (p) => <Svg {...p}><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></Svg>
+const IconBroadcast = (p) => <Svg {...p}><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></Svg>
+const IconCardStack = (p) => <Svg {...p}><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 6V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2"/></Svg>
+
+const StarFilled = (p) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"
+       strokeWidth="1.5" strokeLinejoin="round" {...p}>
+    <path d="M12 2l3 7 7 .8-5.2 4.7 1.5 7.1L12 17.8 5.7 21.6 7.2 14.5 2 9.8 9 9z"/>
+  </svg>
+)
+
+/* Replicates the broadcast bracket vocab from Auth.module.css for big panels */
+const Brackets = () => (
+  <>
+    <span className={`${s.bracket} ${s.bracketTL}`} aria-hidden />
+    <span className={`${s.bracket} ${s.bracketTR}`} aria-hidden />
+    <span className={`${s.bracket} ${s.bracketBL}`} aria-hidden />
+    <span className={`${s.bracket} ${s.bracketBR}`} aria-hidden />
+  </>
+)
+
+/* Section header: NN / TITLE / rule / link */
+function SectionHead({ num, title, count, action }) {
+  return (
+    <div className={s.sectionHead}>
+      <span className={s.sectionNum}>{num}</span>
+      <h3 className={s.sectionTitle}>{title}</h3>
+      {typeof count === 'number' && (
+        <span className={s.sectionCount}>{count}</span>
+      )}
+      <span className={s.sectionRule} aria-hidden />
+      {action}
+    </div>
+  )
+}
+
 export default function Marketplace({
   session,
   albumType = ALBUM_ADRENALYN,
@@ -299,6 +361,7 @@ export default function Marketplace({
     } catch { /* sin-op */ }
   }
 
+  // eslint-disable-next-line no-unused-vars
   const onCloseListing = async (id) => {
     try {
       await closePublicListing(id)
@@ -325,6 +388,7 @@ export default function Marketplace({
   // ============================================================ DRILL-DOWN
   if (selUserId) {
     const prof = selProfile
+    // eslint-disable-next-line no-unused-vars
     const matches = selCol ? computeMatches(myCol, selCol) : null
     const isFav = favoriteIdSet.has(selUserId)
 
@@ -350,11 +414,15 @@ export default function Marketplace({
 
     return (
       <div className={s.wrap}>
-        <button onClick={() => { setSelUserId(null); setSelCol(null); setSelProfile(null) }} className={s.btnSecondary} style={{ marginBottom: 16 }}>
-          ← Volver al Marketplace
+        <button
+          onClick={() => { setSelUserId(null); setSelCol(null); setSelProfile(null) }}
+          className={s.backLink}
+          type="button">
+          <IconArrowLeft size={14}/> Volver al Marketplace
         </button>
 
         <div className={s.detailHead}>
+          <Brackets/>
           <div className={s.detailAvatar}>{prof?.avatar_emoji || '👤'}</div>
           <div className={s.detailBody}>
             <div className={s.detailName}>{prof?.display_name || 'Coleccionista'}</div>
@@ -362,17 +430,19 @@ export default function Marketplace({
               {selCol ? `${theirCount}/${totalItems} cartas · ${theirPct}%` : 'Cargando…'}
             </div>
             <div className={s.detailActions}>
-              <button onClick={() => onToggleFavorite(selUserId)} className={isFav ? s.btnAccent : s.btnSecondary}>
-                {isFav ? '⭐ Favorito' : '☆ Favoritear'}
+              <button onClick={() => onToggleFavorite(selUserId)} className={isFav ? s.btnAccent : s.btnGhost} type="button">
+                {isFav ? <StarFilled/> : <IconStar/>}
+                <span>{isFav ? 'Favorito' : 'Favoritear'}</span>
               </button>
-              <button onClick={() => openChatWith(selUserId)} className={s.btnSecondary}>
-                💬 Chat
+              <button onClick={() => openChatWith(selUserId)} className={s.btnGhost} type="button">
+                <IconChat/> <span>Chat</span>
               </button>
               <button
                 onClick={openTradeModalFromDrillDown}
                 disabled={!selCol || (pickedTheirs.size === 0 && pickedMine.size === 0)}
-                className={s.btnPrimary}>
-                🤝 Proponer trade
+                className={s.btnPrimary}
+                type="button">
+                <IconHandshake/> <span>Proponer Trade</span>
               </button>
             </div>
           </div>
@@ -385,13 +455,15 @@ export default function Marketplace({
             <div className={s.drillTabs}>
               <button
                 onClick={() => setDrillTab('theirs')}
-                className={`${s.drillTab} ${drillTab === 'theirs' ? s.drillTabActive : ''}`}>
-                SUS DUPLICATES <span className={s.matchCount}>{theirsList.length}</span>
+                className={`${s.drillTab} ${drillTab === 'theirs' ? s.drillTabActive : ''}`}
+                type="button">
+                Sus duplicates <span className={s.matchCount}>{theirsList.length}</span>
               </button>
               <button
                 onClick={() => setDrillTab('mine')}
-                className={`${s.drillTab} ${drillTab === 'mine' ? s.drillTabActive : ''}`}>
-                MIS DUPLICATES <span className={s.matchCount}>{mineList.length}</span>
+                className={`${s.drillTab} ${drillTab === 'mine' ? s.drillTabActive : ''}`}
+                type="button">
+                Mis duplicates <span className={s.matchCount}>{mineList.length}</span>
               </button>
             </div>
 
@@ -444,23 +516,29 @@ export default function Marketplace({
   const closedTrades    = tradeRequests.filter(t => t.status !== 'pending')
 
   const subtabs = [
-    { id: 'all',       i: '🌐', l: 'Todos' },
-    { id: 'favorites', i: '⭐', l: 'Favoritos', b: favoriteIdSet.size },
-    { id: 'messages',  i: '💬', l: 'Mensajes' },
-    { id: 'inbox',     i: '📬', l: 'Bandeja',   b: incomingPending.length },
-    { id: 'mine',      i: '📋', l: 'Mi lista',  b: myDups.length },
+    { id: 'all',       I: IconGlobe,   l: 'Todos' },
+    { id: 'favorites', I: IconStar,    l: 'Favoritos', b: favoriteIdSet.size },
+    { id: 'messages',  I: IconChat,    l: 'Mensajes' },
+    { id: 'inbox',     I: IconInbox,   l: 'Bandeja',   b: incomingPending.length },
+    { id: 'mine',      I: IconList,    l: 'Mi lista',  b: myDups.length },
   ]
 
   return (
     <div className={s.wrap}>
       <div className={s.subnav}>
-        {subtabs.map(t => (
-          <button key={t.id} onClick={() => setSub(t.id)}
-            className={`${s.subnavBtn} ${sub === t.id ? s.subnavBtnActive : ''}`}>
-            <span>{t.i}</span> <span>{t.l}</span>
-            {t.b > 0 && <span className={s.subnavBadge}>{t.b}</span>}
-          </button>
-        ))}
+        {subtabs.map(t => {
+          const Icon = t.I
+          const active = sub === t.id
+          return (
+            <button key={t.id} onClick={() => setSub(t.id)}
+              className={`${s.subnavBtn} ${active ? s.subnavBtnActive : ''}`}
+              type="button">
+              <Icon size={14}/>
+              <span>{t.l}</span>
+              {t.b > 0 && <span className={s.subnavBadge}>{t.b}</span>}
+            </button>
+          )
+        })}
       </div>
 
       {/* TODOS — Solo ofertas activas como banners desglosados */}
@@ -468,35 +546,42 @@ export default function Marketplace({
         <>
           {!myProfile?.marketplace_visible ? (
             <div className={s.empty}>
-              <div className={s.emptyEmoji}>🌐</div>
+              <div className={s.emptyIcon}><IconGlobe size={48} sw={1.5}/></div>
               <div className={s.emptyTitle}>NO ESTÁS VISIBLE</div>
               <div className={s.emptyText}>
                 Activa "Visible en Marketplace" en tu perfil para ver y publicar ofertas.
               </div>
-              <button onClick={onGoToProfile} className={s.emptyCta}>Ir a mi perfil</button>
+              <button onClick={onGoToProfile} className={s.emptyCta} type="button">Ir a mi perfil</button>
             </div>
           ) : (
             <>
-              <div className={s.listingsHead}>
-                <div>
-                  <div className={s.listingsTitle}>📢 OFERTAS ACTIVAS</div>
-                  <div className={s.listingsSub}>
-                    {listings.length} {listings.length === 1 ? 'oferta' : 'ofertas'} en {ALBUM_CONFIG[albumType].label || albumType}
-                  </div>
-                </div>
-                <button className={s.btnPrimary} onClick={() => setShowCreate(true)}>
-                  + Nueva oferta
-                </button>
+              <SectionHead
+                num="01"
+                title="Ofertas Activas"
+                count={listings.length}
+                action={
+                  <button className={s.btnPrimary} onClick={() => setShowCreate(true)} type="button">
+                    <IconPlus size={14}/> <span>Nueva Oferta</span>
+                  </button>
+                }
+              />
+              <div className={s.sectionSub}>
+                {listings.length === 1 ? '1 oferta activa' : `${listings.length} ofertas activas`}
+                {' '}en {ALBUM_CONFIG[albumType].label || albumType}
               </div>
 
-              {loading && <div className={s.emptyText} style={{ padding: 30 }}>Cargando ofertas…</div>}
+              {loading && (
+                <div className={s.skeletonStack}>
+                  <div className={s.skeleton}/><div className={s.skeleton}/><div className={s.skeleton}/>
+                </div>
+              )}
 
               {!loading && listings.length === 0 && (
                 <div className={s.empty}>
-                  <div className={s.emptyEmoji}>📢</div>
+                  <div className={s.emptyIcon}><IconBroadcast size={48} sw={1.5}/></div>
                   <div className={s.emptyTitle}>SIN OFERTAS AÚN</div>
                   <div className={s.emptyText}>
-                    Nadie publicó ofertas en este álbum. ¡Sé el primero! Tap "+ Nueva oferta".
+                    Nadie publicó ofertas en este álbum. Sé el primero — tap "Nueva oferta".
                   </div>
                 </div>
               )}
@@ -509,6 +594,7 @@ export default function Marketplace({
                       listing={l}
                       author={listingProfiles[l.user_id]}
                       itemsById={ITEMS_BY_ID}
+                      myCol={myCol}
                       isFavorite={favoriteIdSet.has(l.user_id)}
                       busyAccept={busyAccept === l.id}
                       onToggleFavorite={() => onToggleFavorite(l.user_id)}
@@ -530,70 +616,86 @@ export default function Marketplace({
         <>
           {!myProfile?.marketplace_visible && (
             <div className={s.empty}>
-              <div className={s.emptyEmoji}>🌐</div>
+              <div className={s.emptyIcon}><IconGlobe size={48} sw={1.5}/></div>
               <div className={s.emptyTitle}>NO ESTÁS VISIBLE</div>
               <div className={s.emptyText}>
                 Activa "Visible en Marketplace" en tu perfil para ver coleccionistas.
               </div>
-              <button onClick={onGoToProfile} className={s.emptyCta}>Ir a mi perfil</button>
+              <button onClick={onGoToProfile} className={s.emptyCta} type="button">Ir a mi perfil</button>
             </div>
           )}
 
-          {myProfile?.marketplace_visible && loading && (
-            <div className={s.emptyText} style={{ padding: 30 }}>Cargando…</div>
-          )}
-
-          {myProfile?.marketplace_visible && !loading && profilesView.length === 0 && (
-            <div className={s.empty}>
-              <div className={s.emptyEmoji}>⭐</div>
-              <div className={s.emptyTitle}>SIN FAVORITOS AÚN</div>
-              <div className={s.emptyText}>
-                Marca con ⭐ a los coleccionistas que te interesen desde sus ofertas o perfil.
+          {myProfile?.marketplace_visible && (
+            <>
+              <SectionHead num="02" title="Favoritos" count={profilesView.length}/>
+              <div className={s.sectionSub}>
+                Coleccionistas que destacaste — accesos rápidos a chat y trade
               </div>
-            </div>
-          )}
 
-          {myProfile?.marketplace_visible && !loading && profilesView.length > 0 && (
-            <div className={s.usersGrid}>
-              {profilesView
-                .sort((a,b) => (b.matches.theyHaveIWant.length + b.matches.iHaveTheyWant.length)
-                              - (a.matches.theyHaveIWant.length + a.matches.iHaveTheyWant.length))
-                .map(p => {
-                  const fav = favoriteIdSet.has(p.user_id)
-                  const colCount = Object.values(collections[p.user_id] || {}).filter(v => v !== 'missing').length
-                  return (
-                    <div key={p.user_id} className={s.userCard}>
-                      <div className={s.userCardHead} onClick={() => onSelectUser(p.user_id)}>
-                        <div className={s.userAvatar}>{p.avatar_emoji}</div>
-                        <div className={s.userMeta}>
-                          <div className={s.userName}>{p.display_name}</div>
-                          <div className={s.userSub}>{colCount}/{totalItems} cartas</div>
+              {loading && (
+                <div className={s.skeletonStack}>
+                  <div className={s.skeleton}/><div className={s.skeleton}/>
+                </div>
+              )}
+
+              {!loading && profilesView.length === 0 && (
+                <div className={s.empty}>
+                  <div className={s.emptyIcon}><IconStar size={48} sw={1.5}/></div>
+                  <div className={s.emptyTitle}>SIN FAVORITOS AÚN</div>
+                  <div className={s.emptyText}>
+                    Marca con la estrella a los coleccionistas que te interesen desde sus ofertas o perfil.
+                  </div>
+                </div>
+              )}
+
+              {!loading && profilesView.length > 0 && (
+                <div className={s.usersGrid}>
+                  {profilesView
+                    .sort((a,b) => (b.matches.theyHaveIWant.length + b.matches.iHaveTheyWant.length)
+                                  - (a.matches.theyHaveIWant.length + a.matches.iHaveTheyWant.length))
+                    .map(p => {
+                      const fav = favoriteIdSet.has(p.user_id)
+                      const colCount = Object.values(collections[p.user_id] || {}).filter(v => v !== 'missing').length
+                      return (
+                        <div key={p.user_id} className={s.userCard}>
+                          <div className={s.userCardHead} onClick={() => onSelectUser(p.user_id)}>
+                            <div className={s.userAvatar}>{p.avatar_emoji}</div>
+                            <div className={s.userMeta}>
+                              <div className={s.userName}>{p.display_name}</div>
+                              <div className={s.userSub}>{colCount}/{totalItems} cartas</div>
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); onToggleFavorite(p.user_id) }}
+                              className={`${s.favStar} ${fav ? s.favStarOn : ''}`}
+                              aria-label={fav ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                              type="button">
+                              {fav ? <StarFilled/> : <IconStar size={18}/>}
+                            </button>
+                          </div>
+                          <div className={s.matchRow} onClick={() => onSelectUser(p.user_id)}>
+                            <div className={`${s.matchPill} ${s.matchPillThey}`}>
+                              <div className={s.matchLabel}>Te puede dar</div>
+                              {p.matches.theyHaveIWant.length}
+                            </div>
+                            <div className={`${s.matchPill} ${s.matchPillI}`}>
+                              <div className={s.matchLabel}>Le das</div>
+                              {p.matches.iHaveTheyWant.length}
+                            </div>
+                          </div>
+                          <div className={s.userActions}>
+                            <button onClick={() => openChatWith(p.user_id)} className={s.btnGhost} type="button">
+                              <IconChat size={14}/> <span>Chat</span>
+                            </button>
+                            <button onClick={() => onSelectUser(p.user_id)} className={s.btnPrimary} type="button">
+                              <IconHandshake size={14}/> <span>Trade</span>
+                            </button>
+                          </div>
                         </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onToggleFavorite(p.user_id) }}
-                          className={`${s.favStar} ${fav ? s.favStarOn : ''}`}
-                          aria-label={fav ? 'Quitar de favoritos' : 'Agregar a favoritos'}>
-                          {fav ? '⭐' : '☆'}
-                        </button>
-                      </div>
-                      <div className={s.matchRow} onClick={() => onSelectUser(p.user_id)}>
-                        <div className={`${s.matchPill} ${s.matchPillThey}`}>
-                          <div className={s.matchLabel}>Te puede dar</div>
-                          {p.matches.theyHaveIWant.length}
-                        </div>
-                        <div className={`${s.matchPill} ${s.matchPillI}`}>
-                          <div className={s.matchLabel}>Le das</div>
-                          {p.matches.iHaveTheyWant.length}
-                        </div>
-                      </div>
-                      <div className={s.userActions}>
-                        <button onClick={() => openChatWith(p.user_id)} className={s.btnSecondary}>💬 Chat</button>
-                        <button onClick={() => onSelectUser(p.user_id)} className={s.btnPrimary}>🤝 Trade</button>
-                      </div>
-                    </div>
-                  )
-                })}
-            </div>
+                      )
+                    })}
+                </div>
+              )}
+            </>
           )}
         </>
       )}
@@ -616,9 +718,14 @@ export default function Marketplace({
       {/* BANDEJA — trade requests */}
       {sub === 'inbox' && (
         <>
+          <SectionHead num="03" title="Bandeja" count={tradeRequests.length}/>
+          <div className={s.sectionSub}>
+            Trades recibidos, enviados e historial
+          </div>
+
           {tradeRequests.length === 0 ? (
             <div className={s.empty}>
-              <div className={s.emptyEmoji}>📬</div>
+              <div className={s.emptyIcon}><IconInbox size={48} sw={1.5}/></div>
               <div className={s.emptyTitle}>SIN TRADES AÚN</div>
               <div className={s.emptyText}>
                 Cuando alguien te proponga un trade aparecerá acá. Vos también podés iniciar uno
@@ -630,7 +737,9 @@ export default function Marketplace({
               {incomingPending.length > 0 && (
                 <div className={s.tradeSection}>
                   <div className={s.tradeSectionTitle}>
-                    📩 RECIBIDAS <span className={s.matchCount}>{incomingPending.length}</span>
+                    <span className={s.tradeDot} style={{background:'var(--gold-3)'}} aria-hidden/>
+                    <span>RECIBIDAS</span>
+                    <span className={s.matchCount}>{incomingPending.length}</span>
                   </div>
                   {incomingPending.map(t => (
                     <TradeRow
@@ -648,8 +757,10 @@ export default function Marketplace({
 
               {outgoingPending.length > 0 && (
                 <div className={s.tradeSection}>
-                  <div className={s.tradeSectionTitle} style={{ color: 'var(--text-faint)' }}>
-                    📤 ENVIADAS <span className={s.matchCount}>{outgoingPending.length}</span>
+                  <div className={`${s.tradeSectionTitle} ${s.tradeSectionDim}`}>
+                    <span className={s.tradeDot} style={{background:'var(--text-muted)'}} aria-hidden/>
+                    <span>ENVIADAS</span>
+                    <span className={s.matchCount}>{outgoingPending.length}</span>
                   </div>
                   {outgoingPending.map(t => (
                     <TradeRow
@@ -665,8 +776,10 @@ export default function Marketplace({
 
               {closedTrades.length > 0 && (
                 <div className={s.tradeSection}>
-                  <div className={s.tradeSectionTitle} style={{ color: 'var(--text-faint)' }}>
-                    📚 HISTORIAL <span className={s.matchCount}>{closedTrades.length}</span>
+                  <div className={`${s.tradeSectionTitle} ${s.tradeSectionDim}`}>
+                    <span className={s.tradeDot} style={{background:'var(--text-faint)'}} aria-hidden/>
+                    <span>HISTORIAL</span>
+                    <span className={s.matchCount}>{closedTrades.length}</span>
                   </div>
                   {closedTrades.slice(0, 12).map(t => {
                     const otherId = t.initiator_id === myId ? t.target_id : t.initiator_id
@@ -692,46 +805,49 @@ export default function Marketplace({
         <>
           {myDups.length === 0 ? (
             <div className={s.empty}>
-              <div className={s.emptyEmoji}>🃏</div>
+              <div className={s.emptyIcon}><IconCardStack size={48} sw={1.5}/></div>
               <div className={s.emptyTitle}>SIN REPETIDAS AÚN</div>
               <div className={s.emptyText}>Cuando marques cartas como "Repetida" aparecerán aquí, listas para intercambio.</div>
             </div>
           ) : (
             <>
-              <div className={s.myListHead}>
-                <div>
-                  <div className={s.myListTitle}>📋 MIS REPETIDAS</div>
-                  <div className={s.myListSub}>{myDups.length} cartas listas para intercambio</div>
-                </div>
-                <button className={s.btnPrimary} onClick={() => {
-                  const txt = myDups.map(c => `#${c.num} ${c.name} (${c.team}) [${c.type}]`).join('\n')
-                  copy(txt)
-                }}>
-                  📋 Copiar lista
-                </button>
+              <SectionHead
+                num="04"
+                title="Mis Repetidas"
+                count={myDups.length}
+                action={
+                  <button className={s.btnPrimary} type="button" onClick={() => {
+                    const txt = myDups.map(c => `#${c.num} ${c.name} (${c.team}) [${c.type}]`).join('\n')
+                    copy(txt)
+                  }}>
+                    <IconCopy size={14}/> <span>Copiar Lista</span>
+                  </button>
+                }
+              />
+              <div className={s.sectionSub}>
+                {myDups.length} {myDups.length === 1 ? 'carta lista' : 'cartas listas'} para intercambio
               </div>
 
               {['ultra-rare','rare','special','base'].map(cat => {
                 const cd = myDups.filter(c => c.cat === cat)
                 if (!cd.length) return null
                 const cl = { base:'#475569', special:'#C084FC', rare:'#FCD34D', 'ultra-rare':'#F43F5E' }
-                const nl = { base:'Base', special:'Especiales', rare:'⭐ Raras', 'ultra-rare':'💎 Ultra Raras' }
+                const nl = { base:'BASE', special:'ESPECIALES', rare:'RARAS', 'ultra-rare':'ULTRA RARAS' }
                 return (
-                  <div key={cat} style={{ marginBottom: 24 }}>
-                    <div className={s.matchSectionTitle} style={{ color: cl[cat], borderBottom: `1px solid ${cl[cat]}22`, paddingBottom: 6 }}>
-                      {nl[cat]} <span className={s.matchCount}>{cd.length}</span>
+                  <div key={cat} className={s.catGroup}>
+                    <div className={s.catTitle} style={{ color: cl[cat], borderBottomColor: `${cl[cat]}33` }}>
+                      <span className={s.catDot} style={{ background: cl[cat], boxShadow: `0 0 8px ${cl[cat]}` }} aria-hidden/>
+                      <span>{nl[cat]}</span>
+                      <span className={s.matchCount}>{cd.length}</span>
                     </div>
                     {[...new Set(cd.map(c => c.team))].sort().map(teamName => {
                       const tc = cd.filter(c => c.team === teamName)
                       const tf = TEAMS_LIST.find(t => t.name === teamName)
                       return (
-                        <div key={teamName} style={{
-                          marginBottom: 12, background: 'var(--bg-card)',
-                          border: '1px solid var(--border)', borderRadius: 'var(--r-lg)', padding: 14,
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                            <span style={{ fontSize: 18 }}>{tf?.flag || '🌐'}</span>
-                            <span style={{ fontWeight: 700, color: 'var(--text)', fontSize: 13 }}>{teamName}</span>
+                        <div key={teamName} className={s.teamGroup}>
+                          <div className={s.teamHead}>
+                            <span className={s.teamFlag}>{tf?.flag || '🌐'}</span>
+                            <span className={s.teamName}>{teamName}</span>
                             <span className={s.matchCount}>{tc.length}</span>
                           </div>
                           <div className={s.cardsList}>
@@ -796,11 +912,25 @@ export default function Marketplace({
 // ───────────────────────────────────────────────────────────────────────────
 // Sub-componente: banner desglosado de un listing público (full info, no clic-para-expandir)
 // ───────────────────────────────────────────────────────────────────────────
-function ListingBanner({ listing, author, itemsById, isFavorite, busyAccept, onToggleFavorite, onChat, onTrade, onAccept, onViewProfile }) {
+function ListingBanner({ listing, author, itemsById, myCol, isFavorite, busyAccept, onToggleFavorite, onChat, onTrade, onAccept, onViewProfile }) {
   const offeredCards = listing.offered_ids.map(id => itemsById[id]).filter(Boolean)
   const wantedCards  = listing.wanted_ids.map(id => itemsById[id]).filter(Boolean)
+
+  // Match perfecto: yo tengo TODAS las que el listing busca (como dups) + me faltan TODAS las que ofrece
+  const isPerfectMatch = !!myCol && (() => {
+    const wantedAllMine = wantedCards.length > 0 && wantedCards.every(c => myCol[c.id] === 'duplicate')
+    const offeredAllMissing = offeredCards.length > 0 && offeredCards.every(c => (myCol[c.id] || 'missing') === 'missing')
+    return wantedAllMine && offeredAllMissing
+  })()
+
   return (
-    <div className={s.banner}>
+    <div className={`${s.banner} ${isPerfectMatch ? s.bannerMatch : ''}`}>
+      {isPerfectMatch && (
+        <div className={s.matchBadge}>
+          <IconSparkle size={12}/> <span>MATCH</span>
+        </div>
+      )}
+
       <div className={s.bannerHead}>
         <button onClick={onViewProfile} className={s.bannerAuthor} type="button">
           <div className={s.userAvatar}>{author?.avatar_emoji || '👤'}</div>
@@ -814,19 +944,22 @@ function ListingBanner({ listing, author, itemsById, isFavorite, busyAccept, onT
         <button
           onClick={onToggleFavorite}
           className={`${s.favStar} ${isFavorite ? s.favStarOn : ''}`}
-          aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}>
-          {isFavorite ? '⭐' : '☆'}
+          aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+          type="button">
+          {isFavorite ? <StarFilled/> : <IconStar size={18}/>}
         </button>
       </div>
 
       {offeredCards.length > 0 && (
         <div className={s.bannerSection}>
-          <div className={s.bannerSectionTitle} style={{ color: 'var(--have)' }}>
-            ⬆️ OFRECE <span className={s.matchCount}>{offeredCards.length}</span>
+          <div className={`${s.bannerSectionTitle} ${s.bannerSectionTitleHave}`}>
+            <IconArrowUp size={12}/>
+            <span>OFRECE</span>
+            <span className={s.matchCount}>{offeredCards.length}</span>
           </div>
           <div className={s.cardsList}>
             {offeredCards.map(c => (
-              <div key={c.id} className={s.miniCard}>
+              <div key={c.id} className={s.miniCard} style={{ borderLeftColor: typeColor(c.type) }}>
                 <span className={s.miniCardFlag}>{c.flag}</span>
                 <div className={s.miniCardBody}>
                   <div className={s.miniCardName}>{c.name}</div>
@@ -841,12 +974,14 @@ function ListingBanner({ listing, author, itemsById, isFavorite, busyAccept, onT
 
       {wantedCards.length > 0 && (
         <div className={s.bannerSection}>
-          <div className={s.bannerSectionTitle} style={{ color: 'var(--accent)' }}>
-            ⬇️ BUSCA <span className={s.matchCount}>{wantedCards.length}</span>
+          <div className={`${s.bannerSectionTitle} ${s.bannerSectionTitleWant}`}>
+            <IconArrowDown size={12}/>
+            <span>BUSCA</span>
+            <span className={s.matchCount}>{wantedCards.length}</span>
           </div>
           <div className={s.cardsList}>
             {wantedCards.map(c => (
-              <div key={c.id} className={s.miniCard}>
+              <div key={c.id} className={s.miniCard} style={{ borderLeftColor: typeColor(c.type) }}>
                 <span className={s.miniCardFlag}>{c.flag}</span>
                 <div className={s.miniCardBody}>
                   <div className={s.miniCardName}>{c.name}</div>
@@ -861,29 +996,66 @@ function ListingBanner({ listing, author, itemsById, isFavorite, busyAccept, onT
 
       {(listing.meeting_point || listing.meeting_time_label || listing.note) && (
         <div className={s.bannerInfo}>
-          {listing.meeting_point && <div className={s.bannerInfoLine}>📍 {listing.meeting_point}</div>}
-          {listing.meeting_time_label && <div className={s.bannerInfoLine}>⏰ {listing.meeting_time_label}</div>}
-          {listing.note && <div className={s.bannerNote}>"{listing.note}"</div>}
+          {listing.meeting_point && (
+            <div className={s.bannerInfoLine}>
+              <IconPin size={14} className={s.bannerInfoIcon}/>
+              <span>{listing.meeting_point}</span>
+            </div>
+          )}
+          {listing.meeting_time_label && (
+            <div className={s.bannerInfoLine}>
+              <IconClock size={14} className={s.bannerInfoIcon}/>
+              <span>{listing.meeting_time_label}</span>
+            </div>
+          )}
+          {listing.note && (
+            <div className={s.bannerNote}>
+              <IconQuote size={14} className={s.bannerNoteIcon}/>
+              <span>"{listing.note}"</span>
+            </div>
+          )}
         </div>
       )}
 
       <div className={s.bannerActions}>
-        <button onClick={onChat} className={s.btnSecondary} type="button">
-          💬 Iniciar chat
+        <button onClick={onChat} className={s.btnGhost} type="button">
+          <IconChat size={14}/> <span>Iniciar chat</span>
         </button>
-        <button onClick={onTrade} className={s.btnSecondary} type="button">
-          🤝 Contra oferta
+        <button onClick={onTrade} className={s.btnGhost} type="button">
+          <IconHandshake size={14}/> <span>Contra oferta</span>
         </button>
         <button
           onClick={onAccept}
           disabled={busyAccept}
           className={s.btnPrimary}
           type="button">
-          {busyAccept ? 'Enviando…' : '✅ Aceptar oferta'}
+          {busyAccept
+            ? <span>Enviando…</span>
+            : <><IconCheck size={14}/> <span>Aceptar Oferta</span></>}
         </button>
       </div>
     </div>
   )
+}
+
+/* Map known card types to semantic colors. Falls back to gold-3. */
+function typeColor(type) {
+  if (!type) return 'var(--gold-3)'
+  const t = String(type).toLowerCase()
+  if (t.includes('escudo')) return 'var(--type-escudo)'
+  if (t.includes('plantel')) return 'var(--type-plantel)'
+  if (t.includes('jugador')) return 'var(--type-jugador)'
+  if (t.includes('museo') || t.includes('museum')) return 'var(--type-museum)'
+  if (t.includes('intro')) return 'var(--type-intro)'
+  if (t.includes('hero')) return 'var(--type-heroes)'
+  if (t.includes('icon')) return 'var(--type-icon)'
+  if (t.includes('rookie')) return 'var(--type-rookie)'
+  if (t.includes('keeper') || t.includes('arq')) return 'var(--type-keeper)'
+  if (t.includes('def')) return 'var(--type-defense)'
+  if (t.includes('mid') || t.includes('medio')) return 'var(--type-mid)'
+  if (t.includes('fwd') || t.includes('del')) return 'var(--type-fwd)'
+  if (t.includes('momentum')) return 'var(--type-momentum)'
+  return 'var(--gold-3)'
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -904,10 +1076,10 @@ function TradeRow({ trade, profile, itemsById, isIncoming, onAccept, onReject, o
     ? new Date(trade.meeting_time_exact).toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })
     : null)
   const statusLabel = {
-    accepted: '✅ Aceptada',
-    declined: '✋ Rechazada',
-    cancelled: '🚫 Cancelada',
-    completed: '🎉 Completada',
+    accepted: 'Aceptada',
+    declined: 'Rechazada',
+    cancelled: 'Cancelada',
+    completed: 'Completada',
   }[trade.status]
   return (
     <div className={s.tradeRow}>
@@ -923,20 +1095,36 @@ function TradeRow({ trade, profile, itemsById, isIncoming, onAccept, onReject, o
       <div className={s.tradeRowBody}>
         <div className={s.tradeLine}><strong>{isIncoming ? 'Te ofrece:' : 'Ofreces:'}</strong> {offText}</div>
         <div className={s.tradeLine}><strong>{isIncoming ? 'Te pide:' : 'Pides:'}</strong> {wantText}</div>
-        {trade.meeting_point && <div className={s.tradeLine}>📍 {trade.meeting_point}</div>}
-        {time && <div className={s.tradeLine}>⏰ {time}</div>}
+        {trade.meeting_point && (
+          <div className={s.tradeLine}>
+            <IconPin size={13} className={s.tradeLineIcon}/>
+            <span>{trade.meeting_point}</span>
+          </div>
+        )}
+        {time && (
+          <div className={s.tradeLine}>
+            <IconClock size={13} className={s.tradeLineIcon}/>
+            <span>{time}</span>
+          </div>
+        )}
         {trade.message && <div className={s.tradeMessage}>"{trade.message}"</div>}
       </div>
       {!readonly && (
         <div className={s.tradeActions}>
           {isIncoming && (
             <>
-              <button onClick={onAccept} className={s.btnAccept}>Aceptar</button>
-              <button onClick={onReject} className={s.btnReject}>Rechazar</button>
+              <button onClick={onAccept} className={s.btnAccept} type="button">
+                <IconCheck size={13}/> <span>Aceptar</span>
+              </button>
+              <button onClick={onReject} className={s.btnReject} type="button">
+                <IconX size={13}/> <span>Rechazar</span>
+              </button>
             </>
           )}
           {!isIncoming && onCancel && (
-            <button onClick={onCancel} className={s.btnSecondary}>Cancelar</button>
+            <button onClick={onCancel} className={s.btnGhost} type="button">
+              <IconX size={13}/> <span>Cancelar</span>
+            </button>
           )}
         </div>
       )}
@@ -961,13 +1149,20 @@ function DrillList({ cards, picked, onToggle, emptyText, matchHighlightSet }) {
             key={c.id}
             type="button"
             onClick={() => onToggle(c.id)}
-            className={`${s.miniCard} ${s.miniCardPickable} ${isPicked ? s.miniCardPicked : ''}`}>
-            <span className={s.miniCardCheck}>{isPicked ? '☑' : '☐'}</span>
+            className={`${s.miniCard} ${s.miniCardPickable} ${isPicked ? s.miniCardPicked : ''}`}
+            style={{ borderLeftColor: typeColor(c.type) }}>
+            <span className={s.miniCardCheck} aria-hidden>
+              {isPicked ? <IconCheck size={14}/> : <span className={s.miniCardCheckBox}/>}
+            </span>
             <span className={s.miniCardFlag}>{c.flag}</span>
             <div className={s.miniCardBody}>
               <div className={s.miniCardName}>
                 {c.name}
-                {isMatch && <span className={s.miniCardMatchBadge}>★ matchea</span>}
+                {isMatch && (
+                  <span className={s.miniCardMatchBadge}>
+                    <IconSparkle size={9}/> matchea
+                  </span>
+                )}
               </div>
               <div className={s.miniCardMeta}>{c.team} · {c.type}</div>
             </div>

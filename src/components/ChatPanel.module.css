@@ -1,7 +1,23 @@
-/* ========================================================================
-   ChatPanel — visual rebuild v2 (CSS only; preserves try/catch realtime,
-   useLayoutEffect scrollIntoView, header siempre visible, key remount)
-   ======================================================================== */
+/* =============================================================================
+   ChatPanel — visual rebuild v3 (broadcast × vault).
+   Chamfered (TR + BL), gold left bars, NN / TITLE header, dashed system
+   bubbles preserved, SVG icons (no UI emojis).
+   Preserves: try/catch realtime, useLayoutEffect scrollIntoView, header
+   siempre visible, key remount, position: relative + z-index: 10.
+   ============================================================================= */
+
+@keyframes chFadeUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes chPulse {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.18); }
+}
+@keyframes chBubbleIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 /* ============================================================ List view */
 .listView {
@@ -10,102 +26,174 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: var(--bg-card);
-  border: 1px solid var(--gold-4);
-  border-radius: var(--r-2xl);
+  background: linear-gradient(180deg, rgba(15, 22, 38, 0.85) 0%, rgba(8, 12, 22, 0.95) 100%);
+  border: 1px solid rgba(245, 200, 70, 0.18);
+  border-left: 2px solid var(--gold-3);
+  border-radius: 3px;
   padding: 6px;
   min-height: 320px;
   scroll-margin-top: 100px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), var(--shadow-glow-gold);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.55),
+    0 0 28px rgba(245, 200, 70, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   overflow: hidden;
+  clip-path: polygon(
+    0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px)
+  );
+  animation: chFadeUp 0.22s var(--ease-out);
 }
 
-/* Header — siempre visible aunque loading/error/empty (load-bearing) */
+/* Header — siempre visible aunque loading/error/empty (load-bearing).
+   Broadcast section graphic: NN / TITLE / rule / sub */
 .listHeader {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 12px;
   padding: 14px 16px;
-  background: linear-gradient(180deg, var(--bg-elevated-2) 0%, var(--bg-card) 100%);
-  border-bottom: 1px solid var(--gold-3);
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  background: linear-gradient(180deg, rgba(22, 33, 58, 0.78) 0%, rgba(15, 22, 38, 0.78) 100%);
+  border-bottom: 1px solid rgba(245, 200, 70, 0.20);
   margin: -6px -6px 6px;
 }
-.listHeaderTitle {
+.listHeaderNum {
   font-family: var(--font-display);
-  font-size: 16px;
-  letter-spacing: 0.12em;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  color: var(--gold-3);
+}
+.listHeaderTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.32em;
   color: var(--text);
+  text-transform: uppercase;
+  font-weight: 400;
+}
+.listHeaderRule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(245, 200, 70, 0.30), transparent);
+  align-self: center;
+  min-width: 12px;
 }
 .listHeaderSub {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--gold-2);
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
 }
-
-.listRetry {
-  margin-top: 12px;
-  background: linear-gradient(135deg, var(--gold-2), var(--gold-4));
-  color: #1A1308;
-  border: 0;
-  padding: 9px 20px;
-  border-radius: var(--r-md);
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: transform var(--t-fast), box-shadow var(--t-fast);
-}
-.listRetry:hover { transform: translateY(-1px); box-shadow: var(--shadow-glow-gold); }
 
 .listLoading {
   text-align: center;
-  padding: 24px;
-  color: var(--text-faint);
+  padding: 36px 24px;
+  color: var(--text-muted);
   font-size: 12px;
+  letter-spacing: 0.04em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
+.listLoading svg { color: var(--gold-2); }
 
 .listEmpty {
   text-align: center;
   padding: 50px 20px;
 }
-.listEmptyEmoji { font-size: 56px; margin-bottom: 12px; }
+.listEmptyIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 14px;
+  border: 1px solid rgba(245, 200, 70, 0.18);
+  border-radius: 50%;
+  color: var(--gold-2);
+  background: radial-gradient(circle at center, rgba(245, 200, 70, 0.06) 0%, transparent 70%);
+}
+.listEmptyIcon[data-tone="alert"] {
+  border-color: rgba(248, 113, 113, 0.32);
+  color: #FCA5A5;
+  background: radial-gradient(circle at center, rgba(248, 113, 113, 0.10) 0%, transparent 70%);
+}
 .listEmptyTitle {
   font-family: var(--font-display);
   font-size: 22px;
-  letter-spacing: 0.12em;
-  color: var(--text-faint);
+  letter-spacing: 0.20em;
+  color: var(--text);
   margin-bottom: 8px;
 }
 .listEmptyText {
-  color: var(--text-hint);
-  font-size: 13px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  line-height: 1.5;
   max-width: 320px;
   margin: 0 auto;
+  letter-spacing: 0.02em;
 }
+
+.listRetry {
+  margin-top: 14px;
+  background: transparent;
+  border: 1px solid rgba(245, 200, 70, 0.32);
+  color: var(--gold-2);
+  padding: 9px 18px;
+  border-radius: 3px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
+}
+.listRetry:hover {
+  border-color: var(--gold-3);
+  color: var(--gold-1);
+  background: rgba(245, 200, 70, 0.06);
+  box-shadow: 0 0 18px rgba(245, 200, 70, 0.16);
+}
+
+.threadItems { display: flex; flex-direction: column; gap: 4px; }
 
 .threadItem {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 14px;
-  background: var(--bg-deep);
+  padding: 12px 14px;
+  background: rgba(8, 12, 22, 0.55);
   border: 1px solid transparent;
-  border-radius: var(--r-md);
+  border-left: 2px solid transparent;
+  border-radius: 3px;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  transition: background var(--t-fast), border-color var(--t-fast);
+  transition: background var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+  width: 100%;
 }
 .threadItem:hover {
-  background: var(--bg-elevated);
-  border-color: var(--gold-4);
+  background: rgba(245, 200, 70, 0.04);
+  border-color: rgba(245, 200, 70, 0.18);
+  border-left-color: var(--gold-3);
+  transform: translateX(2px);
+}
+.threadItemUnread {
+  background: rgba(245, 200, 70, 0.06);
+  border-left-color: rgba(245, 200, 70, 0.45);
 }
 
 .threadItemAvatar {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--r-pill);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--bg-elevated-2);
+  border: 1px solid rgba(245, 200, 70, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -129,17 +217,19 @@
 }
 .threadItemName {
   color: var(--text);
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 400;
-  letter-spacing: 0.04em;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .threadItemTime {
-  color: var(--text-faint);
-  font-size: 10px;
+  color: var(--gold-2);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.06em;
   flex-shrink: 0;
 }
 
@@ -149,6 +239,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0.01em;
 }
 .threadItemMe {
   color: var(--text-faint);
@@ -157,15 +248,17 @@
 
 .threadItemBadge {
   flex-shrink: 0;
-  background: linear-gradient(135deg, var(--gold-2), var(--gold-4));
-  color: #1A1308;
-  font-size: 10px;
-  font-weight: 900;
-  padding: 2px 7px;
-  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--gold-2), var(--gold-4));
+  color: #0A0A0A;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 999px;
   min-width: 22px;
   text-align: center;
-  box-shadow: 0 0 8px var(--gold-glow);
+  box-shadow: 0 0 10px var(--gold-glow);
 }
 
 /* ============================================================ Thread view */
@@ -174,54 +267,67 @@
   z-index: 10;
   display: flex;
   flex-direction: column;
-  background: var(--bg-card);
-  border: 1px solid var(--gold-4);
-  border-radius: var(--r-2xl);
+  background: linear-gradient(180deg, rgba(15, 22, 38, 0.85) 0%, rgba(8, 12, 22, 0.95) 100%);
+  border: 1px solid rgba(245, 200, 70, 0.22);
+  border-left: 2px solid var(--gold-3);
+  border-radius: 3px;
   height: clamp(480px, 70vh, 720px);
   min-height: 480px;
   overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), var(--shadow-glow-gold);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.55),
+    0 0 28px rgba(245, 200, 70, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   scroll-margin-top: 100px;
+  clip-path: polygon(
+    0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px)
+  );
+  animation: chFadeUp 0.22s var(--ease-out);
 }
 
 .threadHead {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 14px 16px;
-  background: linear-gradient(180deg, var(--bg-elevated-2) 0%, var(--bg-card) 100%);
-  border-bottom: 1px solid var(--gold-3);
+  background: linear-gradient(180deg, rgba(22, 33, 58, 0.78) 0%, rgba(15, 22, 38, 0.78) 100%);
+  border-bottom: 1px solid rgba(245, 200, 70, 0.22);
   flex-shrink: 0;
 }
 
 .backBtn {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  color: var(--text);
-  width: 34px;
-  height: 34px;
-  border-radius: var(--r-pill);
-  font-size: 18px;
+  background: transparent;
+  border: 1px solid rgba(245, 200, 70, 0.18);
+  color: var(--gold-2);
+  width: 36px;
+  height: 36px;
+  border-radius: 3px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast);
+  transition: border-color var(--t-fast), color var(--t-fast), background var(--t-fast), transform var(--t-fast);
   flex-shrink: 0;
 }
-.backBtn:hover { border-color: var(--gold-3); color: var(--gold-1); background: var(--bg-hover); }
+.backBtn:hover {
+  border-color: var(--gold-3);
+  color: var(--gold-1);
+  background: rgba(245, 200, 70, 0.06);
+  transform: translateX(-2px);
+}
 
 .threadAvatar {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--r-pill);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
   background: var(--bg-elevated-2);
-  border: 1px solid var(--border);
+  border: 1px solid var(--gold-3);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 22px;
   flex-shrink: 0;
+  box-shadow: 0 0 14px rgba(245, 200, 70, 0.16);
 }
 
 .threadHeadBody {
@@ -231,37 +337,95 @@
 .threadHeadName {
   color: var(--text);
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 400;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  line-height: 1.1;
 }
 .threadHeadSub {
-  color: var(--text-faint);
-  font-size: 10px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 4px;
+}
+.statusDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4ADE80;
+  box-shadow: 0 0 8px #4ADE80;
+  animation: chPulse 2.4s ease-in-out infinite;
 }
 
 .threadScroll {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 18px 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  background: var(--bg-void);
+  gap: 8px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(245, 200, 70, 0.04) 0%, transparent 50%),
+    var(--bg-void);
 }
 
-.threadLoading,
-.threadEmpty {
+.threadLoading {
   text-align: center;
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-size: 12px;
   padding: 30px 10px;
-  font-style: italic;
+  letter-spacing: 0.04em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.threadLoading svg { color: var(--gold-2); }
+
+.threadEmpty {
+  text-align: center;
+  padding: 36px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.threadEmptyIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(245, 200, 70, 0.18);
+  border-radius: 50%;
+  color: var(--gold-2);
+  background: radial-gradient(circle at center, rgba(245, 200, 70, 0.06) 0%, transparent 70%);
+}
+.threadEmptyTitle {
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.20em;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.threadEmptyText {
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  max-width: 280px;
+  line-height: 1.5;
 }
 
 .bubbleRow {
   display: flex;
   justify-content: flex-start;
+  animation: chBubbleIn 0.18s var(--ease-out);
 }
 .bubbleRowMine { justify-content: flex-end; }
 .bubbleRowSystem { justify-content: center; }
@@ -269,63 +433,82 @@
 .bubble {
   max-width: 78%;
   padding: 10px 13px;
-  border-radius: 16px;
+  border-radius: 3px;
   display: flex;
   flex-direction: column;
   gap: 4px;
   word-wrap: break-word;
+  position: relative;
 }
 
 .bubbleTheirs {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: rgba(15, 22, 38, 0.85);
+  border: 1px solid rgba(245, 200, 70, 0.10);
+  border-left: 2px solid var(--bg-elevated-2);
   color: var(--text);
-  border-bottom-left-radius: 4px;
 }
 
 .bubbleMine {
-  background: linear-gradient(135deg, var(--gold-2), var(--gold-4));
-  color: #1A1308;
-  border-bottom-right-radius: 4px;
-  box-shadow: 0 4px 12px var(--gold-glow);
+  background: rgba(245, 200, 70, 0.10);
+  border: 1px solid rgba(245, 200, 70, 0.32);
+  border-left: 2px solid var(--gold-3);
+  color: var(--gold-1);
+  box-shadow: 0 6px 18px rgba(245, 200, 70, 0.14);
 }
 
+/* System messages preserved per spec: dashed border, muted, italic */
 .bubbleSystem {
-  background: var(--bg-elevated);
-  border: 1px dashed var(--gold-4);
+  background: rgba(15, 22, 38, 0.55);
+  border: 1px dashed rgba(245, 200, 70, 0.32);
+  border-left: 1px dashed rgba(245, 200, 70, 0.32);
   color: var(--text-muted);
   font-size: 12px;
   font-style: italic;
+  padding: 9px 13px 9px 36px;
+}
+.bubbleSystemIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gold-2);
+  flex-shrink: 0;
 }
 
 .bubbleContent {
   font-size: 13.5px;
   line-height: 1.45;
   white-space: pre-wrap;
+  letter-spacing: 0.01em;
 }
 
 .bubbleTime {
-  font-size: 9px;
-  opacity: 0.6;
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  letter-spacing: 0.10em;
+  opacity: 0.7;
   align-self: flex-end;
 }
-.bubbleMine .bubbleTime { color: rgba(26, 19, 8, 0.7); }
+.bubbleMine .bubbleTime { color: var(--gold-3); opacity: 0.85; }
+.bubbleSystem .bubbleTime { align-self: flex-end; }
 
+/* ============================================================ Composer */
 .composer {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
-  padding: 11px;
-  background: var(--bg-elevated);
-  border-top: 1px solid var(--border);
+  gap: 10px;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(15, 22, 38, 0.65) 0%, rgba(22, 33, 58, 0.85) 100%);
+  border-top: 1px solid rgba(245, 200, 70, 0.18);
   flex-shrink: 0;
 }
 
 .composerInput {
   flex: 1;
-  background: var(--bg-card);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-md);
+  background: rgba(8, 12, 22, 0.78);
+  border: 1px solid rgba(245, 200, 70, 0.14);
+  border-left: 2px solid var(--gold-5);
+  border-radius: 3px;
   padding: 11px 13px;
   color: var(--text);
   font-size: 13px;
@@ -333,38 +516,60 @@
   resize: none;
   font-family: inherit;
   max-height: 120px;
-  min-height: 42px;
+  min-height: 44px;
   line-height: 1.4;
-  transition: border-color var(--t-fast);
+  letter-spacing: 0.01em;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
 }
-.composerInput:focus { border-color: var(--gold-3); }
+.composerInput::placeholder {
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+.composerInput:focus {
+  border-color: rgba(245, 200, 70, 0.45);
+  border-left-color: var(--gold-3);
+  background: rgba(13, 20, 36, 0.92);
+  box-shadow: 0 0 0 3px rgba(245, 200, 70, 0.10);
+}
 
 .composerSend {
   flex-shrink: 0;
-  width: 42px;
-  height: 42px;
-  border-radius: var(--r-pill);
-  background: linear-gradient(135deg, var(--gold-2), var(--gold-4));
-  color: #1A1308;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #FFE9A8 0%, #F5C842 30%, #E6A817 70%, #C88A00 100%);
+  color: #0A0A0A;
   border: 0;
-  font-size: 18px;
-  font-weight: 900;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform var(--t-fast), box-shadow var(--t-fast);
-  box-shadow: 0 4px 12px var(--gold-glow);
+  transition: transform var(--t-fast), box-shadow var(--t-fast), filter var(--t-fast);
+  box-shadow:
+    0 8px 18px rgba(230, 168, 23, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.20);
 }
-.composerSend:hover:not(:disabled) { transform: scale(1.06); box-shadow: 0 6px 18px var(--gold-glow); }
+.composerSend:hover:not(:disabled) {
+  transform: scale(1.06);
+  filter: brightness(1.06);
+  box-shadow:
+    0 12px 26px rgba(230, 168, 23, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.20);
+}
 .composerSend:disabled {
-  background: var(--border-strong);
-  color: var(--text-dim);
+  background: rgba(245, 200, 70, 0.14);
+  color: rgba(255, 255, 255, 0.45);
   cursor: not-allowed;
   box-shadow: none;
+  filter: none;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 540px) {
   .threadView { height: clamp(420px, 75vh, 720px); }
   .bubble { max-width: 86%; }
+  .threadHeadName { font-size: 16px; letter-spacing: 0.06em; }
+  .listHeader { gap: 9px; }
+  .listHeaderTitle { font-size: 13px; letter-spacing: 0.24em; }
 }
