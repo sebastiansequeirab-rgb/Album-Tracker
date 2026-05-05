@@ -153,10 +153,14 @@
 }
 .pillActive {
   color: var(--pill-color);
-  border-color: color-mix(in srgb, var(--pill-color) 38%, transparent);
+  border-color: color-mix(in srgb, var(--pill-color) 55%, transparent);
   border-left-color: var(--pill-color);
-  background: color-mix(in srgb, var(--pill-color) 12%, transparent);
-  box-shadow: 0 0 16px color-mix(in srgb, var(--pill-color) 22%, transparent);
+  border-left-width: 3px;
+  background: color-mix(in srgb, var(--pill-color) 22%, rgba(8, 12, 22, 0.88));
+  box-shadow:
+    0 0 20px color-mix(in srgb, var(--pill-color) 30%, transparent),
+    inset 0 0 12px color-mix(in srgb, var(--pill-color) 10%, transparent);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--pill-color) 60%, transparent);
 }
 .pillActiveAll {
   color: #0A0A0A;

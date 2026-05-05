@@ -118,7 +118,7 @@ export default function DashboardPage({
                       </span>
                       <span className={s.typeRowCount}>{h}/{tc.length}</span>
                     </div>
-                    <ProgressBar pct={p} color={m.c} height={6} />
+                    <ProgressBar pct={p} color={m.c} height={8} />
                   </div>
                 )
               })}
