@@ -11,6 +11,14 @@
   padding-bottom: var(--sp-6);
 }
 
+/* Mac (≥1440px): aprovechá el espacio sin romper el container global.
+   En vez de salir del container (.main usa container-max=980), inflamos
+   gaps internos + padding de panels para que la página respire. */
+@media (min-width: 1440px) {
+  .page { gap: var(--sp-6); }
+  .statsGrid { gap: var(--sp-4); }
+}
+
 /* ===== Stats Row ===== */
 .statsGrid {
   display: grid;
@@ -77,6 +85,10 @@
 }
 .quickCta:hover::before { left: 130%; }
 .quickCta:active { transform: translateY(0); }
+.quickCta:focus-visible {
+  outline: 2px solid #0A0A0A;
+  outline-offset: 2px;
+}
 
 .quickCtaIcon {
   display: inline-flex;
@@ -97,11 +109,17 @@
   letter-spacing: 0.18em;
   color: #0A0A0A;
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .quickCtaSub {
   font-size: 12px;
   color: rgba(10, 10, 10, 0.68);
   letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .quickCtaArrow {
   color: #0A0A0A;
@@ -197,6 +215,12 @@
   transition: background var(--t-fast), color var(--t-fast);
 }
 .panelLink:hover { background: rgba(245, 200, 70, 0.08); color: var(--gold-1); }
+.panelLink:focus-visible {
+  outline: 1px solid var(--gold-3);
+  outline-offset: 2px;
+  background: rgba(245, 200, 70, 0.10);
+  color: var(--gold-1);
+}
 
 .empty {
   font-size: 12px;
@@ -270,6 +294,12 @@
   border-left-color: var(--gold-3);
   transform: translateX(2px);
 }
+.upcomingRow:focus-visible {
+  outline: 2px solid var(--gold-3);
+  outline-offset: 2px;
+  border-left-color: var(--gold-3);
+}
+.upcomingRow:active { transform: translateX(1px); }
 .upcomingRank {
   font-family: var(--font-display);
   font-size: 14px;
@@ -286,6 +316,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   letter-spacing: 0.01em;
+  min-width: 0;
 }
 .upcomingBarWrap { width: 100px; }
 .upcomingFrac {
@@ -299,11 +330,15 @@
 
 @media (max-width: 720px) {
   .upcomingRow {
-    grid-template-columns: 24px auto 1fr auto;
+    grid-template-columns: 24px auto 1fr auto auto;
     gap: var(--sp-2);
+    /* min-height ≥44 for touch target */
+    min-height: 48px;
+    padding: 10px 12px 10px 10px;
   }
   .upcomingBarWrap { display: none; }
   .upcomingRank { font-size: 12px; }
+  .upcomingFrac { min-width: 40px; font-size: 13px; }
 }
 
 /* ===== Raras / Momentum (panel secundario, sin numero) ===== */
@@ -386,8 +421,14 @@
   text-align: left;
   color: var(--text-muted);
   transition: background var(--t-fast), color var(--t-fast);
+  min-height: 36px;
 }
 .momentumRow:hover { background: rgba(20, 28, 48, 0.6); }
+.momentumRow:focus-visible {
+  outline: 1px solid var(--type-momentum);
+  outline-offset: 1px;
+  background: rgba(20, 28, 48, 0.6);
+}
 .momentumRowOn { color: var(--text); }
 .momentumName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .momentumNameOn { font-weight: 600; }
@@ -441,6 +482,12 @@
   border-radius: 999px;
 }
 .sectionLink:hover { background: rgba(245, 200, 70, 0.08); color: var(--gold-1); }
+.sectionLink:focus-visible {
+  outline: 1px solid var(--gold-3);
+  outline-offset: 2px;
+  background: rgba(245, 200, 70, 0.10);
+  color: var(--gold-1);
+}
 
 .missingTeamsGrid {
   display: grid;
@@ -450,12 +497,45 @@
 
 @media (max-width: 1100px) { .missingTeamsGrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 720px)  { .missingTeamsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); } }
+@media (max-width: 360px)  { .missingTeamsGrid { gap: 6px; } }
 
 @media (max-width: 540px) {
-  .quickCta { height: 72px; padding: 0 18px 0 16px; }
-  .quickCtaTitle { font-size: 18px; letter-spacing: 0.14em; }
+  .quickCta {
+    height: 72px;
+    padding: 0 14px 0 14px;
+    gap: var(--sp-3);
+  }
+  .quickCtaIcon { width: 32px; height: 32px; }
+  .quickCtaTitle { font-size: 17px; letter-spacing: 0.12em; }
   .quickCtaSub { font-size: 11px; }
-  .quickCtaArrow { width: 36px; height: 36px; font-size: 22px; }
+  /* Touch target ≥44 — bump arrow circle on mobile */
+  .quickCtaArrow { width: 44px; height: 44px; }
   .panel { padding: 18px 16px 16px; }
   .panelHead, .sectionHead { padding-bottom: 12px; gap: 10px; }
+  .panelTitle, .sectionTitle { font-size: 13px; letter-spacing: 0.24em; }
+  .panelNum, .sectionNum { font-size: 13px; }
+  .rows { gap: 10px; }
+  .typeRowHeader { font-size: 12.5px; }
+  .typeRowCount { font-size: 13px; }
+}
+
+@media (max-width: 380px) {
+  .quickCta { height: 68px; padding: 0 12px; gap: 10px; }
+  .quickCtaTitle { font-size: 16px; letter-spacing: 0.10em; }
+  .quickCtaSub { font-size: 10.5px; }
+  .quickCtaIcon { width: 30px; height: 30px; }
+  .quickCtaArrow { width: 40px; height: 40px; }
+}
+
+/* Reduce-motion respect */
+@media (prefers-reduced-motion: reduce) {
+  .quickCta::before,
+  .quickCta:hover::before,
+  .upcomingRow,
+  .upcomingRow:hover {
+    animation: none !important;
+    transition: none !important;
+  }
+  .upcomingRow:hover { transform: none; }
+  .quickCta:hover { transform: none; }
 }

@@ -28,10 +28,14 @@
   --auth-c-ofc:      #06B6D4;
 
   min-height: 100vh;
+  min-height: 100dvh; /* honor mobile dynamic viewport */
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--sp-5) var(--sp-5) clamp(120px, 14vh, 180px);
+  /* honor safe-area-inset-bottom on iPhone (notch / home indicator) */
+  padding: var(--sp-5) var(--sp-5) calc(clamp(120px, 14vh, 180px) + env(safe-area-inset-bottom, 0px));
+  padding-left: max(var(--sp-5), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--sp-5), env(safe-area-inset-right, 0px));
   position: relative;
   background-color: var(--bg);
   background-image: url('/login-bg.jpg');
@@ -61,6 +65,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* Mac (≥1440px): panel breathes a touch more without overpowering the
+   baked-in packs/features in the bg image. Stays centered. */
+@media (min-width: 1440px) {
+  .stage { max-width: 510px; }
+  .card  { padding: 44px 44px 34px; }
+  .heroTitle    { font-size: 66px; }
+  .heroSubtitle { font-size: 12px; }
+  .welcome      { margin-bottom: 40px; }
 }
 
 /* ── Panel ──────────────────────────────────────────────────────────────── */
@@ -345,9 +359,20 @@
   padding: 4px;
   display: flex;
   align-items: center;
-  transition: color 0.15s ease;
+  justify-content: center;
+  /* touch target ≥44×44 (the icon stays 18px, padding gets it there) */
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 3px;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 .eyeBtn:hover { color: var(--auth-gold-3); }
+.eyeBtn:focus-visible {
+  color: var(--auth-gold-2);
+  background: rgba(245, 200, 70, 0.10);
+  outline: 1px solid rgba(245, 200, 70, 0.40);
+  outline-offset: 1px;
+}
 
 /* ── Options row (Recordarme + Forgot) ──────────────────────────────────── */
 
@@ -367,6 +392,11 @@
   cursor: pointer;
   user-select: none;
   letter-spacing: 0.02em;
+  /* touch target padding so the whole row is tappable on mobile */
+  padding: 6px 4px 6px 0;
+  margin-left: -4px;
+  padding-left: 4px;
+  min-height: 32px;
 }
 .checkbox {
   width: 14px;
@@ -395,10 +425,19 @@
   font-size: 11px;
   font-family: var(--font-body);
   letter-spacing: 0.04em;
-  padding: 0;
-  transition: color 0.15s ease;
+  padding: 6px 4px;
+  margin-right: -4px;
+  min-height: 32px;
+  border-radius: 3px;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 .forgot:hover { color: var(--auth-gold-1); text-decoration: underline; }
+.forgot:focus-visible {
+  color: var(--auth-gold-1);
+  outline: 1px solid rgba(245, 200, 70, 0.40);
+  outline-offset: 2px;
+  background: rgba(245, 200, 70, 0.06);
+}
 
 /* ── CTAs ───────────────────────────────────────────────────────────────── */
 
@@ -483,6 +522,12 @@
   background: rgba(245, 200, 70, 0.05);
   box-shadow: 0 0 22px rgba(245, 200, 70, 0.12);
 }
+.ctaGhost:focus-visible,
+.cta:focus-visible {
+  outline: 2px solid var(--auth-gold-2);
+  outline-offset: 2px;
+}
+.ctaGhost:active { transform: translateY(1px); }
 
 .plus {
   display: inline-block;
@@ -531,23 +576,69 @@
 @media (max-width: 768px) {
   .wrap {
     align-items: flex-start;
-    padding-top: clamp(40px, 8vh, 80px);
-    padding-bottom: clamp(120px, 18vh, 180px);
+    /* honor safe-area top + dynamic viewport on iPhone */
+    padding-top: max(clamp(40px, 8vh, 80px), env(safe-area-inset-top, 0px));
+    padding-bottom: calc(clamp(120px, 18vh, 180px) + env(safe-area-inset-bottom, 0px));
     background-position: 50% 30%;
   }
+  /* iPhone: panel hugs the available width */
+  .stage { max-width: 100%; }
 }
 
 @media (max-width: 540px) {
   .wrap {
-    padding-left: var(--sp-3);
-    padding-right: var(--sp-3);
+    padding-left: max(var(--sp-3), env(safe-area-inset-left, 0px));
+    padding-right: max(var(--sp-3), env(safe-area-inset-right, 0px));
   }
   .card { padding: 32px 22px 24px; }
   .heroTitle { font-size: 46px; gap: 10px; }
   .heroSubtitle { letter-spacing: 0.34em; }
-  .welcome { flex-wrap: wrap; }
+  /* Keep welcome on one line; allow ellipsis-free shrinking by tightening gap */
+  .welcome {
+    gap: 7px;
+    margin-bottom: 28px;
+    font-size: 13px;
+  }
+  /* Inputs: ensure ≥48px touch target (already 52, but enforce on iOS quirks) */
+  .inputBox { height: 52px; }
+  /* Slightly larger eye target on mobile */
+  .eyeBtn { min-width: 44px; min-height: 44px; }
+  /* CTA touch target ≥56 already; ghost CTA bumped from 48 → 52 */
+  .ctaGhost { height: 52px; }
 }
 
-@media (max-width: 360px) {
-  .heroTitle { font-size: 38px; gap: 8px; letter-spacing: 0.04em; }
+@media (max-width: 414px) {
+  /* iPhone Pro Max (414) and below: panel reaches edges with comfortable padding */
+  .card { padding: 28px 18px 22px; }
+  .heroTitle { font-size: 42px; }
+  /* Safer space below conf-strip dots */
+  .confStrip { margin-bottom: 18px; }
+  .welcome { margin-bottom: 26px; }
+  .form { gap: 14px; }
+}
+
+@media (max-width: 380px) {
+  .card { padding: 26px 16px 22px; }
+  .heroTitle { font-size: 40px; gap: 8px; letter-spacing: 0.04em; }
+  /* Welcome single-line: hide the trophy icon if too tight */
+  .welcome { font-size: 12.5px; }
+}
+
+@media (max-width: 340px) {
+  .heroTitle { font-size: 36px; }
+  .heroSubtitle { letter-spacing: 0.26em; font-size: 10px; }
+  /* Last-resort: allow welcome to wrap if device is super narrow */
+  .welcome { flex-wrap: wrap; gap: 4px 6px; }
+}
+
+/* Reduce-motion: respect user pref for the brackets + dot pulse + panel-in */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .bracket,
+  .dot,
+  .cta::before,
+  .cta:hover:not(:disabled)::before {
+    animation: none !important;
+    transition: none !important;
+  }
 }
