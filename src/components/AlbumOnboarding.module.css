@@ -1,139 +1,352 @@
+/* =============================================================================
+   AlbumOnboarding — visual rebuild v3 (broadcast × vault)
+   Hero broadcast title (Bebas + tracking-widest), 2 chamfered cards
+   with brackets + numbered head + SVG icon. Cards lift + glow on hover,
+   gold gradient CTA on press.
+   ============================================================================= */
+
 .wrap {
+  /* component-scoped tokens */
+  --o-panel-bg:      linear-gradient(180deg, rgba(15, 22, 38, 0.78), rgba(8, 12, 22, 0.88));
+  --o-panel-border:  rgba(245, 200, 70, 0.10);
+  --o-panel-strong:  rgba(245, 200, 70, 0.50);
+
   min-height: 100vh;
   background: var(--bg);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(40px, 8vh, 80px) var(--sp-5) clamp(60px, 10vh, 100px);
+  overflow: hidden;
+}
+
+/* Soft gold halo behind the stage */
+.wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 50% 40% at 50% 40%, rgba(245, 200, 70, 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 50% 60%, rgba(0, 0, 0, 0.40) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 820px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: var(--sp-5);
-  gap: var(--sp-6);
+  gap: 40px;
+  animation: stageIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+@keyframes stageIn {
+  0%   { opacity: 0; transform: translateY(14px); filter: blur(6px); }
+  100% { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────── */
 .hero {
   text-align: center;
-  max-width: 540px;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--gold-2);
+  margin-bottom: 4px;
+}
+.eyebrowDot {
+  width: 5px;
+  height: 5px;
+  background: var(--gold-3);
+  transform: rotate(45deg);
+  box-shadow: 0 0 8px var(--gold-3);
+}
+.eyebrowText { font-weight: 600; }
+
 .title {
+  margin: 0;
   font-family: var(--font-display);
-  font-size: 38px;
-  letter-spacing: 3px;
-  color: var(--accent);
-  line-height: 1.1;
-  margin-bottom: var(--sp-3);
+  font-size: 56px;
+  letter-spacing: 0.06em;
+  line-height: 0.95;
+  color: var(--text);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+}
+.titleAccent {
+  background: linear-gradient(180deg, #FFE9A8 0%, #F5C842 50%, #C88A00 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 14px rgba(245, 200, 70, 0.4));
+  letter-spacing: 0.04em;
+}
+
+.heroDivider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 4px auto;
+  max-width: 240px;
+  width: 100%;
+}
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-4));
+}
+.dividerLineRight {
+  background: linear-gradient(90deg, var(--gold-4), transparent);
+}
+.dividerDiamond {
+  width: 5px;
+  height: 5px;
+  background: var(--gold-3);
+  transform: rotate(45deg);
+  box-shadow: 0 0 10px var(--gold-3);
 }
 
 .subtitle {
+  margin: 0;
+  font-family: var(--font-body);
   font-size: 14px;
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: 1.55;
+  letter-spacing: 0.02em;
+  max-width: 480px;
 }
 
+/* ── Cards ────────────────────────────────────────────────────────── */
 .cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--sp-4);
+  gap: 22px;
   width: 100%;
-  max-width: 720px;
+  max-width: 760px;
 }
 
 .card {
-  background: linear-gradient(180deg, var(--bg-card), var(--bg-elevated));
-  border: 2px solid var(--border);
-  border-radius: var(--r-2xl);
-  padding: var(--sp-6) var(--sp-5);
+  position: relative;
+  background: var(--o-panel-bg);
+  border: 1px solid var(--o-panel-border);
+  border-radius: 3px;
+  padding: 28px 26px 22px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: var(--sp-3);
-  transition: transform var(--t-base), border-color var(--t-base), box-shadow var(--t-base);
+  align-items: stretch;
+  text-align: left;
+  gap: 10px;
+  font-family: var(--font-body);
+  color: inherit;
+  cursor: pointer;
+  /* chamfered TR + BL — broadcast signature */
+  clip-path: polygon(
+    0 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% 100%,
+    14px 100%,
+    0 calc(100% - 14px)
+  );
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s ease,
+              box-shadow 0.28s ease,
+              background 0.22s ease;
 }
 .card:hover:not(:disabled) {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-6px);
+  border-color: rgba(245, 200, 70, 0.32);
+  background: linear-gradient(180deg, rgba(20, 28, 48, 0.85), rgba(10, 16, 30, 0.92));
+  box-shadow:
+    0 22px 50px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(245, 200, 70, 0.12),
+    0 0 36px rgba(245, 200, 70, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.card:hover:not(:disabled) .cardCta {
+  background: linear-gradient(180deg, #FFE9A8 0%, #F5C842 30%, #E6A817 70%, #C88A00 100%);
+  color: #0A0A0A;
+  border-color: transparent;
+  box-shadow:
+    0 12px 24px rgba(230, 168, 23, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.card:hover:not(:disabled) .cardIconBox {
+  border-color: var(--gold-3);
+  color: var(--gold-1);
+  box-shadow: inset 0 0 18px rgba(245, 200, 70, 0.20), 0 0 22px rgba(245, 200, 70, 0.28);
+}
+.card:active:not(:disabled) { transform: translateY(-2px); }
+.card:disabled { cursor: wait; }
+.cardBusy { border-color: rgba(245, 200, 70, 0.45); }
+
+/* Brackets */
+.bracket {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  z-index: 2;
+}
+.bracket::before,
+.bracket::after {
+  content: '';
+  position: absolute;
+  background: var(--gold-2);
+  box-shadow: 0 0 6px rgba(245, 200, 70, 0.55);
+}
+.tl { top: 12px; left: 12px; }
+.tl::before { top: 0; left: 0; width: 12px; height: 1.5px; }
+.tl::after  { top: 0; left: 0; width: 1.5px; height: 12px; }
+
+.tr { top: 12px; right: 12px; }
+.tr::before { top: 0; right: 0; width: 12px; height: 1.5px; }
+.tr::after  { top: 0; right: 0; width: 1.5px; height: 12px; }
+
+.bl { bottom: 12px; left: 12px; }
+.bl::before { bottom: 0; left: 0; width: 12px; height: 1.5px; }
+.bl::after  { bottom: 0; left: 0; width: 1.5px; height: 12px; }
+
+.br { bottom: 12px; right: 12px; }
+.br::before { bottom: 0; right: 0; width: 12px; height: 1.5px; }
+.br::after  { bottom: 0; right: 0; width: 1.5px; height: 12px; }
+
+/* Card head — broadcast: NUM / LABEL / rule */
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--o-panel-border);
+}
+.cardNum {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  color: var(--gold-3);
+}
+.cardLabel {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.cardRule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(245, 200, 70, 0.30), transparent);
+  align-self: center;
+  min-width: 14px;
 }
 
-.cardAdrenalyn:hover:not(:disabled) {
-  border-color: var(--accent);
-  box-shadow: 0 12px 40px rgba(252, 211, 77, 0.25);
-}
-
-.cardSticker:hover:not(:disabled) {
-  border-color: #10B981;
-  box-shadow: 0 12px 40px rgba(16, 185, 129, 0.25);
-}
-
-.cardIcon {
-  font-size: 64px;
-  line-height: 1;
+/* Icon box */
+.cardIconBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 6px 0 8px;
+  border: 1.5px solid rgba(245, 200, 70, 0.25);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.30);
+  color: var(--gold-3);
+  align-self: flex-start;
+  /* tiny chamfer on icon box */
+  clip-path: polygon(
+    0 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% 100%,
+    6px 100%,
+    0 calc(100% - 6px)
+  );
+  transition: color 0.22s ease, border-color 0.22s ease, box-shadow 0.28s ease;
 }
 
 .cardTitle {
   font-family: var(--font-display);
-  font-size: 26px;
-  letter-spacing: 2px;
-  color: var(--text);
+  font-size: 28px;
+  letter-spacing: 0.14em;
   line-height: 1;
-}
-
-.cardCount {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  color: var(--text);
   text-transform: uppercase;
 }
-
-.cardCountAdrenalyn { color: var(--accent); }
-.cardCountSticker   { color: #10B981; }
-
+.cardCount {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  color: var(--gold-2);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
 .cardDesc {
+  margin: 4px 0 8px;
+  font-family: var(--font-body);
   font-size: 13px;
   color: var(--text-muted);
-  line-height: 1.5;
-  margin-top: var(--sp-2);
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+  flex: 1;
 }
 
+/* Card CTA — ghost by default, gold gradient on parent hover */
 .cardCta {
-  margin-top: var(--sp-3);
-  background: transparent;
-  border: 1px solid var(--border-strong);
-  color: var(--text);
-  border-radius: var(--r-md);
-  padding: 10px 18px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  width: 100%;
-}
-
-.cardCtaAdrenalyn { background: var(--accent-grad); color: #000; border: none; }
-.cardCtaSticker   { background: linear-gradient(135deg, #10B981, #059669); color: #fff; border: none; }
-
-.footer {
-  font-size: 12px;
-  color: var(--text-faint);
-  text-align: center;
-  max-width: 480px;
-  line-height: 1.5;
-}
-
-.footerLink {
-  color: var(--accent);
-  cursor: pointer;
-  font-weight: 700;
-}
-.footerLink:hover { text-decoration: underline; }
-
-.error {
-  background: var(--error-bg);
-  border: 1px solid var(--error);
-  color: var(--error-soft);
-  border-radius: var(--r-md);
-  padding: 10px 16px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 46px;
+  margin-top: 6px;
+  border: 1px solid rgba(245, 200, 70, 0.30);
+  border-radius: 3px;
+  background: rgba(245, 200, 70, 0.06);
+  color: var(--gold-1);
+  font-family: var(--font-display);
   font-size: 13px;
-  text-align: center;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  /* chamfered ends */
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+  transition: background 0.22s ease, color 0.22s ease, box-shadow 0.28s ease, border-color 0.22s ease;
 }
+.cardCta svg { stroke-width: 3; }
 
 .spinner {
   display: inline-block;
@@ -143,13 +356,60 @@
   border-right-color: transparent;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
-  margin-right: 6px;
-  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Footer (logout link) ─────────────────────────────────────────── */
+.footer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text-faint);
+  letter-spacing: 0.04em;
+}
+.footerLink {
+  background: none;
+  border: none;
+  color: var(--gold-2);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.04em;
+  transition: color 0.18s ease;
+}
+.footerLink:hover { color: var(--gold-1); text-decoration: underline; }
+
+/* ── Error ────────────────────────────────────────────────────────── */
+.error {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(127, 29, 29, 0.35);
+  border: 1px solid rgba(248, 113, 113, 0.40);
+  border-left: 2px solid #F87171;
+  color: #FCA5A5;
+  border-radius: 3px;
+  padding: 10px 14px;
+  font-family: var(--font-body);
+  font-size: 13px;
 }
 
+/* ── Responsive ───────────────────────────────────────────────────── */
 @media (max-width: 720px) {
-  .cards { grid-template-columns: 1fr; max-width: 420px; }
-  .title { font-size: 30px; }
-  .cardIcon { font-size: 52px; }
-  .cardTitle { font-size: 22px; }
+  .cards { grid-template-columns: 1fr; max-width: 460px; }
+  .title { font-size: 40px; gap: 10px; }
+  .cardTitle { font-size: 24px; }
+  .stage { gap: 32px; }
+}
+
+@media (max-width: 480px) {
+  .title { font-size: 34px; letter-spacing: 0.04em; }
+  .card { padding: 24px 20px 20px; }
+  .cardIconBox { width: 56px; height: 56px; }
+  .cardCta { height: 44px; font-size: 12px; letter-spacing: 0.18em; }
+  .eyebrowText { letter-spacing: 0.20em; }
 }

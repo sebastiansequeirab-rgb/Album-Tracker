@@ -7,6 +7,109 @@ import { activateAlbum, deactivateAlbum } from '../lib/album'
 import { ALBUM_ADRENALYN, ALBUM_STICKER } from '../data'
 import s from './Profile.module.css'
 
+/* ── Inline SVG icons (no emoji in UI chrome) ───────────────────────────── */
+const IconUser = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+)
+const IconInstagram = (p) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <rect x="3" y="3" width="18" height="18" rx="5" />
+    <circle cx="12" cy="12" r="4" />
+    <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" />
+  </svg>
+)
+const IconWhatsapp = (p) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+  </svg>
+)
+const IconMail = (p) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="M3 7l9 6 9-6" />
+  </svg>
+)
+const IconPin = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+)
+const IconGlobe = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M2 12h20" />
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+  </svg>
+)
+const IconBook = (p) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+  </svg>
+)
+const IconBolt = (p) => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M13 2L3 14h7l-1 8 11-14h-7l0-6z" />
+  </svg>
+)
+const IconPlus = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+)
+const IconClose = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M18 6L6 18M6 6l12 12" />
+  </svg>
+)
+const IconCheck = (p) => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M20 6L9 17l-5-5" />
+  </svg>
+)
+const IconAlert = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M12 9v4M12 17h.01" />
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+  </svg>
+)
+const IconChevron = (p) => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+)
+
+/* Section header — broadcast pattern: NN / TITLE / rule */
+const SectionHead = ({ num, title, sub }) => (
+  <>
+    <div className={s.sectionHead}>
+      <span className={s.sectionNum}>{num}</span>
+      <h2 className={s.sectionTitle}>{title}</h2>
+      <span className={s.sectionRule} />
+    </div>
+    {sub && <p className={s.sectionSub}>{sub}</p>}
+  </>
+)
+
+/* Numbered field label */
+const FieldLabel = ({ num, children }) => (
+  <label className={s.fieldLabel}>
+    <span className={s.fieldLabelNum}>{num}</span>
+    <span className={s.fieldLabelText}>{children}</span>
+  </label>
+)
+
+const MEETING_TYPE_COLORS = {
+  university: 'var(--type-jugador)',
+  shopping:   'var(--type-intro)',
+  home:       'var(--type-plantel)',
+  other:      'var(--gold-3)',
+}
+
 export default function Profile({ session, onSaved, onAlbumsChanged }) {
   const [profile, setProfile] = useState(null)
   const [saving, setSaving]   = useState(false)
@@ -65,7 +168,6 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
   const toggleAlbum = async (albumType) => {
     if (albumBusy) return
     const isActive = activeAlbums.includes(albumType)
-    // No permitir quedarse sin álbumes — debe haber al menos uno activo
     if (isActive && activeAlbums.length <= 1) {
       setErr('Necesitás tener al menos un álbum activo. Activá el otro antes de desactivar este.')
       return
@@ -86,40 +188,67 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
   return (
     <div className={s.wrap}>
 
-      <div className={s.section}>
-        <div className={s.sectionTitle}>👤 IDENTIDAD</div>
-        <div className={s.sectionSub}>Cómo te ven los otros coleccionistas en el Marketplace.</div>
+      {/* ═══════════════════ 01 — IDENTIDAD ═══════════════════ */}
+      <section className={s.panel}>
+        <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
+
+        <SectionHead
+          num="01"
+          title="IDENTIDAD"
+          sub="Cómo te ven los otros coleccionistas en el Marketplace."
+        />
 
         <div className={s.field}>
-          <label className={s.label}>NOMBRE PARA MOSTRAR</label>
-          <input className={s.input} type="text" maxLength={40}
-            value={profile.display_name}
-            onChange={e => upd('display_name', e.target.value)}
-            placeholder="Ej: Juan, Coleccionista_22, etc." />
-        </div>
-
-        <div className={s.field}>
-          <label className={s.label}>AVATAR</label>
-          <div className={s.avatarRow}>
-            {EMOJI_AVATARS.map(em => (
-              <button key={em} type="button"
-                onClick={() => upd('avatar_emoji', em)}
-                className={`${s.avatarBtn} ${profile.avatar_emoji === em ? s.avatarBtnActive : ''}`}>
-                {em}
-              </button>
-            ))}
+          <FieldLabel num="01">Nombre para mostrar</FieldLabel>
+          <div className={s.inputBox}>
+            <span className={s.inputIcon}><IconUser /></span>
+            <input className={s.input} type="text" maxLength={40}
+              value={profile.display_name}
+              onChange={e => upd('display_name', e.target.value)}
+              placeholder="Ej: Juan, Coleccionista_22, etc." />
           </div>
         </div>
-      </div>
-
-      <div className={s.section}>
-        <div className={s.sectionTitle}>📱 CONTACTOS</div>
-        <div className={s.sectionSub}>Cuando alguien quiera proponer un trade, verá los datos que dejes acá. Llena al menos uno.</div>
 
         <div className={s.field}>
-          <label className={s.label}>INSTAGRAM</label>
-          <div className={s.inputPrefix}>
-            <span className={s.prefix}>@</span>
+          <FieldLabel num="02">Avatar</FieldLabel>
+          <div className={s.avatarGrid}>
+            {EMOJI_AVATARS.map(em => {
+              const active = profile.avatar_emoji === em
+              return (
+                <button key={em} type="button"
+                  onClick={() => upd('avatar_emoji', em)}
+                  className={`${s.avatarBtn} ${active ? s.avatarBtnActive : ''}`}
+                  aria-pressed={active}>
+                  <span className={s.avatarEmoji}>{em}</span>
+                  {active && <span className={s.avatarCheck} aria-hidden="true"><IconCheck /></span>}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════ 02 — CONTACTOS ═══════════════════ */}
+      <section className={s.panel}>
+        <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
+
+        <SectionHead
+          num="02"
+          title="CONTACTOS"
+          sub="Cuando alguien quiera proponer un trade, verá los datos que dejes acá. Llená al menos uno."
+        />
+
+        <div className={s.field}>
+          <FieldLabel num="01">Instagram</FieldLabel>
+          <div className={s.inputBox}>
+            <span className={s.inputIcon}><IconInstagram /></span>
+            <span className={s.inputAt}>@</span>
             <input className={s.input} type="text"
               value={(profile.contact?.instagram || '').replace(/^@/, '')}
               onChange={e => updContact('instagram', e.target.value.replace(/^@/, ''))}
@@ -128,133 +257,204 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         </div>
 
         <div className={s.field}>
-          <label className={s.label}>WHATSAPP</label>
-          <input className={s.input} type="tel"
-            value={profile.contact?.whatsapp || ''}
-            onChange={e => updContact('whatsapp', e.target.value)}
-            placeholder="+58 412 1234567" />
+          <FieldLabel num="02">WhatsApp</FieldLabel>
+          <div className={s.inputBox}>
+            <span className={s.inputIcon}><IconWhatsapp /></span>
+            <input className={s.input} type="tel"
+              value={profile.contact?.whatsapp || ''}
+              onChange={e => updContact('whatsapp', e.target.value)}
+              placeholder="+58 412 1234567" />
+          </div>
         </div>
 
         <div className={s.field}>
-          <label className={s.label}>EMAIL DE CONTACTO</label>
-          <input className={s.input} type="email"
-            value={profile.contact?.email || ''}
-            onChange={e => updContact('email', e.target.value)}
-            placeholder={session.user.email} />
+          <FieldLabel num="03">Email de contacto</FieldLabel>
+          <div className={s.inputBox}>
+            <span className={s.inputIcon}><IconMail /></span>
+            <input className={s.input} type="email"
+              value={profile.contact?.email || ''}
+              onChange={e => updContact('email', e.target.value)}
+              placeholder={session.user.email} />
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className={s.section}>
-        <div className={s.sectionTitle}>🌐 VISIBILIDAD</div>
-        <div className={s.sectionSub}>Tú decides cuándo apareces en el Marketplace.</div>
+      {/* ═══════════════════ 03 — VISIBILIDAD ═══════════════════ */}
+      <section className={s.panel}>
+        <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
 
-        <div className={`${s.toggleRow} ${visible ? s.toggleRowOn : ''}`}
+        <SectionHead
+          num="03"
+          title="VISIBILIDAD"
+          sub="Tú decidís cuándo aparecés en el Marketplace."
+        />
+
+        <button type="button"
+          className={`${s.toggleRow} ${visible ? s.toggleRowOn : ''}`}
           onClick={() => upd('marketplace_visible', !visible)}
-          style={{ cursor: 'pointer' }}>
+          aria-pressed={visible}>
+          <span className={s.toggleIcon}>
+            <IconGlobe />
+          </span>
           <div className={s.toggleBody}>
             <div className={s.toggleTitle}>Visible en Marketplace</div>
             <div className={s.toggleHint}>
               {visible
-                ? 'Otros usuarios autenticados ven tu nombre, avatar, contactos y matches contigo.'
-                : 'Estás oculto. Activa esto para que otros vean tu listing y propongan trades.'}
+                ? 'Otros coleccionistas autenticados ven tu nombre, avatar, contactos y matches.'
+                : 'Estás oculto. Activá esto para que otros vean tu listing y propongan trades.'}
             </div>
           </div>
-          <div className={`${s.switch} ${visible ? s.switchOn : ''}`}>
-            <div className={s.switchKnob} />
-          </div>
-        </div>
-      </div>
+          <span className={`${s.switch} ${visible ? s.switchOn : ''}`} aria-hidden="true">
+            <span className={s.switchKnob} />
+          </span>
+        </button>
+      </section>
 
-      <div className={s.section}>
-        <div className={s.sectionTitle}>📍 PUNTOS DE ENCUENTRO HABITUALES</div>
-        <div className={s.sectionSub}>
-          Lugares donde solés intercambiar cartas. Aparecen como sugerencias cuando alguien te
-          propone un trade.
-        </div>
+      {/* ═══════════════════ 04 — PUNTOS DE ENCUENTRO ═══════════════════ */}
+      <section className={s.panel}>
+        <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
+
+        <SectionHead
+          num="04"
+          title="PUNTOS DE ENCUENTRO"
+          sub="Lugares donde solés intercambiar cartas. Aparecen como sugerencias cuando alguien te propone un trade."
+        />
 
         {meetingPoints.length === 0 && (
-          <div className={s.mpEmpty}>Todavía no agregaste ningún punto. Tap "Agregar punto" para empezar.</div>
+          <div className={s.mpEmpty}>
+            <IconPin />
+            <span>Todavía no agregaste ningún punto. Tap “Agregar punto” para empezar.</span>
+          </div>
         )}
 
-        {meetingPoints.map((mp) => (
-          <div key={mp.id} className={s.mpCard}>
-            <div className={s.mpRow}>
-              <input
-                className={s.input}
-                type="text"
-                maxLength={80}
-                value={mp.name}
-                onChange={e => updateMeetingPoint(mp.id, { name: e.target.value })}
-                placeholder="Ej: UCAB campus principal"
-              />
-              <button type="button" className={s.mpRemove} onClick={() => removeMeetingPoint(mp.id)} aria-label="Eliminar punto">×</button>
+        {meetingPoints.map((mp, idx) => (
+          <div key={mp.id}
+            className={s.mpCard}
+            style={{ '--mp-accent': MEETING_TYPE_COLORS[mp.type] || 'var(--gold-3)' }}>
+            <div className={s.mpHead}>
+              <span className={s.mpIndex}>{String(idx + 1).padStart(2, '0')}</span>
+              <span className={s.mpHeadIcon}><IconPin /></span>
+              <button type="button" className={s.mpRemove} onClick={() => removeMeetingPoint(mp.id)} aria-label="Eliminar punto">
+                <IconClose />
+              </button>
             </div>
             <div className={s.mpRow}>
-              <select
-                className={s.input}
-                value={mp.type || 'other'}
-                onChange={e => updateMeetingPoint(mp.id, { type: e.target.value })}>
-                {MEETING_POINT_TYPES.map(t => (
-                  <option key={t.id} value={t.id}>{t.label}</option>
-                ))}
-              </select>
-              <input
-                className={s.input}
-                type="text"
-                maxLength={120}
-                value={mp.hint || ''}
-                onChange={e => updateMeetingPoint(mp.id, { hint: e.target.value })}
-                placeholder="Hint opcional (puerta, hora habitual…)"
-              />
+              <div className={s.inputBox} style={{ flex: 2 }}>
+                <input
+                  className={s.input}
+                  type="text"
+                  maxLength={80}
+                  value={mp.name}
+                  onChange={e => updateMeetingPoint(mp.id, { name: e.target.value })}
+                  placeholder="Ej: UCAB campus principal"
+                />
+              </div>
+            </div>
+            <div className={s.mpRow}>
+              <div className={s.inputBox} style={{ flex: 1 }}>
+                <select
+                  className={`${s.input} ${s.select}`}
+                  value={mp.type || 'other'}
+                  onChange={e => updateMeetingPoint(mp.id, { type: e.target.value })}>
+                  {MEETING_POINT_TYPES.map(t => (
+                    <option key={t.id} value={t.id}>{t.label}</option>
+                  ))}
+                </select>
+                <span className={s.selectChev}><IconChevron /></span>
+              </div>
+              <div className={s.inputBox} style={{ flex: 2 }}>
+                <input
+                  className={s.input}
+                  type="text"
+                  maxLength={120}
+                  value={mp.hint || ''}
+                  onChange={e => updateMeetingPoint(mp.id, { hint: e.target.value })}
+                  placeholder="Hint (puerta, hora habitual…)"
+                />
+              </div>
             </div>
           </div>
         ))}
 
         <button type="button" className={s.mpAdd} onClick={addMeetingPoint}>
-          + Agregar punto
+          <IconPlus />
+          <span>Agregar punto</span>
         </button>
-      </div>
+      </section>
 
-      <div className={s.section}>
-        <div className={s.sectionTitle}>📚 MIS ÁLBUMES</div>
-        <div className={s.sectionSub}>
-          Activá los álbumes que coleccionás. Tu progreso se guarda por separado
-          en cada uno y podés alternarlos desde el header.
-        </div>
+      {/* ═══════════════════ 05 — MIS ÁLBUMES ═══════════════════ */}
+      <section className={s.panel}>
+        <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
+        <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
 
-        {[
-          { id: ALBUM_ADRENALYN, icon: '⚽', title: 'Adrenalyn XL',       sub: '633 cartas · trading cards' },
-          { id: ALBUM_STICKER,   icon: '📖', title: 'Álbum de Stickers',  sub: '980 stickers · álbum tradicional' },
-        ].map(album => {
-          const isActive = activeAlbums.includes(album.id)
-          const isBusy   = albumBusy === album.id
-          return (
-            <div key={album.id}
-              className={`${s.toggleRow} ${isActive ? s.toggleRowOn : ''}`}
-              onClick={() => toggleAlbum(album.id)}
-              style={{ cursor: isBusy ? 'wait' : 'pointer', marginBottom: 10, opacity: isBusy ? 0.7 : 1 }}>
-              <div className={s.toggleBody}>
-                <div className={s.toggleTitle}>{album.icon} {album.title}</div>
-                <div className={s.toggleHint}>
-                  {isBusy ? 'Procesando…' : (isActive ? 'Activo · ' : 'No activo · ') + album.sub}
+        <SectionHead
+          num="05"
+          title="MIS ÁLBUMES ACTIVOS"
+          sub="Activá los álbumes que coleccionás. Tu progreso se guarda por separado en cada uno y podés alternarlos desde el header."
+        />
+
+        <div className={s.albumGrid}>
+          {[
+            { id: ALBUM_ADRENALYN, Icon: IconBolt, title: 'Adrenalyn XL',      sub: '633 cartas · trading cards' },
+            { id: ALBUM_STICKER,   Icon: IconBook, title: 'Álbum de Stickers', sub: '980 stickers · álbum tradicional' },
+          ].map(album => {
+            const isActive = activeAlbums.includes(album.id)
+            const isBusy   = albumBusy === album.id
+            const Icon = album.Icon
+            return (
+              <button key={album.id}
+                type="button"
+                className={`${s.albumCard} ${isActive ? s.albumCardOn : ''}`}
+                onClick={() => toggleAlbum(album.id)}
+                disabled={isBusy}
+                aria-pressed={isActive}>
+                <span className={s.albumIcon}><Icon /></span>
+                <div className={s.albumBody}>
+                  <div className={s.albumTitle}>{album.title}</div>
+                  <div className={s.albumSub}>
+                    {isBusy
+                      ? 'Procesando…'
+                      : (isActive ? 'Activo · ' : 'No activo · ') + album.sub}
+                  </div>
                 </div>
-              </div>
-              <div className={`${s.switch} ${isActive ? s.switchOn : ''}`}>
-                <div className={s.switchKnob} />
-              </div>
-            </div>
-          )
-        })}
-      </div>
+                <span className={`${s.albumStatus} ${isActive ? s.albumStatusOn : ''}`}>
+                  {isActive ? <IconCheck /> : null}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </section>
 
+      {/* ═══════════════════ Save CTA ═══════════════════ */}
       <div className={s.actions}>
         <button onClick={onSave} disabled={saving} className={s.saveBtn}>
-          {saving ? 'Guardando…' : 'Guardar perfil'}
+          <span className={s.saveBtnLabel}>
+            {saving ? 'GUARDANDO…' : 'GUARDAR CAMBIOS'}
+          </span>
         </button>
       </div>
 
-      {savedAt > 0 && Date.now() - savedAt < 4000 && <div className={s.savedHint}>✓ Guardado</div>}
-      {err && <div className={s.errorHint}>⚠️ {err}</div>}
+      {savedAt > 0 && Date.now() - savedAt < 4000 && (
+        <div className={s.savedHint}>
+          <IconCheck />
+          <span>Guardado</span>
+        </div>
+      )}
+      {err && (
+        <div className={s.errorHint}>
+          <IconAlert />
+          <span>{err}</span>
+        </div>
+      )}
 
     </div>
   )
