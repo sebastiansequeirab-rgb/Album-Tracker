@@ -7,6 +7,7 @@ import Flag from './Flag'
 import Marketplace from './Marketplace'
 import Profile from './Profile'
 import DashboardPage from './pages/DashboardPage'
+import TeamsPage from './pages/TeamsPage'
 import s from './Tracker.module.css'
 
 export default function Tracker({
@@ -169,6 +170,22 @@ export default function Tracker({
   }
 
   const gs = id => col[id] || 'missing'
+
+  // Bulk update — UNA sola call a save() para preservar coalescing.
+  // Reusable: TeamDrawer (commit 4), CardsPage bulk action bar (commit 5).
+  const bulkUpdate = (ids, status) => {
+    if (!ids || ids.length === 0) return
+    const nc = { ...col }
+    let changed = 0
+    ids.forEach(id => {
+      if (nc[id] !== status) { nc[id] = status; changed++ }
+    })
+    if (changed === 0) return
+    setCol(nc); save(nc)
+    const lbl = { have: '✅ Tengo', duplicate: '🔄 Repetidas', missing: '❌ Faltantes' }
+    const clr = { have: '#4ADE80', duplicate: '#F59E0B', missing: '#94A3B8' }
+    flash(`✨ ${changed} carta${changed !== 1 ? 's' : ''} → ${lbl[status] || status}`, clr[status] || '#94A3B8')
+  }
 
   const applyQuickUpdate = () => {
     const numbers = parseNumberList(quickText)
@@ -443,63 +460,21 @@ export default function Tracker({
           </div>
         )}
 
-        {/* Teams grid */}
-        {tab === 'teams' && !selTeam && (
-          <div className={`${s.fade} ${s.teamsGrid}`}>
-            {teamStats.sort((a,b) => a.name.localeCompare(b.name)).map(t => (
-              <div key={t.id} onClick={() => setSelTeam(t.id)}
-                className={`${s.teamCard} ${t.pct === 100 ? s.teamCardComplete : ''}`}
-                style={{ cursor:'pointer' }}>
-                <div className={s.teamFlag}>
-                  <Flag fifa={t.id} emoji={t.flag} size={48} alt={t.name} />
-                </div>
-                <div className={s.teamName}>{t.name}</div>
-                <div className={s.teamConf} style={{ color: CC[t.conf] || '#64748B' }}>{t.conf}</div>
-                <Bar pct={t.pct} color={t.pct === 100 ? '#22C55E' : '#60A5FA'} h={5} />
-                <div className={`${s.teamScore} ${t.pct === 100 ? s.teamScoreDone : ''}`}>{t.have}/{t.tot}</div>
-                {t.pct === 100 && <div className={s.teamDoneBadge}>✨ Completo</div>}
-              </div>
-            ))}
+        {/* Teams grid + drawer */}
+        {tab === 'teams' && (
+          <div className={s.fade}>
+            <TeamsPage
+              teamStats={teamStats}
+              ALL_ITEMS={ALL_ITEMS}
+              TM={TM}
+              gs={gs}
+              toggle={toggle}
+              bulkUpdate={bulkUpdate}
+              selTeam={selTeam}
+              setSelTeam={setSelTeam}
+            />
           </div>
         )}
-
-        {/* Team detail */}
-        {tab === 'teams' && selTeam && (() => {
-          const team = cfg.teams.find(t => t.id === selTeam)
-          if (!team) return null
-          const { name, flag, conf } = team
-          const tc = ALL_ITEMS.filter(c => c.team === name)
-          const hv = tc.filter(c => gs(c.id) !== 'missing').length
-          const byType = Object.keys(TM)
-            .map(type => ({ type, cards: tc.filter(c => c.type === type) }))
-            .filter(g => g.cards.length > 0)
-          return (
-            <div className={s.fade}>
-              <button onClick={() => setSelTeam(null)} className={s.backBtn}>← Volver</button>
-              <div className={s.teamHeader}>
-                <div className={s.teamHeaderFlag}>
-                  <Flag fifa={team.id} emoji={flag} size={72} alt={name} />
-                </div>
-                <div className={s.teamHeaderBody}>
-                  <h2 className={s.teamHeaderName}>{name}</h2>
-                  <div className={s.teamHeaderConf} style={{ color: CC[conf] || '#64748B' }}>{conf}</div>
-                  <Bar pct={Math.round(hv/tc.length*100)} color="#60A5FA" h={8} />
-                  <div className={s.teamHeaderCount}>{hv}/{tc.length} · {Math.round(hv/tc.length*100)}%</div>
-                </div>
-              </div>
-              {byType.map(({ type, cards }) => (
-                <div key={type} className={s.typeGroup}>
-                  <div className={s.typeGroupHeader} style={{ color: TM[type]?.c || '#64748B' }}>
-                    {TM[type]?.e} {TM[type]?.l?.toUpperCase()} ({cards.filter(c => gs(c.id) !== 'missing').length}/{cards.length})
-                  </div>
-                  <div className={s.pillGrid}>
-                    {cards.map(c => <Pill key={c.id} card={c} />)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
-        })()}
 
         {/* Cards browser */}
         {tab === 'cards' && (
