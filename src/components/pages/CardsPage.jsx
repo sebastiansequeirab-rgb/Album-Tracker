@@ -206,8 +206,7 @@ export default function CardsPage({
 
       {/* ── Section header + summary row ──────────────────────────────── */}
       <header className={s.summaryHead}>
-        <span className={s.summaryNum}>04</span>
-        <h3 className={s.summaryTitle}>Catalogo</h3>
+        <h3 className={s.summaryTitle}>Resumen</h3>
         <span className={s.summaryRule} aria-hidden="true" />
         <span className={s.summaryDots}>
           <span className={`${s.dotPill} ${s.dotHave}`}>

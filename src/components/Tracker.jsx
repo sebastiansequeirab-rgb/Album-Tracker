@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../supabaseClient'
-import { parseNumberList, MOMENTUM, ALBUM_CONFIG, ALBUM_ADRENALYN, ALBUM_TYPES } from '../data'
+import { MOMENTUM, ALBUM_CONFIG, ALBUM_ADRENALYN, ALBUM_TYPES } from '../data'
 import {
   ensureMyProfile, loadUnreadCount, subscribeToInbox,
   recordTradeHistory, updateTradeRequestStatus,
@@ -15,7 +15,6 @@ import DashboardPage from './pages/DashboardPage'
 import TeamsPage from './pages/TeamsPage'
 import CardsPage from './pages/CardsPage'
 import ProgressBar from './ui/ProgressBar'
-import BulkUpdateModal from './ui/BulkUpdateModal'
 import QuickUpdateModal from './QuickUpdateModal'
 import s from './Tracker.module.css'
 
@@ -102,11 +101,8 @@ export default function Tracker({
   const [loaded,    setLoaded]    = useState(false)
   const [saveStatus,setSaveStatus]= useState('idle')
   const [toast,     setToast]     = useState(null)
-  const [showQuick, setShowQuick] = useState(false)
   const [showQuickTrade, setShowQuickTrade] = useState(false)
   const [quickTradePrefill, setQuickTradePrefill] = useState(null)
-  const [quickText, setQuickText] = useState('')
-  const [quickAction,setQuickAction]=useState('have')
   const [showReset, setShowReset] = useState(false)
   const [myProfile, setMyProfile] = useState(null)
   const [unread,    setUnread]    = useState(0)
@@ -261,25 +257,7 @@ export default function Tracker({
     flash(`✨ ${changed} carta${changed !== 1 ? 's' : ''} → ${lbl[status] || status}`, clr[status] || '#94A3B8')
   }
 
-  const applyQuickUpdate = () => {
-    const numbers = parseNumberList(quickText)
-    if (!numbers.length) { flash('⚠️ No hay números válidos', '#F87171'); return }
-    const nc = { ...col }
-    let count = 0
-    ALL_ITEMS.forEach(card => {
-      if (typeof card.num === 'number' && numbers.includes(card.num)) {
-        nc[card.id] = quickAction
-        count++
-      }
-    })
-    setCol(nc); save(nc)
-    const lbl = { have:'✅ Tengo', duplicate:'🔄 Repetidas', missing:'❌ Faltantes' }
-    const clr = { have:'#4ADE80', duplicate:'#F59E0B', missing:'#94A3B8' }
-    flash(`✨ ${count} cartas → ${lbl[quickAction]}`, clr[quickAction])
-    setQuickText(''); setShowQuick(false)
-  }
-
-  // Intercambio rápido — actualiza colección y registra el trade en history.
+  // Registrar movimiento — actualiza colección y registra el trade en history.
   const applyQuickTrade = async ({ entered = [], left = [], note, partnerId }) => {
     const nc = { ...col }
     let changed = 0
@@ -326,12 +304,6 @@ export default function Tracker({
     flash('🔄 Restablecido al estado inicial', '#60A5FA')
     setShowReset(false)
   }
-
-  const matchedCards = useMemo(() => {
-    if (!quickText) return []
-    const nums = parseNumberList(quickText)
-    return ALL_ITEMS.filter(c => typeof c.num === 'number' && nums.includes(c.num))
-  }, [quickText])
 
   const mainCards = useMemo(
     () => cfg.showMomentum ? ALL_ITEMS.filter(c => c.type !== 'Momentum') : ALL_ITEMS,
@@ -403,19 +375,7 @@ export default function Tracker({
         </div>
       )}
 
-      {/* Quick Update Modal */}
-      <BulkUpdateModal
-        open={showQuick}
-        onClose={() => setShowQuick(false)}
-        quickText={quickText}
-        setQuickText={setQuickText}
-        quickAction={quickAction}
-        setQuickAction={setQuickAction}
-        matchedCards={matchedCards}
-        onApply={applyQuickUpdate}
-      />
-
-      {/* Intercambio rápido (entró/salió) */}
+      {/* Registrar movimiento (entró/salió) */}
       <QuickUpdateModal
         open={showQuickTrade}
         onClose={() => { setShowQuickTrade(false); setQuickTradePrefill(null) }}
@@ -518,7 +478,6 @@ export default function Tracker({
                 MOMENTUM={MOMENTUM}
                 gs={gs}
                 toggle={toggle}
-                setShowQuick={setShowQuick}
                 setShowQuickTrade={setShowQuickTrade}
                 setTab={setTab}
                 setSelTeam={setSelTeam}
@@ -620,11 +579,11 @@ export default function Tracker({
         </AnimatePresence>
       </main>
 
-      {/* Floating Quick Update Button — hidden on Home (has inline CTA) */}
+      {/* FAB Registrar Movimiento — hidden on Home (has inline CTA) */}
       {tab !== 'dashboard' && (
-        <button onClick={() => setShowQuick(true)} className={s.fab} aria-label="Actualización rápida">
+        <button onClick={() => setShowQuickTrade(true)} className={s.fab} aria-label="Registrar movimiento">
           <span className={s.fabIcon} aria-hidden="true"><IconPencil /></span>
-          <span className={s.fabLabel}>ACTUALIZAR</span>
+          <span className={s.fabLabel}>REGISTRAR</span>
         </button>
       )}
     </div>

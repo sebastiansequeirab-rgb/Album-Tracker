@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { parseNumberList } from '../data'
 import s from './QuickUpdateModal.module.css'
 
 const IconClose = (p) => (
@@ -20,78 +19,66 @@ const IconHand = (p) => (
     <path d="M18 8a2 2 0 0 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-1-5.5-3l-3.5-6c-.7-1.4 0-2.7 1.5-3 1.5-.3 2.5.5 3.5 2"/>
   </svg>
 )
+const IconCheck = (p) => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+)
+const IconSearch = (p) => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>
+)
+
+const MAX_RESULTS = 60
 
 export default function QuickUpdateModal({
   open,
   onClose,
   cards,           // ALL_ITEMS
   col,             // current collection { id: 'have' | 'duplicate' | 'missing' }
-  onApply,         // ({ entered: ids[], left: ids[], note, partnerId }) => Promise
-  prefill,         // optional: { enteredIds, leftIds, partnerId, partnerName, note }
+  onApply,         // ({ entered, left, note, partnerId }) => Promise
+  prefill,         // optional: { enteredIds, leftIds, partnerId, partnerName, tradeId, note }
 }) {
   const [step, setStep] = useState(1)
-  const [enteredText, setEnteredText] = useState('')
-  const [leftText, setLeftText] = useState('')
+  const [enteredSet, setEnteredSet] = useState(() => new Set())
+  const [leftSet, setLeftSet] = useState(() => new Set())
+  const [enteredQuery, setEnteredQuery] = useState('')
+  const [leftQuery, setLeftQuery] = useState('')
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [prefillIds, setPrefillIds] = useState({ entered: null, left: null, partnerId: null, partnerName: null })
+  const [partner, setPartner] = useState({ id: null, name: null })
 
   useEffect(() => {
     if (!open) return
     if (prefill) {
-      const enteredNums = (prefill.enteredIds || [])
-        .map(id => cards.find(c => c.id === id)?.num)
-        .filter(n => Number.isFinite(n))
-      const leftNums = (prefill.leftIds || [])
-        .map(id => cards.find(c => c.id === id)?.num)
-        .filter(n => Number.isFinite(n))
-      setStep(1)
-      setEnteredText(enteredNums.join(', '))
-      setLeftText(leftNums.join(', '))
-      setNote(prefill.note || (prefill.partnerName ? `Trade con ${prefill.partnerName}` : ''))
-      setPrefillIds({
-        entered: prefill.enteredIds || null,
-        left: prefill.leftIds || null,
-        partnerId: prefill.partnerId || null,
-        partnerName: prefill.partnerName || null,
-      })
+      setEnteredSet(new Set(prefill.enteredIds || []))
+      setLeftSet(new Set(prefill.leftIds || []))
+      setNote(prefill.note || (prefill.partnerName ? `Cambio con ${prefill.partnerName}` : ''))
+      setPartner({ id: prefill.partnerId || null, name: prefill.partnerName || null })
     } else {
-      setStep(1); setEnteredText(''); setLeftText(''); setNote('')
-      setPrefillIds({ entered: null, left: null, partnerId: null, partnerName: null })
+      setEnteredSet(new Set()); setLeftSet(new Set())
+      setNote(''); setPartner({ id: null, name: null })
     }
-    setSubmitting(false)
+    setStep(1); setEnteredQuery(''); setLeftQuery(''); setSubmitting(false)
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
-  const enteredIds = useMemo(() => {
-    if (prefillIds.entered && enteredText && sameNums(enteredText, prefillIds.entered, cards)) {
-      return prefillIds.entered
-    }
-    return matchByNumber(cards, enteredText)
-  }, [cards, enteredText, prefillIds.entered])
-
-  const leftIds = useMemo(() => {
-    if (prefillIds.left && leftText && sameNums(leftText, prefillIds.left, cards)) {
-      return prefillIds.left
-    }
-    return matchByNumber(cards, leftText)
-  }, [cards, leftText, prefillIds.left])
-
   if (!open) return null
 
   const submit = async () => {
     if (submitting) return
-    if (enteredIds.length === 0 && leftIds.length === 0) return
+    if (enteredSet.size === 0 && leftSet.size === 0) return
     setSubmitting(true)
     try {
       await onApply({
-        entered: enteredIds,
-        left: leftIds,
+        entered: [...enteredSet],
+        left: [...leftSet],
         note: note.trim() || null,
-        partnerId: prefillIds.partnerId || null,
+        partnerId: partner.id || null,
       })
       onClose()
     } catch (err) {
@@ -100,6 +87,13 @@ export default function QuickUpdateModal({
     }
   }
 
+  const enteredItems = enteredSet.size === 0
+    ? []
+    : cards.filter(c => enteredSet.has(c.id))
+  const leftItems = leftSet.size === 0
+    ? []
+    : cards.filter(c => leftSet.has(c.id))
+
   return (
     <div className={s.backdrop} onClick={onClose}>
       <div
@@ -107,7 +101,7 @@ export default function QuickUpdateModal({
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Intercambio rápido"
+        aria-label="Registrar movimiento"
       >
         <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
         <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
@@ -118,7 +112,7 @@ export default function QuickUpdateModal({
           <div className={s.headTitleRow}>
             <span className={s.headIcon} aria-hidden="true"><IconHand /></span>
             <div>
-              <h2 className={s.title}>INTERCAMBIO RÁPIDO</h2>
+              <h2 className={s.title}>REGISTRAR MOVIMIENTO</h2>
               <div className={s.headSub}>Paso {step} de 2</div>
             </div>
           </div>
@@ -128,76 +122,58 @@ export default function QuickUpdateModal({
         </header>
 
         {step === 1 && (
-          <section className={s.section}>
-            <div className={s.label}>
-              <span className={s.labelText}>¿Qué entró?</span>
-              <span className={s.labelHint}>Cartas que conseguiste — pasan a "tengo"</span>
-            </div>
-            <textarea
-              value={enteredText}
-              onChange={(e) => setEnteredText(e.target.value)}
-              placeholder="Ej: 12, 45, 102-110"
-              className={s.textarea}
-              autoFocus
-            />
-            <div className={s.matchHint}>
-              {enteredIds.length > 0
-                ? <strong>{enteredIds.length}</strong>
-                : 'Aún no marcaste nada'}
-              {enteredIds.length > 0 && (enteredIds.length === 1 ? ' carta detectada' : ' cartas detectadas')}
-            </div>
-
-            {enteredIds.length > 0 && enteredIds.length <= 12 && (
-              <ul className={s.preview}>
-                {enteredIds.map((id) => {
-                  const card = cards.find(c => c.id === id)
-                  if (!card) return null
-                  return (
-                    <li key={id} className={s.previewRow}>
-                      <span className={s.previewNum}>#{card.num}</span>
-                      <span className={s.previewName}>{card.name}</span>
-                      <span className={s.previewTeam}>{card.team}</span>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </section>
+          <CardPicker
+            label="¿Qué entró?"
+            hint="Cartas que conseguiste — pasan a 'tengo'"
+            placeholder="Buscar por nombre, equipo o número…"
+            cards={cards}
+            col={col}
+            preferStatus="missing"
+            query={enteredQuery}
+            setQuery={setEnteredQuery}
+            picked={enteredSet}
+            setPicked={setEnteredSet}
+            otherPicked={leftSet}
+          />
         )}
 
         {step === 2 && (
-          <section className={s.section}>
-            <div className={s.label}>
-              <span className={s.labelText}>¿Qué salió?</span>
-              <span className={s.labelHint}>Repetidas que entregaste — pasan a "falta" si no quedan</span>
-            </div>
-            <textarea
-              value={leftText}
-              onChange={(e) => setLeftText(e.target.value)}
-              placeholder="Ej: 8, 23, 76"
-              className={s.textarea}
-              autoFocus
+          <>
+            <CardPicker
+              label="¿Qué salió?"
+              hint="Repetidas que entregaste — pasan a 'falta' si era tu única, o quedan en 'tengo' si era duplicada"
+              placeholder="Buscar por nombre, equipo o número…"
+              cards={cards}
+              col={col}
+              preferStatus="duplicate"
+              query={leftQuery}
+              setQuery={setLeftQuery}
+              picked={leftSet}
+              setPicked={setLeftSet}
+              otherPicked={enteredSet}
             />
-            <div className={s.matchHint}>
-              {leftIds.length > 0
-                ? <strong>{leftIds.length}</strong>
-                : 'Si no entregaste nada, dejá vacío'}
-              {leftIds.length > 0 && (leftIds.length === 1 ? ' carta detectada' : ' cartas detectadas')}
-            </div>
 
-            <div className={s.label} style={{ marginTop: 16 }}>
-              <span className={s.labelText}>Nota (opcional)</span>
+            <div className={s.section}>
+              <div className={s.label}>
+                <span className={s.labelText}>Nota (opcional)</span>
+                {partner.name && <span className={s.labelHint}>Trade con {partner.name}</span>}
+              </div>
+              <input
+                type="text"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Con quién, dónde, etc."
+                className={s.input}
+                maxLength={160}
+              />
             </div>
-            <input
-              type="text"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Con quién, dónde, etc."
-              className={s.input}
-              maxLength={160}
-            />
-          </section>
+          </>
         )}
+
+        <div className={s.summaryBar}>
+          <span className={s.summaryChip}><strong>+{enteredItems.length}</strong> entró</span>
+          <span className={s.summaryChip}><strong>−{leftItems.length}</strong> salió</span>
+        </div>
 
         <div className={s.ctaStack}>
           {step === 1 && (
@@ -205,7 +181,7 @@ export default function QuickUpdateModal({
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                disabled={enteredIds.length === 0}
+                disabled={enteredSet.size === 0}
                 className={s.cta}
               >
                 SIGUIENTE <IconArrow />
@@ -218,10 +194,10 @@ export default function QuickUpdateModal({
               <button
                 type="button"
                 onClick={submit}
-                disabled={submitting || (enteredIds.length === 0 && leftIds.length === 0)}
+                disabled={submitting || (enteredSet.size === 0 && leftSet.size === 0)}
                 className={s.cta}
               >
-                {submitting ? 'GUARDANDO…' : 'REGISTRAR INTERCAMBIO'}
+                {submitting ? 'GUARDANDO…' : 'REGISTRAR MOVIMIENTO'}
               </button>
               <button type="button" onClick={() => setStep(1)} className={s.ctaGhost}>
                 ← VOLVER
@@ -234,23 +210,131 @@ export default function QuickUpdateModal({
   )
 }
 
-function matchByNumber(cards, text) {
-  const nums = parseNumberList(text || '')
-  if (!nums.length) return []
-  const set = new Set(nums)
-  const out = []
-  for (const c of cards) {
-    if (typeof c.num === 'number' && set.has(c.num)) out.push(c.id)
-  }
-  return out
-}
+function CardPicker({
+  label, hint, placeholder, cards, col, preferStatus,
+  query, setQuery, picked, setPicked, otherPicked,
+}) {
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    let list = cards
+    if (q) {
+      const num = Number.isFinite(parseInt(q, 10)) ? parseInt(q, 10) : null
+      list = list.filter(c =>
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.team || '').toLowerCase().includes(q) ||
+        (num != null && c.num === num)
+      )
+    } else {
+      // Sin query: priorizar cartas en el estado deseado
+      list = list.filter(c => (col[c.id] || 'missing') === preferStatus)
+    }
+    // Sort: estado preferido primero, luego por equipo, luego por num
+    return list.slice().sort((a, b) => {
+      const aPref = (col[a.id] || 'missing') === preferStatus ? 0 : 1
+      const bPref = (col[b.id] || 'missing') === preferStatus ? 0 : 1
+      if (aPref !== bPref) return aPref - bPref
+      const t = (a.team || '').localeCompare(b.team || '')
+      if (t !== 0) return t
+      return (a.num || 0) - (b.num || 0)
+    }).slice(0, MAX_RESULTS)
+  }, [cards, col, query, preferStatus])
 
-function sameNums(text, ids, cards) {
-  const nums = new Set(parseNumberList(text || ''))
-  if (nums.size !== ids.length) return false
-  for (const id of ids) {
-    const c = cards.find(x => x.id === id)
-    if (!c || !nums.has(c.num)) return false
+  const togglePick = (id) => {
+    setPicked(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
   }
-  return true
+
+  const removePick = (id) => {
+    setPicked(prev => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }
+
+  const pickedItems = useMemo(
+    () => cards.filter(c => picked.has(c.id)),
+    [cards, picked]
+  )
+
+  return (
+    <section className={s.section}>
+      <div className={s.label}>
+        <span className={s.labelText}>{label}</span>
+        <span className={s.labelHint}>{hint}</span>
+      </div>
+
+      {pickedItems.length > 0 && (
+        <div className={s.chipList}>
+          {pickedItems.map(c => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => removePick(c.id)}
+              className={s.chip}
+              title="Quitar de la selección"
+            >
+              <span className={s.chipFlag}>{c.flag}</span>
+              <span className={s.chipName}>{c.name}</span>
+              <span className={s.chipMeta}>{c.team} · #{c.num}</span>
+              <IconClose />
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className={s.searchWrap}>
+        <span className={s.searchIcon} aria-hidden><IconSearch /></span>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={placeholder}
+          className={s.search}
+          autoFocus
+        />
+      </div>
+
+      <ul className={s.results}>
+        {filtered.length === 0 && (
+          <li className={s.resultEmpty}>
+            {query.trim()
+              ? 'Nada matchea con esa búsqueda.'
+              : `No tenés cartas en estado "${preferStatus === 'missing' ? 'falta' : 'repetida'}". Buscá una específica arriba.`}
+          </li>
+        )}
+        {filtered.map(c => {
+          const isPicked = picked.has(c.id)
+          const isInOther = otherPicked.has(c.id)
+          const status = col[c.id] || 'missing'
+          return (
+            <li key={c.id}>
+              <button
+                type="button"
+                onClick={() => togglePick(c.id)}
+                disabled={isInOther}
+                className={`${s.resultRow} ${isPicked ? s.resultRowPicked : ''} ${isInOther ? s.resultRowDisabled : ''}`}
+                title={isInOther ? 'Ya elegida en el otro lado' : ''}
+              >
+                <span className={s.resultCheck} aria-hidden>
+                  {isPicked && <IconCheck />}
+                </span>
+                <span className={s.resultFlag}>{c.flag}</span>
+                <div className={s.resultBody}>
+                  <div className={s.resultName}>{c.name}</div>
+                  <div className={s.resultMeta}>{c.team} · #{c.num} · {c.type}</div>
+                </div>
+                <span className={`${s.resultStatus} ${s[`status_${status}`] || ''}`}>
+                  {status === 'have' ? 'Tengo' : status === 'duplicate' ? 'Repetida' : 'Falta'}
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
 }

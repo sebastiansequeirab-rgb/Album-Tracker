@@ -7,12 +7,6 @@ import TypeDonut from '../ui/TypeDonut'
 import TeamCard from '../ui/TeamCard'
 import s from './DashboardPage.module.css'
 
-const IconPencil = (p) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
-    <path d="M12 20h9" />
-    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-  </svg>
-)
 const IconArrow = (p) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}>
     <path d="M5 12h14M13 5l7 7-7 7" />
@@ -55,7 +49,6 @@ export default function DashboardPage({
   MOMENTUM,
   gs,
   toggle,
-  setShowQuick,
   setShowQuickTrade,
   setTab,
   setSelTeam,
@@ -89,27 +82,17 @@ export default function DashboardPage({
         </motion.section>
       )}
 
-      {/* ── Quick CTAs ──────────────────────────────────────────────────── */}
-      <div className={s.quickCtaRow}>
-        {setShowQuickTrade && (
-          <button type="button" onClick={() => setShowQuickTrade(true)} className={`${s.quickCta} ${s.quickCtaPrimary}`}>
-            <span className={s.quickCtaIcon} aria-hidden="true"><IconHandshake /></span>
-            <div className={s.quickCtaCopy}>
-              <div className={s.quickCtaTitle}>Intercambio Rápido</div>
-              <div className={s.quickCtaSub}>Registrá qué entró y qué salió en un cambio</div>
-            </div>
-            <div className={s.quickCtaArrow} aria-hidden="true"><IconArrow /></div>
-          </button>
-        )}
-        <button type="button" onClick={() => setShowQuick(true)} className={s.quickCta}>
-          <span className={s.quickCtaIcon} aria-hidden="true"><IconPencil /></span>
+      {/* ── Registrar Movimiento ────────────────────────────────────────── */}
+      {setShowQuickTrade && (
+        <button type="button" onClick={() => setShowQuickTrade(true)} className={s.quickCta}>
+          <span className={s.quickCtaIcon} aria-hidden="true"><IconHandshake /></span>
           <div className={s.quickCtaCopy}>
-            <div className={s.quickCtaTitle}>Actualización Rápida</div>
-            <div className={s.quickCtaSub}>Pegá varios números en bulk · Ej: "1, 3, 5-10"</div>
+            <div className={s.quickCtaTitle}>Registrar Movimiento</div>
+            <div className={s.quickCtaSub}>Anotá qué entró y qué salió en un cambio</div>
           </div>
           <div className={s.quickCtaArrow} aria-hidden="true"><IconArrow /></div>
         </button>
-      </div>
+      )}
 
       {/* ── 01 Próximos a Completar ──────────────────────────────────────── */}
       <section className={s.panel}>
