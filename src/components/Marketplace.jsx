@@ -3,7 +3,7 @@ import {
   loadVisibleProfiles, loadProfile,
   loadMyFavorites, addFavorite, removeFavorite,
   loadMyTradeRequests, updateTradeRequestStatus, createTradeRequest,
-  loadActivePublicListings, closePublicListing,
+  loadActivePublicListings, closePublicListing, deletePublicListing, completePublicListing,
   sendMessage,
   computeMatches,
 } from '../lib/marketplace'
@@ -12,6 +12,8 @@ import { ALBUM_CONFIG, ALBUM_ADRENALYN } from '../data'
 import TradeRequestModal from './TradeRequestModal'
 import CreatePublicListingModal from './CreatePublicListingModal'
 import ChatPanel from './ChatPanel'
+import TypeDonut from './ui/TypeDonut'
+import { exportListPdf } from '../lib/exportPdf'
 import s from './Marketplace.module.css'
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -43,6 +45,8 @@ const IconSparkle = (p) => <Svg {...p}><path d="M12 3l1.8 5.4L19 10l-5.2 1.6L12 
 const IconCopy    = (p) => <Svg {...p}><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></Svg>
 const IconBroadcast = (p) => <Svg {...p}><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/></Svg>
 const IconCardStack = (p) => <Svg {...p}><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 6V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2"/></Svg>
+const IconSearch    = (p) => <Svg {...p}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Svg>
+const IconDownload  = (p) => <Svg {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></Svg>
 
 const StarFilled = (p) => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"
@@ -62,10 +66,10 @@ const Brackets = () => (
 )
 
 /* Section header: NN / TITLE / rule / link */
-function SectionHead({ num, title, count, action }) {
+function SectionHead({ icon, title, count, action }) {
   return (
     <div className={s.sectionHead}>
-      <span className={s.sectionNum}>{num}</span>
+      {icon && <span className={s.sectionIcon} aria-hidden>{icon}</span>}
       <h3 className={s.sectionTitle}>{title}</h3>
       {typeof count === 'number' && (
         <span className={s.sectionCount}>{count}</span>
@@ -83,6 +87,7 @@ export default function Marketplace({
   myProfile,
   onGoToProfile,
   onUnreadChange,
+  onCompleteTrade,
   flash,
 }) {
   const cfg = ALBUM_CONFIG[albumType]
@@ -112,6 +117,11 @@ export default function Marketplace({
   const [listings,     setListings]     = useState([])
   const [listingProfiles, setListingProfiles] = useState({}) // user_id -> profile
   const [showCreate,   setShowCreate]   = useState(false)
+  const [filterNum, setFilterNum] = useState('')
+  const [filterConf, setFilterConf] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchSort, setSearchSort] = useState('recent')
+  const [mineTab, setMineTab] = useState('repetidas') // 'repetidas' | 'faltantes'
   const [chatCpId,     setChatCpId]     = useState(null) // counterpart id activo en chat
   const [busyAccept,   setBusyAccept]   = useState(null) // listing.id en curso
 
@@ -129,7 +139,7 @@ export default function Marketplace({
       setProfiles(vp)
       setFavorites(fv)
       setTradeRequests(tr)
-      setListings(pl.filter(l => l.user_id !== myId))
+      setListings(pl)
       const ids = vp.map(p => p.user_id)
       const cm  = await loadAlbumByUserIds(albumType, ids)
       setCollections(cm)
@@ -171,6 +181,32 @@ export default function Marketplace({
     if (sub === 'favorites') return list.filter(p => favoriteIdSet.has(p.user_id))
     return list
   }, [profiles, collections, myCol, sub, favoriteIdSet])
+
+  const searchView = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    const list = profiles.map(p => {
+      const matches = computeMatches(myCol, collections[p.user_id] || {})
+      const ownCol = collections[p.user_id] || {}
+      const ownDups = Object.values(ownCol).filter(v => v === 'duplicate').length
+      const ownHave = Object.values(ownCol).filter(v => v === 'have' || v === 'duplicate').length
+      return { ...p, matches, ownDups, ownHave, isFav: favoriteIdSet.has(p.user_id) }
+    })
+    const filtered = q
+      ? list.filter(p => (p.display_name || '').toLowerCase().includes(q))
+      : list
+    const sorted = [...filtered]
+    if (searchSort === 'active') {
+      sorted.sort((a, b) => (b.ownDups - a.ownDups) || (b.ownHave - a.ownHave))
+    } else if (searchSort === 'favorites') {
+      sorted.sort((a, b) => (Number(b.isFav) - Number(a.isFav)) ||
+                            (b.matches.theyHaveIWant.length - a.matches.theyHaveIWant.length))
+    } else if (searchSort === 'matches') {
+      sorted.sort((a, b) => b.matches.theyHaveIWant.length - a.matches.theyHaveIWant.length)
+    } else {
+      // recent: ya viene ordenado por updated_at desc desde loadVisibleProfiles
+    }
+    return sorted
+  }, [profiles, collections, myCol, favoriteIdSet, searchQuery, searchSort])
 
   const onSelectUser = async (uid, prefill = null) => {
     setSelUserId(uid)
@@ -292,15 +328,12 @@ export default function Marketplace({
         wanted_ids:   listing.offered_ids || [],  // pido lo que ofrecen
         meeting_point:      listing.meeting_point || null,
         meeting_time_label: listing.meeting_time_label || null,
-        message: '✅ Acepté tu oferta tal cual. ¡Hagamos el trade!',
+        message: '',
       })
-      flash?.('✅ Trade enviado — abriendo chat…', '#4ADE80')
+      flash?.('✅ Trade enviado — revísalo en Trades', '#4ADE80')
       const tr = await loadMyTradeRequests(myId)
       setTradeRequests(tr)
-      sendMessage(myId, listing.user_id,
-        `✅ Acepté tu oferta pública (${listing.offered_ids?.length || 0} ofrecidas / ${listing.wanted_ids?.length || 0} pedidas) — abrí Bandeja para confirmar.`
-      ).catch(err => console.warn('system msg failed:', err))
-      openChatWith(listing.user_id)
+      setSub('inbox')
     } catch (e) {
       console.error('acceptListing error:', e)
       flash?.(`⚠️ ${e?.message || 'No se pudo enviar el trade'}`, '#F87171')
@@ -316,10 +349,8 @@ export default function Marketplace({
       const tr = await loadMyTradeRequests(myId)
       setTradeRequests(tr)
       if (created?.target_id) {
-        sendMessage(myId, created.target_id,
-          '🤝 Te envié una solicitud de trade — abrí Bandeja para verla.'
-        ).catch(() => {})
-        openChatWith(created.target_id)
+        flash?.('🤝 Trade enviado — lo verás en Trades', '#4ADE80')
+        setSub('inbox')
       }
     } catch { /* sin-op */ }
   }
@@ -357,7 +388,7 @@ export default function Marketplace({
   const onListingCreated = async () => {
     try {
       const pl = await loadActivePublicListings(albumType)
-      setListings(pl.filter(l => l.user_id !== myId))
+      setListings(pl)
     } catch { /* sin-op */ }
   }
 
@@ -366,10 +397,33 @@ export default function Marketplace({
     try {
       await closePublicListing(id)
       const pl = await loadActivePublicListings(albumType)
-      setListings(pl.filter(l => l.user_id !== myId))
+      setListings(pl)
       flash?.('🔒 Oferta cerrada','#94A3B8')
     } catch(e) {
       flash?.(`⚠️ ${e.message || 'Error'}`, '#F87171')
+    }
+  }
+
+  const onDeleteListing = async (id) => {
+    if (!window.confirm('¿Eliminar esta oferta? Esto la borra para siempre.')) return
+    try {
+      await deletePublicListing(id)
+      const pl = await loadActivePublicListings(albumType)
+      setListings(pl)
+      flash?.('🗑️ Oferta eliminada', '#94A3B8')
+    } catch (e) {
+      flash?.(`⚠️ ${e.message || 'No se pudo eliminar'}`, '#F87171')
+    }
+  }
+
+  const onCompleteListing = async (id) => {
+    try {
+      await completePublicListing(id)
+      const pl = await loadActivePublicListings(albumType)
+      setListings(pl)
+      flash?.('🤝 Oferta marcada como concretada', '#4ADE80')
+    } catch (e) {
+      flash?.(`⚠️ ${e.message || 'No se pudo marcar'}`, '#F87171')
     }
   }
 
@@ -379,6 +433,36 @@ export default function Marketplace({
 
   // ────────────────────────────────────────────────────────── Render helpers
   const myDups = useMemo(() => ALL_ITEMS.filter(c => myCol[c.id] === 'duplicate'), [myCol, ALL_ITEMS])
+
+  const teamConf = useMemo(() => {
+    const m = new Map()
+    for (const t of (cfg.teams || [])) m.set(t.name, String(t.conf || '').toUpperCase())
+    return m
+  }, [cfg.teams])
+
+  const filteredListings = useMemo(() => {
+    const numQuery = filterNum.trim()
+    const matchesNum = (l) => {
+      if (!numQuery) return true
+      const target = numQuery
+      const parts = target.split(/[\s,]+/).filter(Boolean).map(p => parseInt(p, 10)).filter(n => Number.isFinite(n))
+      if (parts.length === 0) return true
+      const ids = [...(l.offered_ids || []), ...(l.wanted_ids || [])]
+      return ids.some(id => {
+        const c = ITEMS_BY_ID[id]
+        return c && parts.includes(c.num)
+      })
+    }
+    const matchesConf = (l) => {
+      if (filterConf === 'all') return true
+      const ids = [...(l.offered_ids || []), ...(l.wanted_ids || [])]
+      return ids.some(id => {
+        const c = ITEMS_BY_ID[id]
+        return c && teamConf.get(c.team) === filterConf
+      })
+    }
+    return listings.filter(l => matchesNum(l) && matchesConf(l))
+  }, [listings, filterNum, filterConf, ITEMS_BY_ID, teamConf])
   const myMissingSet = useMemo(() => {
     const out = new Set()
     for (const c of ALL_ITEMS) if ((myCol[c.id] || 'missing') === 'missing') out.add(c.id)
@@ -412,6 +496,20 @@ export default function Marketplace({
     const theirCount = selCol ? Object.values(selCol).filter(v => v !== 'missing').length : 0
     const theirPct   = totalItems ? Math.round((theirCount / totalItems) * 100) : 0
 
+    // Build TypeDonut segments for the other user — same logic as Tracker.
+    const TM = cfg.TM || {}
+    const theirSegments = selCol
+      ? Object.entries(TM)
+          .filter(([t]) => t !== 'Momentum')
+          .map(([type, m]) => {
+            const items = ALL_ITEMS.filter(c => c.type === type)
+            return {
+              name: type, label: m.l, color: m.c, total: items.length,
+              have: items.filter(c => (selCol[c.id] || 'missing') !== 'missing').length,
+            }
+          })
+      : []
+
     return (
       <div className={s.wrap}>
         <button
@@ -428,9 +526,12 @@ export default function Marketplace({
             <div className={s.detailName}>{prof?.display_name || 'Coleccionista'}</div>
             <div className={s.detailSub}>
               {selCol ? `${theirCount}/${totalItems} cartas · ${theirPct}%` : 'Cargando…'}
+              {prof?.trades_completed > 0 && (
+                <span className={s.detailTradesBadge}>· {prof.trades_completed} trades</span>
+              )}
             </div>
             <div className={s.detailActions}>
-              <button onClick={() => onToggleFavorite(selUserId)} className={isFav ? s.btnAccent : s.btnGhost} type="button">
+              <button onClick={() => onToggleFavorite(selUserId)} className={isFav ? s.btnPrimary : s.btnAccent} type="button">
                 {isFav ? <StarFilled/> : <IconStar/>}
                 <span>{isFav ? 'Favorito' : 'Favoritear'}</span>
               </button>
@@ -439,16 +540,22 @@ export default function Marketplace({
               </button>
               <button
                 onClick={openTradeModalFromDrillDown}
-                disabled={!selCol || (pickedTheirs.size === 0 && pickedMine.size === 0)}
-                className={s.btnPrimary}
+                disabled={!selCol}
+                className={s.btnGhost}
                 type="button">
-                <IconHandshake/> <span>Proponer Trade</span>
+                <IconHandshake/> <span>Proponer cambio</span>
               </button>
             </div>
           </div>
         </div>
 
         {!selCol && <div className={s.emptyText}>Cargando colección…</div>}
+
+        {selCol && theirSegments.length > 0 && (
+          <div className={s.detailDonut}>
+            <TypeDonut segments={theirSegments} />
+          </div>
+        )}
 
         {selCol && (
           <>
@@ -513,14 +620,16 @@ export default function Marketplace({
   // ============================================================ LIST VIEW
   const incomingPending = tradeRequests.filter(t => t.target_id === myId && t.status === 'pending')
   const outgoingPending = tradeRequests.filter(t => t.initiator_id === myId && t.status === 'pending')
-  const closedTrades    = tradeRequests.filter(t => t.status !== 'pending')
+  const inProgressTrades = tradeRequests.filter(t => t.status === 'accepted')
+  const closedTrades    = tradeRequests.filter(t => ['declined','cancelled','completed'].includes(t.status))
 
   const subtabs = [
-    { id: 'all',       I: IconGlobe,   l: 'Todos' },
-    { id: 'favorites', I: IconStar,    l: 'Favoritos', b: favoriteIdSet.size },
-    { id: 'messages',  I: IconChat,    l: 'Mensajes' },
-    { id: 'inbox',     I: IconInbox,   l: 'Bandeja',   b: incomingPending.length },
-    { id: 'mine',      I: IconList,    l: 'Mi lista',  b: myDups.length },
+    { id: 'all',       I: IconBroadcast, l: 'Ofertas' },
+    { id: 'search',    I: IconSearch,    l: 'Buscar' },
+    { id: 'favorites', I: IconStar,      l: 'Favoritos', b: favoriteIdSet.size },
+    { id: 'messages',  I: IconChat,      l: 'Mensajes' },
+    { id: 'inbox',     I: IconHandshake, l: 'Trades',    b: incomingPending.length },
+    { id: 'mine',      I: IconList,      l: 'Mis Repetidas', b: myDups.length },
   ]
 
   return (
@@ -549,14 +658,14 @@ export default function Marketplace({
               <div className={s.emptyIcon}><IconGlobe size={48} sw={1.5}/></div>
               <div className={s.emptyTitle}>NO ESTÁS VISIBLE</div>
               <div className={s.emptyText}>
-                Activa "Visible en Marketplace" en tu perfil para ver y publicar ofertas.
+                Activa "Aparecer en el Marketplace" en tu perfil para ver y publicar ofertas.
               </div>
               <button onClick={onGoToProfile} className={s.emptyCta} type="button">Ir a mi perfil</button>
             </div>
           ) : (
             <>
               <SectionHead
-                num="01"
+                icon={<IconBroadcast size={18}/>}
                 title="Ofertas Activas"
                 count={listings.length}
                 action={
@@ -566,8 +675,43 @@ export default function Marketplace({
                 }
               />
               <div className={s.sectionSub}>
-                {listings.length === 1 ? '1 oferta activa' : `${listings.length} ofertas activas`}
+                {filteredListings.length === 1 ? '1 oferta activa' : `${filteredListings.length} ofertas activas`}
                 {' '}en {ALBUM_CONFIG[albumType].label || albumType}
+              </div>
+
+              <div className={s.listingFilters}>
+                <input
+                  type="search"
+                  inputMode="numeric"
+                  placeholder="Filtrar por #"
+                  value={filterNum}
+                  onChange={(e) => setFilterNum(e.target.value)}
+                  className={s.listingFilterInput}
+                  aria-label="Filtrar por número de sticker"
+                />
+                <select
+                  value={filterConf}
+                  onChange={(e) => setFilterConf(e.target.value)}
+                  className={s.listingFilterSelect}
+                  aria-label="Filtrar por confederación"
+                >
+                  <option value="all">Todas las confederaciones</option>
+                  <option value="CONMEBOL">CONMEBOL</option>
+                  <option value="UEFA">UEFA</option>
+                  <option value="CONCACAF">CONCACAF</option>
+                  <option value="CAF">CAF</option>
+                  <option value="AFC">AFC</option>
+                  <option value="OFC">OFC</option>
+                </select>
+                {(filterNum || filterConf !== 'all') && (
+                  <button
+                    type="button"
+                    className={s.listingFilterClear}
+                    onClick={() => { setFilterNum(''); setFilterConf('all') }}
+                  >
+                    Limpiar
+                  </button>
+                )}
               </div>
 
               {loading && (
@@ -576,25 +720,28 @@ export default function Marketplace({
                 </div>
               )}
 
-              {!loading && listings.length === 0 && (
+              {!loading && filteredListings.length === 0 && (
                 <div className={s.empty}>
                   <div className={s.emptyIcon}><IconBroadcast size={48} sw={1.5}/></div>
-                  <div className={s.emptyTitle}>SIN OFERTAS AÚN</div>
+                  <div className={s.emptyTitle}>{listings.length === 0 ? 'SIN OFERTAS AÚN' : 'SIN RESULTADOS'}</div>
                   <div className={s.emptyText}>
-                    Nadie publicó ofertas en este álbum. Sé el primero — tap "Nueva oferta".
+                    {listings.length === 0
+                      ? 'Nadie publicó ofertas en este álbum. Sé el primero — tap "Nueva oferta".'
+                      : 'Probá otro filtro o limpia los activos.'}
                   </div>
                 </div>
               )}
 
-              {!loading && listings.length > 0 && (
+              {!loading && filteredListings.length > 0 && (
                 <div className={s.bannerList}>
-                  {listings.map(l => (
+                  {filteredListings.map(l => (
                     <ListingBanner
                       key={l.id}
                       listing={l}
                       author={listingProfiles[l.user_id]}
                       itemsById={ITEMS_BY_ID}
                       myCol={myCol}
+                      isMine={l.user_id === myId}
                       isFavorite={favoriteIdSet.has(l.user_id)}
                       busyAccept={busyAccept === l.id}
                       onToggleFavorite={() => onToggleFavorite(l.user_id)}
@@ -602,11 +749,102 @@ export default function Marketplace({
                       onTrade={() => openTradeModalFromListing(l)}
                       onAccept={() => acceptListing(l)}
                       onViewProfile={() => onSelectUser(l.user_id)}
+                      onDelete={() => onDeleteListing(l.id)}
+                      onComplete={() => onCompleteListing(l.id)}
                     />
                   ))}
                 </div>
               )}
             </>
+          )}
+        </>
+      )}
+
+      {/* BUSCAR — encontrar coleccionistas */}
+      {sub === 'search' && (
+        <>
+          <SectionHead icon={<IconSearch size={18}/>} title="Buscar coleccionistas" count={searchView.length}/>
+          <div className={s.sectionSub}>
+            Encuentra a otros usuarios y revisa sus colecciones
+          </div>
+
+          <div className={s.listingFilters}>
+            <input
+              type="search"
+              placeholder="Buscar por nombre…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={s.listingFilterInput}
+              aria-label="Buscar por nombre"
+            />
+            <select
+              value={searchSort}
+              onChange={(e) => setSearchSort(e.target.value)}
+              className={s.listingFilterSelect}
+              aria-label="Ordenar por"
+            >
+              <option value="recent">Más recientes</option>
+              <option value="active">Más activos (más cartas)</option>
+              <option value="favorites">Favoritos primero</option>
+              <option value="matches">Mejor compatibilidad</option>
+            </select>
+          </div>
+
+          {loading && (
+            <div className={s.skeletonStack}>
+              <div className={s.skeleton}/><div className={s.skeleton}/>
+            </div>
+          )}
+
+          {!loading && searchView.length === 0 && (
+            <div className={s.empty}>
+              <div className={s.emptyIcon}><IconSearch size={48} sw={1.5}/></div>
+              <div className={s.emptyTitle}>SIN RESULTADOS</div>
+              <div className={s.emptyText}>
+                {searchQuery ? 'Probá con otro nombre.' : 'No hay coleccionistas visibles aún.'}
+              </div>
+            </div>
+          )}
+
+          {!loading && searchView.length > 0 && (
+            <div className={s.usersGrid}>
+              {searchView.map(p => (
+                <div key={p.user_id} className={s.userCard}>
+                  <div className={s.userCardHead} onClick={() => onSelectUser(p.user_id)}>
+                    <div className={s.userAvatar}>{p.avatar_emoji}</div>
+                    <div className={s.userMeta}>
+                      <div className={s.userName}>{p.display_name}</div>
+                      <div className={s.userSub}>{p.ownHave}/{totalItems} cartas · {p.ownDups} repetidas</div>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onToggleFavorite(p.user_id) }}
+                      className={`${s.favStar} ${p.isFav ? s.favStarOn : ''}`}
+                      aria-label={p.isFav ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                      type="button">
+                      {p.isFav ? <StarFilled/> : <IconStar size={18}/>}
+                    </button>
+                  </div>
+                  <div className={s.matchRow} onClick={() => onSelectUser(p.user_id)}>
+                    <div className={`${s.matchPill} ${s.matchPillThey}`}>
+                      <div className={s.matchLabel}>Te puede dar</div>
+                      {p.matches.theyHaveIWant.length}
+                    </div>
+                    <div className={`${s.matchPill} ${s.matchPillI}`}>
+                      <div className={s.matchLabel}>Le das</div>
+                      {p.matches.iHaveTheyWant.length}
+                    </div>
+                  </div>
+                  <div className={s.userActions}>
+                    <button onClick={() => openChatWith(p.user_id)} className={s.btnGhost} type="button">
+                      <IconChat size={14}/> <span>Chat</span>
+                    </button>
+                    <button onClick={() => onSelectUser(p.user_id)} className={s.btnPrimary} type="button">
+                      <IconHandshake size={14}/> <span>Trade</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </>
       )}
@@ -619,7 +857,7 @@ export default function Marketplace({
               <div className={s.emptyIcon}><IconGlobe size={48} sw={1.5}/></div>
               <div className={s.emptyTitle}>NO ESTÁS VISIBLE</div>
               <div className={s.emptyText}>
-                Activa "Visible en Marketplace" en tu perfil para ver coleccionistas.
+                Activa "Aparecer en el Marketplace" en tu perfil para ver coleccionistas.
               </div>
               <button onClick={onGoToProfile} className={s.emptyCta} type="button">Ir a mi perfil</button>
             </div>
@@ -627,7 +865,7 @@ export default function Marketplace({
 
           {myProfile?.marketplace_visible && (
             <>
-              <SectionHead num="02" title="Favoritos" count={profilesView.length}/>
+              <SectionHead icon={<IconStar size={18}/>} title="Favoritos" count={profilesView.length}/>
               <div className={s.sectionSub}>
                 Coleccionistas que destacaste — accesos rápidos a chat y trade
               </div>
@@ -651,13 +889,13 @@ export default function Marketplace({
               {!loading && profilesView.length > 0 && (
                 <div className={s.usersGrid}>
                   {profilesView
-                    .sort((a,b) => (b.matches.theyHaveIWant.length + b.matches.iHaveTheyWant.length)
-                                  - (a.matches.theyHaveIWant.length + a.matches.iHaveTheyWant.length))
+                    .sort((a,b) => b.matches.theyHaveIWant.length - a.matches.theyHaveIWant.length)
                     .map(p => {
                       const fav = favoriteIdSet.has(p.user_id)
                       const colCount = Object.values(collections[p.user_id] || {}).filter(v => v !== 'missing').length
+                      const dimmed = p.matches.theyHaveIWant.length === 0
                       return (
-                        <div key={p.user_id} className={s.userCard}>
+                        <div key={p.user_id} className={`${s.userCard} ${dimmed ? s.userCardDim : ''}`}>
                           <div className={s.userCardHead} onClick={() => onSelectUser(p.user_id)}>
                             <div className={s.userAvatar}>{p.avatar_emoji}</div>
                             <div className={s.userMeta}>
@@ -718,59 +956,78 @@ export default function Marketplace({
       {/* BANDEJA — trade requests */}
       {sub === 'inbox' && (
         <>
-          <SectionHead num="03" title="Bandeja" count={tradeRequests.length}/>
+          <SectionHead icon={<IconHandshake size={18}/>} title="Trades" count={tradeRequests.length}/>
           <div className={s.sectionSub}>
             Trades recibidos, enviados e historial
           </div>
 
-          {tradeRequests.length === 0 ? (
-            <div className={s.empty}>
-              <div className={s.emptyIcon}><IconInbox size={48} sw={1.5}/></div>
-              <div className={s.emptyTitle}>SIN TRADES AÚN</div>
-              <div className={s.emptyText}>
-                Cuando alguien te proponga un trade aparecerá acá. Vos también podés iniciar uno
-                desde el drill-down de cualquier coleccionista.
+          <>
+              <div className={s.tradeSection}>
+                <div className={s.tradeSectionTitle}>
+                  <span className={s.tradeDot} style={{background:'var(--gold-3)'}} aria-hidden/>
+                  <span>RECIBIDAS</span>
+                  <span className={s.matchCount}>{incomingPending.length}</span>
+                </div>
+                {incomingPending.length === 0 ? (
+                  <div className={s.tradeEmpty}>Nadie te propuso un trade todavía.</div>
+                ) : incomingPending.map(t => (
+                  <TradeRow
+                    key={t.id}
+                    trade={t}
+                    isIncoming
+                    profile={profilesById[t.initiator_id] || listingProfiles[t.initiator_id]}
+                    itemsById={ITEMS_BY_ID}
+                    onAccept={() => onUpdateTradeStatus(t.id, 'accepted')}
+                    onReject={() => onUpdateTradeStatus(t.id, 'declined')}
+                  />
+                ))}
               </div>
-            </div>
-          ) : (
-            <>
-              {incomingPending.length > 0 && (
+
+              <div className={s.tradeSection}>
+                <div className={`${s.tradeSectionTitle} ${s.tradeSectionDim}`}>
+                  <span className={s.tradeDot} style={{background:'var(--text-muted)'}} aria-hidden/>
+                  <span>ENVIADAS</span>
+                  <span className={s.matchCount}>{outgoingPending.length}</span>
+                </div>
+                {outgoingPending.length === 0 ? (
+                  <div className={s.tradeEmpty}>Sin trades enviados pendientes.</div>
+                ) : outgoingPending.map(t => (
+                  <TradeRow
+                    key={t.id}
+                    trade={t}
+                    profile={profilesById[t.target_id] || listingProfiles[t.target_id]}
+                    itemsById={ITEMS_BY_ID}
+                    onCancel={() => onUpdateTradeStatus(t.id, 'cancelled')}
+                  />
+                ))}
+              </div>
+
+              {inProgressTrades.length > 0 && (
                 <div className={s.tradeSection}>
                   <div className={s.tradeSectionTitle}>
-                    <span className={s.tradeDot} style={{background:'var(--gold-3)'}} aria-hidden/>
-                    <span>RECIBIDAS</span>
-                    <span className={s.matchCount}>{incomingPending.length}</span>
+                    <span className={s.tradeDot} style={{background:'var(--status-have)'}} aria-hidden/>
+                    <span>EN CURSO</span>
+                    <span className={s.matchCount}>{inProgressTrades.length}</span>
                   </div>
-                  {incomingPending.map(t => (
-                    <TradeRow
-                      key={t.id}
-                      trade={t}
-                      isIncoming
-                      profile={profilesById[t.initiator_id] || listingProfiles[t.initiator_id]}
-                      itemsById={ITEMS_BY_ID}
-                      onAccept={() => onUpdateTradeStatus(t.id, 'accepted')}
-                      onReject={() => onUpdateTradeStatus(t.id, 'declined')}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {outgoingPending.length > 0 && (
-                <div className={s.tradeSection}>
-                  <div className={`${s.tradeSectionTitle} ${s.tradeSectionDim}`}>
-                    <span className={s.tradeDot} style={{background:'var(--text-muted)'}} aria-hidden/>
-                    <span>ENVIADAS</span>
-                    <span className={s.matchCount}>{outgoingPending.length}</span>
-                  </div>
-                  {outgoingPending.map(t => (
-                    <TradeRow
-                      key={t.id}
-                      trade={t}
-                      profile={profilesById[t.target_id] || listingProfiles[t.target_id]}
-                      itemsById={ITEMS_BY_ID}
-                      onCancel={() => onUpdateTradeStatus(t.id, 'cancelled')}
-                    />
-                  ))}
+                  {inProgressTrades.map(t => {
+                    const isIncoming = t.target_id === myId
+                    const otherId = isIncoming ? t.initiator_id : t.target_id
+                    const partner = profilesById[otherId] || listingProfiles[otherId]
+                    return (
+                      <TradeRow
+                        key={t.id}
+                        trade={t}
+                        isIncoming={isIncoming}
+                        profile={partner}
+                        itemsById={ITEMS_BY_ID}
+                        onCoordinate={() => openChatWith(otherId)}
+                        onComplete={() => {
+                          if (onCompleteTrade) onCompleteTrade(t, partner)
+                          else onUpdateTradeStatus(t.id, 'completed')
+                        }}
+                      />
+                    )
+                  })}
                 </div>
               )}
 
@@ -796,14 +1053,51 @@ export default function Marketplace({
                 </div>
               )}
             </>
-          )}
         </>
       )}
 
       {/* MI LISTA */}
       {sub === 'mine' && (
         <>
-          {myDups.length === 0 ? (
+          <div className={s.mineToggle}>
+            <button
+              type="button"
+              onClick={() => setMineTab('repetidas')}
+              className={`${s.mineToggleBtn} ${mineTab === 'repetidas' ? s.mineToggleBtnActive : ''}`}
+            >
+              Repetidas <span className={s.matchCount}>{myDups.length}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMineTab('faltantes')}
+              className={`${s.mineToggleBtn} ${mineTab === 'faltantes' ? s.mineToggleBtnActive : ''}`}
+            >
+              Faltantes <span className={s.matchCount}>{myMissingSet.size}</span>
+            </button>
+          </div>
+
+          {mineTab === 'faltantes' && (
+            <MineFaltantes
+              allItems={ALL_ITEMS}
+              myMissingSet={myMissingSet}
+              myProfile={myProfile}
+              onExport={() => exportListPdf({
+                items: ALL_ITEMS.filter(c => myMissingSet.has(c.id)),
+                title: 'Mis Faltantes',
+                subtitle: ALBUM_CONFIG[albumType].label,
+                username: myProfile?.display_name,
+                publicUrl: myProfile?.slug ? `${typeof window !== 'undefined' ? window.location.origin : ''}/u/${myProfile.slug}` : null,
+              })}
+              onCreateRequest={(card) => {
+                // Permite crear trade desde una carta faltante. El usuario
+                // elegirá el target en el listado de coleccionistas.
+                setSub('search')
+                flash?.('Elige a quién pedirle esta carta', '#FCD34D')
+              }}
+            />
+          )}
+
+          {mineTab === 'repetidas' && (myDups.length === 0 ? (
             <div className={s.empty}>
               <div className={s.emptyIcon}><IconCardStack size={48} sw={1.5}/></div>
               <div className={s.emptyTitle}>SIN REPETIDAS AÚN</div>
@@ -812,15 +1106,18 @@ export default function Marketplace({
           ) : (
             <>
               <SectionHead
-                num="04"
+                icon={<IconList size={18}/>}
                 title="Mis Repetidas"
                 count={myDups.length}
                 action={
-                  <button className={s.btnPrimary} type="button" onClick={() => {
-                    const txt = myDups.map(c => `#${c.num} ${c.name} (${c.team}) [${c.type}]`).join('\n')
-                    copy(txt)
-                  }}>
-                    <IconCopy size={14}/> <span>Copiar Lista</span>
+                  <button className={s.btnPrimary} type="button" onClick={() => exportListPdf({
+                    items: myDups,
+                    title: 'Mis Repetidas',
+                    subtitle: ALBUM_CONFIG[albumType].label,
+                    username: myProfile?.display_name,
+                    publicUrl: myProfile?.slug ? `${typeof window !== 'undefined' ? window.location.origin : ''}/u/${myProfile.slug}` : null,
+                  })}>
+                    <IconDownload size={14}/> <span>Exportar PDF</span>
                   </button>
                 }
               />
@@ -869,7 +1166,7 @@ export default function Marketplace({
                 )
               })}
             </>
-          )}
+          ))}
         </>
       )}
 
@@ -912,7 +1209,7 @@ export default function Marketplace({
 // ───────────────────────────────────────────────────────────────────────────
 // Sub-componente: banner desglosado de un listing público (full info, no clic-para-expandir)
 // ───────────────────────────────────────────────────────────────────────────
-function ListingBanner({ listing, author, itemsById, myCol, isFavorite, busyAccept, onToggleFavorite, onChat, onTrade, onAccept, onViewProfile }) {
+function ListingBanner({ listing, author, itemsById, myCol, isMine, isFavorite, busyAccept, onToggleFavorite, onChat, onTrade, onAccept, onViewProfile, onDelete, onComplete }) {
   const offeredCards = listing.offered_ids.map(id => itemsById[id]).filter(Boolean)
   const wantedCards  = listing.wanted_ids.map(id => itemsById[id]).filter(Boolean)
 
@@ -950,49 +1247,51 @@ function ListingBanner({ listing, author, itemsById, myCol, isFavorite, busyAcce
         </button>
       </div>
 
-      {offeredCards.length > 0 && (
-        <div className={s.bannerSection}>
-          <div className={`${s.bannerSectionTitle} ${s.bannerSectionTitleHave}`}>
-            <IconArrowUp size={12}/>
-            <span>OFRECE</span>
-            <span className={s.matchCount}>{offeredCards.length}</span>
-          </div>
-          <div className={s.cardsList}>
-            {offeredCards.map(c => (
-              <div key={c.id} className={s.miniCard} style={{ borderLeftColor: typeColor(c.type) }}>
-                <span className={s.miniCardFlag}>{c.flag}</span>
-                <div className={s.miniCardBody}>
-                  <div className={s.miniCardName}>{c.name}</div>
-                  <div className={s.miniCardMeta}>{c.team} · {c.type}</div>
+      <div className={s.bannerColumns}>
+        {offeredCards.length > 0 && (
+          <div className={s.bannerSection}>
+            <div className={`${s.bannerSectionTitle} ${s.bannerSectionTitleHave}`}>
+              <IconArrowUp size={12}/>
+              <span>OFRECE</span>
+              <span className={s.matchCount}>{offeredCards.length}</span>
+            </div>
+            <div className={s.cardsList}>
+              {offeredCards.map(c => (
+                <div key={c.id} className={s.miniCard} style={{ borderLeftColor: typeColor(c.type) }}>
+                  <span className={s.miniCardFlag}>{c.flag}</span>
+                  <div className={s.miniCardBody}>
+                    <div className={s.miniCardName}>{c.name}</div>
+                    <div className={s.miniCardMeta}>{c.team} · {c.type}</div>
+                  </div>
+                  <span className={s.miniCardNum}>#{c.num}</span>
                 </div>
-                <span className={s.miniCardNum}>#{c.num}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {wantedCards.length > 0 && (
-        <div className={s.bannerSection}>
-          <div className={`${s.bannerSectionTitle} ${s.bannerSectionTitleWant}`}>
-            <IconArrowDown size={12}/>
-            <span>BUSCA</span>
-            <span className={s.matchCount}>{wantedCards.length}</span>
-          </div>
-          <div className={s.cardsList}>
-            {wantedCards.map(c => (
-              <div key={c.id} className={s.miniCard} style={{ borderLeftColor: typeColor(c.type) }}>
-                <span className={s.miniCardFlag}>{c.flag}</span>
-                <div className={s.miniCardBody}>
-                  <div className={s.miniCardName}>{c.name}</div>
-                  <div className={s.miniCardMeta}>{c.team} · {c.type}</div>
+        {wantedCards.length > 0 && (
+          <div className={s.bannerSection}>
+            <div className={`${s.bannerSectionTitle} ${s.bannerSectionTitleWant}`}>
+              <IconArrowDown size={12}/>
+              <span>BUSCA</span>
+              <span className={s.matchCount}>{wantedCards.length}</span>
+            </div>
+            <div className={s.cardsList}>
+              {wantedCards.map(c => (
+                <div key={c.id} className={s.miniCard} style={{ borderLeftColor: typeColor(c.type) }}>
+                  <span className={s.miniCardFlag}>{c.flag}</span>
+                  <div className={s.miniCardBody}>
+                    <div className={s.miniCardName}>{c.name}</div>
+                    <div className={s.miniCardMeta}>{c.team} · {c.type}</div>
+                  </div>
+                  <span className={s.miniCardNum}>#{c.num}</span>
                 </div>
-                <span className={s.miniCardNum}>#{c.num}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {(listing.meeting_point || listing.meeting_time_label || listing.note) && (
         <div className={s.bannerInfo}>
@@ -1018,23 +1317,92 @@ function ListingBanner({ listing, author, itemsById, myCol, isFavorite, busyAcce
       )}
 
       <div className={s.bannerActions}>
-        <button onClick={onChat} className={s.btnGhost} type="button">
-          <IconChat size={14}/> <span>Iniciar chat</span>
-        </button>
-        <button onClick={onTrade} className={s.btnGhost} type="button">
-          <IconHandshake size={14}/> <span>Contra oferta</span>
-        </button>
-        <button
-          onClick={onAccept}
-          disabled={busyAccept}
-          className={s.btnPrimary}
-          type="button">
-          {busyAccept
-            ? <span>Enviando…</span>
-            : <><IconCheck size={14}/> <span>Aceptar Oferta</span></>}
-        </button>
+        {isMine ? (
+          <>
+            <span className={s.bannerOwnTag}>TU OFERTA</span>
+            <button onClick={onDelete} className={s.btnGhost} type="button">
+              <IconX size={14}/> <span>Eliminar</span>
+            </button>
+            <button onClick={onComplete} className={s.btnPrimary} type="button">
+              <IconCheck size={14}/> <span>Marcar concretada</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button onClick={onChat} className={s.btnGhost} type="button">
+              <IconChat size={14}/> <span>Chatear</span>
+            </button>
+            <button onClick={onTrade} className={s.btnGhost} type="button">
+              <IconHandshake size={14}/> <span>Contra oferta</span>
+            </button>
+            <button
+              onClick={onAccept}
+              disabled={busyAccept}
+              className={s.btnPrimary}
+              type="button">
+              {busyAccept
+                ? <span>Enviando…</span>
+                : <><IconCheck size={14}/> <span>Aceptar Oferta</span></>}
+            </button>
+          </>
+        )}
       </div>
     </div>
+  )
+}
+
+function MineFaltantes({ allItems, myMissingSet, onExport, onCreateRequest }) {
+  const items = useMemo(
+    () => allItems.filter(c => myMissingSet.has(c.id)),
+    [allItems, myMissingSet]
+  )
+  if (items.length === 0) {
+    return (
+      <div className={s.empty}>
+        <div className={s.emptyIcon}><IconCardStack size={48} sw={1.5}/></div>
+        <div className={s.emptyTitle}>SIN FALTANTES</div>
+        <div className={s.emptyText}>¡Tenés todo el álbum!</div>
+      </div>
+    )
+  }
+  return (
+    <>
+      <SectionHead
+        icon={<IconCardStack size={18}/>}
+        title="Mis Faltantes"
+        count={items.length}
+        action={
+          <button className={s.btnPrimary} type="button" onClick={onExport}>
+            <IconDownload size={14}/> <span>Exportar PDF</span>
+          </button>
+        }
+      />
+      <div className={s.sectionSub}>
+        Cartas que te faltan — pedile a algún coleccionista o publica una oferta.
+      </div>
+      <div className={s.cardsList}>
+        {items.map(c => (
+          <div key={c.id} className={s.miniCard} style={{ borderLeftColor: typeColor(c.type) }}>
+            <span className={s.miniCardFlag}>{c.flag}</span>
+            <div className={s.miniCardBody}>
+              <div className={s.miniCardName}>{c.name}</div>
+              <div className={s.miniCardMeta}>{c.team} · {c.type}</div>
+            </div>
+            <span className={s.miniCardNum}>#{c.num}</span>
+            {onCreateRequest && (
+              <button
+                type="button"
+                className={s.miniCardCta}
+                onClick={() => onCreateRequest(c)}
+                aria-label="Pedir esta carta"
+              >
+                Pedirla
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
   )
 }
 
@@ -1061,7 +1429,7 @@ function typeColor(type) {
 // ───────────────────────────────────────────────────────────────────────────
 // Sub-componente: row de trade request en la Bandeja
 // ───────────────────────────────────────────────────────────────────────────
-function TradeRow({ trade, profile, itemsById, isIncoming, onAccept, onReject, onCancel, readonly }) {
+function TradeRow({ trade, profile, itemsById, isIncoming, onAccept, onReject, onCancel, onCoordinate, onComplete, readonly }) {
   const fmtCards = (ids) => ids.slice(0, 3).map(id => {
     const c = itemsById[id]
     return c ? `#${c.num} ${c.name}` : null
@@ -1075,12 +1443,16 @@ function TradeRow({ trade, profile, itemsById, isIncoming, onAccept, onReject, o
   const time = trade.meeting_time_label || (trade.meeting_time_exact
     ? new Date(trade.meeting_time_exact).toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })
     : null)
-  const statusLabel = {
-    accepted: 'Aceptada',
-    declined: 'Rechazada',
-    cancelled: 'Cancelada',
-    completed: 'Completada',
-  }[trade.status]
+
+  const STATUS_BADGE = {
+    pending:   { label: isIncoming ? 'RECIBIDA' : 'ESPERANDO RESPUESTA', tone: 'gold'   },
+    accepted:  { label: 'ACEPTADA',  tone: 'green' },
+    declined:  { label: 'RECHAZADA', tone: 'red'   },
+    cancelled: { label: 'CANCELADA', tone: 'mute'  },
+    completed: { label: 'CONCRETADA', tone: 'blue' },
+  }
+  const badge = STATUS_BADGE[trade.status] || STATUS_BADGE.pending
+
   return (
     <div className={s.tradeRow}>
       <div className={s.tradeRowHead}>
@@ -1088,9 +1460,10 @@ function TradeRow({ trade, profile, itemsById, isIncoming, onAccept, onReject, o
         <div className={s.userMeta}>
           <div className={s.userName}>{profile?.display_name || 'Coleccionista'}</div>
           <div className={s.userSub}>
-            {isIncoming ? 'Te propone' : (readonly ? statusLabel : 'Esperando respuesta…')}
+            {isIncoming ? 'Te propone' : 'Le propusiste'}
           </div>
         </div>
+        <span className={`${s.tradeBadge} ${s[`tradeBadge_${badge.tone}`] || ''}`}>{badge.label}</span>
       </div>
       <div className={s.tradeRowBody}>
         <div className={s.tradeLine}><strong>{isIncoming ? 'Te ofrece:' : 'Ofreces:'}</strong> {offText}</div>
@@ -1111,7 +1484,7 @@ function TradeRow({ trade, profile, itemsById, isIncoming, onAccept, onReject, o
       </div>
       {!readonly && (
         <div className={s.tradeActions}>
-          {isIncoming && (
+          {trade.status === 'pending' && isIncoming && (
             <>
               <button onClick={onAccept} className={s.btnAccept} type="button">
                 <IconCheck size={13}/> <span>Aceptar</span>
@@ -1121,10 +1494,24 @@ function TradeRow({ trade, profile, itemsById, isIncoming, onAccept, onReject, o
               </button>
             </>
           )}
-          {!isIncoming && onCancel && (
+          {trade.status === 'pending' && !isIncoming && onCancel && (
             <button onClick={onCancel} className={s.btnGhost} type="button">
               <IconX size={13}/> <span>Cancelar</span>
             </button>
+          )}
+          {trade.status === 'accepted' && (
+            <>
+              {onCoordinate && (
+                <button onClick={onCoordinate} className={s.btnGhost} type="button">
+                  <IconChat size={13}/> <span>Coordinar</span>
+                </button>
+              )}
+              {onComplete && (
+                <button onClick={onComplete} className={s.btnAccept} type="button">
+                  <IconCheck size={13}/> <span>Marcar concretado</span>
+                </button>
+              )}
+            </>
           )}
         </div>
       )}

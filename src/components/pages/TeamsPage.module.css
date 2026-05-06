@@ -11,12 +11,11 @@
   padding-bottom: var(--sp-6);
 }
 
-/* ===== Filter bar (sticky) =====
-   Note: clip-path no rompe sticky — el sticky aplica al position calc, el
-   clip-path solo al render. Confirmado.                                     */
+/* ===== Filter bar =====
+   Sticky en desktop. En mobile se mantiene en flujo normal para evitar el
+   bug de iOS donde quedan pegados gigantes y no suben con el scroll.        */
 .filterBar {
-  position: sticky;
-  top: 0;
+  position: static;
   z-index: 5;
   display: grid;
   grid-template-columns: minmax(220px, 1fr) auto auto;
@@ -36,6 +35,13 @@
     10px 100%,
     0 calc(100% - 10px)
   );
+}
+
+@media (min-width: 720px) {
+  .filterBar {
+    position: sticky;
+    top: 0;
+  }
 }
 
 @media (max-width: 1100px) {

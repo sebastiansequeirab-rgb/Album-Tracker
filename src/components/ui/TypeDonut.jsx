@@ -77,7 +77,7 @@ export default function TypeDonut({ segments = [] }) {
                   strokeLinecap="butt"
                   style={{
                     transition: `stroke-dasharray 1.3s cubic-bezier(0.16,1,0.3,1) ${i * 0.06}s`,
-                    filter: `drop-shadow(0 0 5px ${seg.color})`,
+                    filter: `drop-shadow(0 0 8px ${seg.color}) drop-shadow(0 0 2px ${seg.color})`,
                   }}
                 />
               </g>
@@ -121,9 +121,9 @@ export default function TypeDonut({ segments = [] }) {
                   className={s.legendBarFill}
                   style={{
                     width: armed ? `${pct}%` : '0%',
-                    background: seg.color,
-                    transition: `width 1.1s cubic-bezier(0.16,1,0.3,1) ${i * 0.05}s`,
-                    boxShadow: pct > 0 ? `0 0 6px ${seg.color}88` : 'none',
+                    background: `linear-gradient(90deg, ${seg.color}cc 0%, ${seg.color} 100%)`,
+                    transition: `width 1.1s cubic-bezier(0.22,1,0.36,1) ${i * 0.07}s`,
+                    boxShadow: pct > 0 ? `0 0 10px ${seg.color}, 0 0 4px ${seg.color}aa inset` : 'none',
                   }}
                 />
               </span>

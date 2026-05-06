@@ -25,7 +25,16 @@
   padding: var(--sp-2) 0;
 }
 
-/* ===== Quick Update Banner ===== */
+/* ===== Quick CTAs ===== */
+.quickCtaRow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+}
+@media (min-width: 900px) {
+  .quickCtaRow { grid-template-columns: 1fr 1fr; }
+}
+
 .quickCta {
   position: relative;
   display: flex;

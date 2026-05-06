@@ -106,6 +106,13 @@ export default function TradeRequestModal({
 
   // ────────── Compute lists para el picker ──────────
   const myDups = useMemo(() => allItems.filter(c => myCol[c.id] === 'duplicate'), [allItems, myCol])
+  // Cualquier carta que tengo (have o duplicate) — usado cuando el usuario quiere
+  // ofrecer libremente, incluso una que sea su única copia. La UI marca esas
+  // como "única" para que decida.
+  const myOwned = useMemo(() => allItems.filter(c => {
+    const v = myCol[c.id]
+    return v === 'have' || v === 'duplicate'
+  }), [allItems, myCol])
   const targetDups = useMemo(() => allItems.filter(c => targetCol[c.id] === 'duplicate'), [allItems, targetCol])
   const myMissingSet = useMemo(() => {
     const out = new Set()
@@ -118,18 +125,22 @@ export default function TradeRequestModal({
     return out
   }, [allItems, targetCol])
 
-  // OFRECES — mis dups que el target le falten primero
+  // OFRECES — todo lo que tengo (have o duplicate); las que matchean (le faltan
+  // al target) van primero, dups antes que únicas.
   const offeredList = useMemo(() => {
-    const filtered = onlyMatches
+    const base = onlyMatches
       ? myDups.filter(c => targetMissingSet.has(c.id))
-      : myDups
-    return [...filtered].sort((a, b) => {
+      : myOwned
+    return [...base].sort((a, b) => {
       const aMatch = targetMissingSet.has(a.id) ? 0 : 1
       const bMatch = targetMissingSet.has(b.id) ? 0 : 1
       if (aMatch !== bMatch) return aMatch - bMatch
+      const aDup = myCol[a.id] === 'duplicate' ? 0 : 1
+      const bDup = myCol[b.id] === 'duplicate' ? 0 : 1
+      if (aDup !== bDup) return aDup - bDup
       return (a.num || 0) - (b.num || 0)
     })
-  }, [myDups, targetMissingSet, onlyMatches])
+  }, [myDups, myOwned, myCol, targetMissingSet, onlyMatches])
 
   // PIDES — sus dups que me falten primero
   const wantedList = useMemo(() => {

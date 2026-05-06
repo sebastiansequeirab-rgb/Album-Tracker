@@ -78,11 +78,11 @@ export default function TeamsPage({
           <span className={s.searchIcon} aria-hidden="true"><IconSearch /></span>
           <input
             type="search"
-            placeholder="Buscar país…"
+            placeholder="Busca un país…"
             value={q}
             onChange={e => setQ(e.target.value)}
             className={s.search}
-            aria-label="Buscar país"
+            aria-label="Busca un país"
           />
         </div>
         <div className={s.confPills} role="tablist" aria-label="Filtrar por confederación">

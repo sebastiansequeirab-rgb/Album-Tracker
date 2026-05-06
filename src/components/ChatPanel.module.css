@@ -61,6 +61,12 @@
   letter-spacing: 0.14em;
   color: var(--gold-3);
 }
+.listHeaderIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-3);
+}
 .listHeaderTitle {
   margin: 0;
   font-family: var(--font-display);
@@ -293,6 +299,30 @@
   background: linear-gradient(180deg, rgba(22, 33, 58, 0.78) 0%, rgba(15, 22, 38, 0.78) 100%);
   border-bottom: 1px solid rgba(245, 200, 70, 0.22);
   flex-shrink: 0;
+}
+
+.waBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: linear-gradient(180deg, #25D366 0%, #128C7E 100%);
+  color: #fff;
+  text-decoration: none;
+  border-radius: 3px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 12px rgba(18, 140, 126, 0.30);
+  transition: filter var(--t-fast);
+}
+.waBtn:hover { filter: brightness(1.08); }
+@media (max-width: 540px) {
+  .waLabel { display: none; }
+  .waBtn { padding: 8px 9px; }
 }
 
 .backBtn {

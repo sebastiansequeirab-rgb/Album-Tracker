@@ -18,6 +18,14 @@ const IconArrow = (p) => (
     <path d="M5 12h14M13 5l7 7-7 7" />
   </svg>
 )
+const IconHandshake = (p) => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M11 17l-5-5L8 9l3 3"/>
+    <path d="M14 12l4-4 3 3-4 4"/>
+    <path d="M11 17l3 3 4-4"/>
+    <path d="M3 14l3-3"/>
+  </svg>
+)
 
 const listVariants = {
   hidden: { opacity: 1 },
@@ -48,6 +56,7 @@ export default function DashboardPage({
   gs,
   toggle,
   setShowQuick,
+  setShowQuickTrade,
   setTab,
   setSelTeam,
   segments = [],
@@ -80,20 +89,31 @@ export default function DashboardPage({
         </motion.section>
       )}
 
-      {/* ── Quick Update CTA ─────────────────────────────────────────────── */}
-      <button type="button" onClick={() => setShowQuick(true)} className={s.quickCta}>
-        <span className={s.quickCtaIcon} aria-hidden="true"><IconPencil /></span>
-        <div className={s.quickCtaCopy}>
-          <div className={s.quickCtaTitle}>Actualización Rápida</div>
-          <div className={s.quickCtaSub}>Pegá varios números en bulk · Ej: "1, 3, 5-10"</div>
-        </div>
-        <div className={s.quickCtaArrow} aria-hidden="true"><IconArrow /></div>
-      </button>
+      {/* ── Quick CTAs ──────────────────────────────────────────────────── */}
+      <div className={s.quickCtaRow}>
+        {setShowQuickTrade && (
+          <button type="button" onClick={() => setShowQuickTrade(true)} className={`${s.quickCta} ${s.quickCtaPrimary}`}>
+            <span className={s.quickCtaIcon} aria-hidden="true"><IconHandshake /></span>
+            <div className={s.quickCtaCopy}>
+              <div className={s.quickCtaTitle}>Intercambio Rápido</div>
+              <div className={s.quickCtaSub}>Registrá qué entró y qué salió en un cambio</div>
+            </div>
+            <div className={s.quickCtaArrow} aria-hidden="true"><IconArrow /></div>
+          </button>
+        )}
+        <button type="button" onClick={() => setShowQuick(true)} className={s.quickCta}>
+          <span className={s.quickCtaIcon} aria-hidden="true"><IconPencil /></span>
+          <div className={s.quickCtaCopy}>
+            <div className={s.quickCtaTitle}>Actualización Rápida</div>
+            <div className={s.quickCtaSub}>Pegá varios números en bulk · Ej: "1, 3, 5-10"</div>
+          </div>
+          <div className={s.quickCtaArrow} aria-hidden="true"><IconArrow /></div>
+        </button>
+      </div>
 
       {/* ── 01 Próximos a Completar ──────────────────────────────────────── */}
       <section className={s.panel}>
         <header className={s.panelHead}>
-          <span className={s.panelNum}>01</span>
           <h3 className={s.panelTitle}>Próximos a Completar</h3>
           <span className={s.panelRule} aria-hidden="true" />
           {upcoming.length > 0 && (
@@ -214,7 +234,6 @@ export default function DashboardPage({
       {/* ── 02 Equipos con más Faltantes ─────────────────────────────────── */}
       <section className={s.missingTeamsSection}>
         <header className={s.sectionHead}>
-          <span className={s.sectionNum}>02</span>
           <h3 className={s.sectionTitle}>Equipos con más Faltantes</h3>
           <span className={s.sectionRule} aria-hidden="true" />
           <button type="button" onClick={() => setTab('teams')} className={s.sectionLink}>

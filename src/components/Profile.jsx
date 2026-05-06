@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   EMOJI_AVATARS, loadMyProfile, saveMyProfile, deriveDisplayName,
-  MEETING_POINT_TYPES, newMeetingPoint,
+  MEETING_POINT_TYPES, newMeetingPoint, loadMyTradeHistory,
 } from '../lib/marketplace'
 import { activateAlbum, deactivateAlbum } from '../lib/album'
 import { ALBUM_ADRENALYN, ALBUM_STICKER } from '../data'
@@ -132,7 +132,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
     return () => { cancelled = true }
   }, [session.user.id, session.user.email])
 
-  if (!profile) return <div className={s.wrap} style={{ padding: 24, color: 'var(--text-muted)' }}>Cargando perfil…</div>
+  if (!profile) return <div className={s.wrap} style={{ padding: 24, color: 'var(--text-muted)' }}>Cargando…</div>
 
   const upd = (k, v) => setProfile(p => ({ ...p, [k]: v }))
   const updContact = (k, v) => setProfile(p => ({ ...p, contact: { ...(p.contact || {}), [k]: v } }))
@@ -241,7 +241,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         <SectionHead
           num="02"
           title="CONTACTOS"
-          sub="Cuando alguien quiera proponer un trade, verá los datos que dejes acá. Llená al menos uno."
+          sub="Cuando otro coleccionista quiera cambiarte algo, va a ver lo que pongas acá. Deja al menos uno."
         />
 
         <div className={s.fieldGrid}>
@@ -302,7 +302,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
             <IconGlobe />
           </span>
           <div className={s.toggleBody}>
-            <div className={s.toggleTitle}>Visible en Marketplace</div>
+            <div className={s.toggleTitle}>Aparecer en el Marketplace</div>
             <div className={s.toggleHint}>
               {visible
                 ? 'Otros coleccionistas autenticados ven tu nombre, avatar, contactos y matches.'
@@ -313,6 +313,25 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
             <span className={s.switchKnob} />
           </span>
         </button>
+
+        {visible && profile.slug && (
+          <div className={s.publicLinkRow}>
+            <div className={s.publicLinkLabel}>Tu link público</div>
+            <div className={s.publicLinkValue}>
+              <code>{`${typeof window !== 'undefined' ? window.location.origin : ''}/u/${profile.slug}`}</code>
+              <button
+                type="button"
+                onClick={() => {
+                  const url = `${window.location.origin}/u/${profile.slug}`
+                  navigator.clipboard?.writeText(url)
+                }}
+                className={s.publicLinkCopy}
+              >
+                Copiar
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ═══════════════════ 04 — PUNTOS DE ENCUENTRO ═══════════════════ */}
@@ -390,6 +409,9 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         </button>
       </section>
 
+      {/* ═══════════════════ MIS TRADES ═══════════════════ */}
+      <TradeHistorySection userId={session.user.id} />
+
       {/* ═══════════════════ 05 — MIS ÁLBUMES ═══════════════════ */}
       <section className={s.panel}>
         <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
@@ -440,7 +462,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
       <div className={s.actions}>
         <button onClick={onSave} disabled={saving} className={s.saveBtn}>
           <span className={s.saveBtnLabel}>
-            {saving ? 'GUARDANDO…' : 'GUARDAR CAMBIOS'}
+            {saving ? 'GUARDANDO…' : 'GUARDAR'}
           </span>
         </button>
       </div>
@@ -459,5 +481,65 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
       )}
 
     </div>
+  )
+}
+
+function TradeHistorySection({ userId }) {
+  const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    loadMyTradeHistory(userId)
+      .then(data => { if (!cancelled) setHistory(data) })
+      .catch(() => { if (!cancelled) setHistory([]) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [userId])
+
+  return (
+    <section className={s.panel}>
+      <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
+      <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
+      <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
+      <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
+
+      <SectionHead
+        num="·"
+        title="MIS TRADES"
+        sub="Intercambios concretados — historial privado, solo vos lo ves."
+      />
+
+      {loading && (
+        <div className={s.toggleHint} style={{ padding: '12px 0' }}>Cargando…</div>
+      )}
+
+      {!loading && history.length === 0 && (
+        <div className={s.toggleHint} style={{ padding: '12px 0' }}>
+          Aún no registraste ningún cambio. Cuando marques un trade como concretado o uses Intercambio Rápido, aparecerá acá.
+        </div>
+      )}
+
+      {!loading && history.length > 0 && (
+        <div className={s.tradeHistoryList}>
+          {history.map(h => (
+            <div key={h.id} className={s.tradeHistoryRow}>
+              <div className={s.tradeHistoryDate}>
+                {new Date(h.created_at).toLocaleDateString('es-VE', { day: '2-digit', month: 'short' })}
+              </div>
+              <div className={s.tradeHistoryBody}>
+                <div className={s.tradeHistoryLine}>
+                  <strong>+{h.received_ids?.length || 0}</strong> entró
+                  {' · '}
+                  <strong>−{h.given_ids?.length || 0}</strong> salió
+                </div>
+                {h.note && <div className={s.tradeHistoryNote}>"{h.note}"</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }

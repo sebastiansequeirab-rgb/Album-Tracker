@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import Auth from './components/Auth'
 import Tracker from './components/Tracker'
 import AlbumOnboarding from './components/AlbumOnboarding'
+import PublicProfile from './components/PublicProfile'
 import { ensureMyProfile } from './lib/marketplace'
 import { ALBUM_ADRENALYN, ALBUM_STICKER, ALBUM_TYPES } from './data'
 
@@ -20,6 +22,15 @@ function persistAlbum(albumType) {
 }
 
 export default function App() {
+  return (
+    <Routes>
+      <Route path="/u/:slug" element={<PublicProfile />} />
+      <Route path="/*" element={<MainApp />} />
+    </Routes>
+  )
+}
+
+function MainApp() {
   const [session, setSession]             = useState(null)
   const [loading, setLoading]             = useState(true)
   const [profile, setProfile]             = useState(null)

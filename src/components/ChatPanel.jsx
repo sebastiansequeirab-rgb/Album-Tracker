@@ -23,6 +23,7 @@ const IconHand      = (p) => <Svg {...p}><path d="M11 17l2 2a1 1 0 1 0 3-3"/><pa
 const IconRetry     = (p) => <Svg {...p}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></Svg>
 const IconClock     = (p) => <Svg {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></Svg>
 const IconWave      = (p) => <Svg {...p}><path d="M2 12c2 0 2-3 4-3s2 6 4 6 2-9 4-9 2 6 4 6 2-3 4-3"/></Svg>
+const IconWa        = (p) => <Svg {...p}><path d="M22 12a10 10 0 1 1-3.92-7.94L22 3l-1.06 3.92A9.97 9.97 0 0 1 22 12z"/><path d="M16.5 14.2c-.4-.2-2.4-1.2-2.7-1.3-.4-.2-.6-.2-.9.2-.2.3-1 1.2-1.2 1.5-.2.2-.4.3-.8.1-1.4-.7-2.4-1.3-3.4-2.9-.3-.5.3-.5.7-1.5.1-.2 0-.4 0-.6 0-.2-.9-2.1-1.2-2.9-.3-.7-.6-.6-.9-.7-.2 0-.5 0-.7 0-.3 0-.7.1-1.1.5-.4.4-1.4 1.4-1.4 3.4 0 2 1.5 3.9 1.7 4.2.2.3 2.9 4.4 7 6 2.5 1 3.4.7 4.1.7.6-.1 2.4-1 2.7-1.9.3-.9.3-1.7.2-1.9-.1-.2-.4-.3-.8-.5z"/></Svg>
 
 export default function ChatPanel({
   myId,
@@ -209,6 +210,24 @@ export default function ChatPanel({
               <span>Chat 1:1 · tiempo real</span>
             </div>
           </div>
+          {(() => {
+            const wa = (activeProfile?.contact?.whatsapp || '').replace(/[^\d+]/g, '')
+            if (!wa) return null
+            const myName = myProfile?.display_name || 'un coleccionista'
+            const text = encodeURIComponent(`Hola, soy ${myName} desde Adrenalyn Tracker — quería coordinar un cambio.`)
+            return (
+              <a
+                href={`https://wa.me/${wa.replace(/^\+/, '')}?text=${text}`}
+                target="_blank" rel="noopener noreferrer"
+                className={s.waBtn}
+                aria-label="Abrir en WhatsApp"
+                title="Abrir en WhatsApp"
+              >
+                <IconWa size={16} />
+                <span className={s.waLabel}>WhatsApp</span>
+              </a>
+            )
+          })()}
         </div>
 
         <div ref={scrollRef} className={s.threadScroll}>
@@ -272,7 +291,7 @@ export default function ChatPanel({
   return (
     <div ref={rootRef} className={s.listView}>
       <div className={s.listHeader}>
-        <span className={s.listHeaderNum}>05</span>
+        <span className={s.listHeaderIcon} aria-hidden><IconChat size={18}/></span>
         <h3 className={s.listHeaderTitle}>Mensajes</h3>
         <span className={s.listHeaderRule} aria-hidden/>
         <span className={s.listHeaderSub}>
@@ -305,7 +324,7 @@ export default function ChatPanel({
           <div className={s.listEmptyIcon}><IconChat size={32} sw={1.5}/></div>
           <div className={s.listEmptyTitle}>SIN MENSAJES AÚN</div>
           <div className={s.listEmptyText}>
-            Tap "Iniciar chat" en cualquier oferta para empezar una conversación.
+            Tap "Chatear" en cualquier oferta para empezar a hablar.
           </div>
         </div>
       )}

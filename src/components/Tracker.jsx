@@ -2,7 +2,11 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../supabaseClient'
 import { parseNumberList, MOMENTUM, ALBUM_CONFIG, ALBUM_ADRENALYN, ALBUM_TYPES } from '../data'
-import { ensureMyProfile, loadUnreadCount, subscribeToInbox } from '../lib/marketplace'
+import {
+  ensureMyProfile, loadUnreadCount, subscribeToInbox,
+  recordTradeHistory, updateTradeRequestStatus,
+} from '../lib/marketplace'
+import { useLocalStorageState } from '../lib/useLocalStorageState'
 import AlbumSwitcher from './AlbumSwitcher'
 import Flag from './Flag'
 import Marketplace from './Marketplace'
@@ -12,6 +16,7 @@ import TeamsPage from './pages/TeamsPage'
 import CardsPage from './pages/CardsPage'
 import ProgressBar from './ui/ProgressBar'
 import BulkUpdateModal from './ui/BulkUpdateModal'
+import QuickUpdateModal from './QuickUpdateModal'
 import s from './Tracker.module.css'
 
 const IconAlbum = (p) => (
@@ -84,7 +89,11 @@ export default function Tracker({
   const ALL_ITEMS = useMemo(() => cfg.buildItems(), [albumType])
   const { TM, CC, ST } = cfg
   const [col,       setCol]       = useState({})
-  const [tab,       setTab]       = useState('dashboard')
+  const [tab,       setTab]       = useLocalStorageState(
+    'adrenalyn:lastTab',
+    'dashboard',
+    (v) => ['dashboard','teams','cards','marketplace','profile'].includes(v)
+  )
   const [fType,     setFType]     = useState('all')
   const [fSt,       setFSt]       = useState('all')
   const [fTeam,     setFTeam]     = useState('all')
@@ -94,6 +103,8 @@ export default function Tracker({
   const [saveStatus,setSaveStatus]= useState('idle')
   const [toast,     setToast]     = useState(null)
   const [showQuick, setShowQuick] = useState(false)
+  const [showQuickTrade, setShowQuickTrade] = useState(false)
+  const [quickTradePrefill, setQuickTradePrefill] = useState(null)
   const [quickText, setQuickText] = useState('')
   const [quickAction,setQuickAction]=useState('have')
   const [showReset, setShowReset] = useState(false)
@@ -268,6 +279,47 @@ export default function Tracker({
     setQuickText(''); setShowQuick(false)
   }
 
+  // Intercambio rápido — actualiza colección y registra el trade en history.
+  const applyQuickTrade = async ({ entered = [], left = [], note, partnerId }) => {
+    const nc = { ...col }
+    let changed = 0
+    for (const id of entered) {
+      if (nc[id] === 'missing' || !nc[id]) { nc[id] = 'have'; changed++ }
+    }
+    for (const id of left) {
+      const cur = nc[id] || 'missing'
+      if (cur === 'duplicate') { nc[id] = 'have'; changed++ }
+      else if (cur === 'have') { nc[id] = 'missing'; changed++ }
+    }
+    if (changed) {
+      setCol(nc)
+      await save(nc)
+    }
+    try {
+      await recordTradeHistory({
+        user_id: session.user.id,
+        partner_id: partnerId || null,
+        album_type: albumType,
+        received_ids: entered,
+        given_ids: left,
+        note: note || null,
+      })
+    } catch (err) {
+      console.warn('trade_history insert failed:', err)
+    }
+    const tradeId = quickTradePrefill?.tradeId
+    if (tradeId) {
+      try { await updateTradeRequestStatus(tradeId, 'completed') }
+      catch (err) { console.warn('trade status update failed:', err) }
+    }
+    flash(`Intercambio registrado · ${entered.length} entró · ${left.length} salió`, '#4ADE80')
+  }
+
+  const openQuickTradeWithPrefill = (prefill) => {
+    setQuickTradePrefill(prefill || null)
+    setShowQuickTrade(true)
+  }
+
   const resetToInitial = async () => {
     const init = cfg.buildInitial()
     setCol(init); await save(init)
@@ -363,6 +415,16 @@ export default function Tracker({
         onApply={applyQuickUpdate}
       />
 
+      {/* Intercambio rápido (entró/salió) */}
+      <QuickUpdateModal
+        open={showQuickTrade}
+        onClose={() => { setShowQuickTrade(false); setQuickTradePrefill(null) }}
+        cards={ALL_ITEMS}
+        col={col}
+        prefill={quickTradePrefill}
+        onApply={applyQuickTrade}
+      />
+
       {/* Reset Modal */}
       {showReset && (
         <div className={s.modalBackdrop} onClick={() => setShowReset(false)}>
@@ -386,7 +448,7 @@ export default function Tracker({
             <div className={s.brand}>
               <div className={s.brandTitle} style={{ color: cfg.accent }}>
                 <span className={s.brandIcon} aria-hidden="true">
-                  {albumType === ALBUM_ADRENALYN ? <IconBolt /> : <IconAlbum />}
+                  <img src="/logo-mark.svg" alt="" width="22" height="22" />
                 </span>
                 {cfg.label.toUpperCase()}
               </div>
@@ -405,19 +467,10 @@ export default function Tracker({
               </button>
               <button onClick={() => supabase.auth.signOut()} title="Cerrar sesión" className={`${s.iconBtn} ${s.iconBtnText}`}>Salir</button>
               <div className={s.pctBlock}>
-                <div className={`${s.pctValue} ${stats.pct >= 100 ? s.pctValueDone : s.pctValueGoing}`} style={{ color: stats.pct >= 100 ? cfg.accent : undefined }}>{stats.pct}%</div>
+                <div className={`${s.pctValue} ${stats.pct >= 100 ? s.pctValueDone : s.pctValueGoing}`} style={{ color: stats.pct >= 100 ? cfg.accent : undefined }}>{stats.have}</div>
                 <div className={s.pctLabel}>DE {cfg.mainCount}</div>
               </div>
             </div>
-          </div>
-          <div className={s.summaryRow}>
-            <span className={s.sumHave}>{stats.have} <span className={s.sumLabel}>tengo</span></span>
-            <span className={s.sumDup}>{stats.dup} <span className={s.sumLabel}>repetidas</span></span>
-            <span className={s.sumMiss}>{stats.miss} <span className={s.sumLabel}>faltan</span></span>
-            {cfg.showMomentum && <span className={s.sumMom}>{momStats.have}/{momStats.tot} <span className={s.sumLabel}>momentum</span></span>}
-            {cfg.extraCount > 0 && (
-              <span className={s.sumTotal}>+ {cfg.extraCount} Momentum</span>
-            )}
           </div>
         </div>
       </header>
@@ -466,6 +519,7 @@ export default function Tracker({
                 gs={gs}
                 toggle={toggle}
                 setShowQuick={setShowQuick}
+                setShowQuickTrade={setShowQuickTrade}
                 setTab={setTab}
                 setSelTeam={setSelTeam}
                 segments={segments}
@@ -531,6 +585,18 @@ export default function Tracker({
               onGoToProfile={() => setTab('profile')}
               onUnreadChange={() => {
                 loadUnreadCount(session.user.id).then(setUnread).catch(() => {})
+              }}
+              onCompleteTrade={(trade, partner) => {
+                const isIncoming = trade.target_id === session.user.id
+                const enteredIds = isIncoming ? trade.offered_ids : trade.wanted_ids
+                const leftIds    = isIncoming ? trade.wanted_ids  : trade.offered_ids
+                openQuickTradeWithPrefill({
+                  enteredIds: enteredIds || [],
+                  leftIds: leftIds || [],
+                  partnerId: isIncoming ? trade.initiator_id : trade.target_id,
+                  partnerName: partner?.display_name || null,
+                  tradeId: trade.id,
+                })
               }}
               flash={flash}
             />

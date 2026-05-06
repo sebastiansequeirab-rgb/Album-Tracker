@@ -28,13 +28,15 @@ export async function ensureMyProfile(userId, fallbackEmail) {
   if (selErr) throw selErr
   if (existing) return existing
 
+  const displayName = deriveDisplayName(fallbackEmail)
   const seed = {
     user_id: userId,
-    display_name: deriveDisplayName(fallbackEmail),
+    display_name: displayName,
     avatar_emoji: '⚽',
     contact: {},
     marketplace_visible: false,
     meeting_points: [],
+    slug: makeSlug(displayName, userId),
   }
   const { data, error } = await supabase
     .from('adrenalyn_profiles')
@@ -43,6 +45,16 @@ export async function ensureMyProfile(userId, fallbackEmail) {
     .single()
   if (error) throw error
   return data
+}
+
+function makeSlug(displayName, userId) {
+  const base = String(displayName || 'coleccionista')
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+  const suffix = String(userId || '').slice(0, 6)
+  return `${base || 'coleccionista'}-${suffix}`
 }
 
 export async function loadMyProfile(userId) {
@@ -78,24 +90,52 @@ export async function saveMyProfile(userId, profile) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function loadVisibleProfiles(currentUserId) {
-  const { data, error } = await supabase
-    .from('adrenalyn_profiles')
-    .select('user_id, display_name, avatar_emoji, contact, marketplace_visible, meeting_points, updated_at')
-    .eq('marketplace_visible', true)
-    .neq('user_id', currentUserId)
-    .order('updated_at', { ascending: false })
-  if (error) throw error
-  return data || []
+  // Try with the new schema fields first; fall back if columns don't exist yet.
+  try {
+    const { data, error } = await supabase
+      .from('adrenalyn_profiles')
+      .select('user_id, display_name, avatar_emoji, contact, marketplace_visible, meeting_points, updated_at, slug, trades_completed')
+      .eq('marketplace_visible', true)
+      .neq('user_id', currentUserId)
+      .order('updated_at', { ascending: false })
+    if (error) throw error
+    return data || []
+  } catch (err) {
+    if (String(err?.message || '').toLowerCase().includes('column')) {
+      const { data, error } = await supabase
+        .from('adrenalyn_profiles')
+        .select('user_id, display_name, avatar_emoji, contact, marketplace_visible, meeting_points, updated_at')
+        .eq('marketplace_visible', true)
+        .neq('user_id', currentUserId)
+        .order('updated_at', { ascending: false })
+      if (error) throw error
+      return data || []
+    }
+    throw err
+  }
 }
 
 export async function loadProfile(userId) {
-  const { data, error } = await supabase
-    .from('adrenalyn_profiles')
-    .select('user_id, display_name, avatar_emoji, contact, marketplace_visible, meeting_points')
-    .eq('user_id', userId)
-    .maybeSingle()
-  if (error) throw error
-  return data
+  try {
+    const { data, error } = await supabase
+      .from('adrenalyn_profiles')
+      .select('user_id, display_name, avatar_emoji, contact, marketplace_visible, meeting_points, slug, trades_completed')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (error) throw error
+    return data
+  } catch (err) {
+    if (String(err?.message || '').toLowerCase().includes('column')) {
+      const { data, error } = await supabase
+        .from('adrenalyn_profiles')
+        .select('user_id, display_name, avatar_emoji, contact, marketplace_visible, meeting_points')
+        .eq('user_id', userId)
+        .maybeSingle()
+      if (error) throw error
+      return data
+    }
+    throw err
+  }
 }
 
 export async function loadCollection(userId) {
@@ -350,6 +390,81 @@ export async function closePublicListing(id) {
     .single()
   if (error) throw error
   return data
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Trade history (intercambios concretados)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function recordTradeHistory({
+  user_id, partner_id = null, album_type,
+  received_ids = [], given_ids = [], note = null,
+}) {
+  const { data, error } = await supabase
+    .from('adrenalyn_trade_history')
+    .insert({
+      user_id,
+      partner_id,
+      album_type,
+      received_ids,
+      given_ids,
+      note,
+    })
+    .select('*')
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function loadMyTradeHistory(userId, limit = 50) {
+  try {
+    const { data, error } = await supabase
+      .from('adrenalyn_trade_history')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+    if (error) throw error
+    return data || []
+  } catch (err) {
+    if (String(err?.message || '').toLowerCase().includes('relation')) return []
+    throw err
+  }
+}
+
+export async function deletePublicListing(id) {
+  const { error } = await supabase
+    .from('adrenalyn_public_listings')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function completePublicListing(id) {
+  // Tries to set status='completed' with completed_at; falls back to 'closed' if
+  // the column doesn't exist yet (schema migration pending).
+  try {
+    const { data, error } = await supabase
+      .from('adrenalyn_public_listings')
+      .update({ status: 'completed', completed_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('*')
+      .single()
+    if (error) throw error
+    return data
+  } catch (err) {
+    if (String(err?.message || '').toLowerCase().includes('completed_at')) {
+      const { data, error } = await supabase
+        .from('adrenalyn_public_listings')
+        .update({ status: 'closed' })
+        .eq('id', id)
+        .select('*')
+        .single()
+      if (error) throw error
+      return data
+    }
+    throw err
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
