@@ -1,20 +1,23 @@
-// Panini FIFA World Cup 2026 Sticker Album (Latam) — 980 stickers
+// Panini FIFA World Cup 2026 Sticker Album (oficial Latam) — 980 stickers
 //
 // Estructura oficial:
-//   - 9 stickers de intro (cover, mascot, ball, host cities, etc.)
-//   - 11 stickers de FIFA Museum (campeones históricos)
-//   - 48 selecciones x 20 = 960 stickers de equipos
-//       - 18 retratos de jugadores
-//       - 1 foto grupal del equipo
-//       - 1 escudo oficial (foil)
-//   - Total: 980
+//   #00-08    → Intro (9):     Cubierta, Mascota, Balón, Ciudades, Trofeo, etc.
+//   #9-968    → 48 selecciones × 20 stickers c/u (960 total).
+//                Por bloque de equipo:
+//                  pos 1  → Escudo (foil)
+//                  pos 2-12 → 11 jugadores
+//                  pos 13 → Foto del plantel (team photo)
+//                  pos 14-20 → 7 jugadores
+//   #969-979  → FIFA Museum (11): campeones históricos al final del álbum.
+//
+// Total: 9 + 960 + 11 = 980.
 //
 // Los nombres de jugadores son PLACEHOLDERS genéricos ("Jugador 1", "Jugador 2",
-// etc). El usuario los reemplaza con la lista real cuando reciba el álbum
+// etc.). El usuario los reemplaza con la lista real cuando reciba el álbum
 // oficial. NO reproducimos el checklist oficial de Panini.
 //
-// IDs son determinísticos y estables — se guardan en el blob `data` jsonb del
-// usuario, así que no se pueden cambiar después del primer guardado sin migrar.
+// IDs son determinísticos y ESTABLES — se guardan en el blob `data` jsonb del
+// usuario. Nunca renombrar después del primer guardado sin migrar.
 
 import { STICKER_TEAMS } from './teams'
 
@@ -34,13 +37,13 @@ export const SST = {
   duplicate: { l: 'Repet.', bg: '#180A00', bd: '#D97706', tx: '#FCD34D', dot: '#F59E0B', tag: '#1C1008' },
 }
 
-// 9 stickers de intro
+// 9 stickers de intro (#00-08)
 const INTRO_LABELS = [
   'Cubierta', 'Mascota', 'Balón Oficial', 'Ciudades Sede 1', 'Ciudades Sede 2',
   'Ciudades Sede 3', 'Trofeo', 'Logo del Torneo', 'Embajadores',
 ]
 
-// 11 stickers de FIFA Museum (campeones históricos genéricos)
+// 11 stickers de FIFA Museum (#969-979)
 const MUSEUM_LABELS = [
   'Campeón 1930', 'Campeón 1950', 'Campeón 1958', 'Campeón 1966', 'Campeón 1970',
   'Campeón 1978', 'Campeón 1986', 'Campeón 1998', 'Campeón 2006', 'Campeón 2018',
@@ -50,11 +53,11 @@ const MUSEUM_LABELS = [
 export function buildStickers() {
   const out = []
 
-  // 1) Intro stickers (1-9)
+  // 1) Intro (#00-08) — empieza en 0, no en 1.
   INTRO_LABELS.forEach((label, i) => {
     out.push({
-      id:   `INT-${i + 1}`,
-      num:  i + 1,
+      id:   `INT-${i + 1}`,    // ID legacy estable (1..9 internamente)
+      num:  i,                  // numeración oficial 0..8
       name: label,
       team: 'FIFA WC 2026',
       flag: '🏆',
@@ -63,27 +66,27 @@ export function buildStickers() {
     })
   })
 
-  // 2) FIFA Museum (10-20)
-  MUSEUM_LABELS.forEach((label, i) => {
+  // 2) 48 equipos × 20 stickers (#9-968).
+  STICKER_TEAMS.forEach((team, k) => {
+    const base = 9 + k * 20
+
+    // pos 1 → Escudo (foil)
     out.push({
-      id:   `MUS-${i + 1}`,
-      num:  9 + i + 1,
-      name: label,
-      team: 'FIFA Museum',
-      flag: '🏆',
-      type: 'FIFA Museum',
+      id:   `${team.id}-C`,
+      num:  base,
+      name: `${team.name} — Escudo`,
+      team: team.name,
+      flag: team.flag,
+      conf: team.conf,
+      type: 'Team Crest',
       cat:  'rare',
     })
-  })
 
-  // 3) 48 equipos x 20 (21-980)
-  let n = 21
-  for (const team of STICKER_TEAMS) {
-    // 18 retratos de jugadores (placeholders)
-    for (let i = 1; i <= 18; i++) {
+    // pos 2-12 → Jugadores 1..11
+    for (let i = 1; i <= 11; i++) {
       out.push({
         id:   `${team.id}-P${String(i).padStart(2, '0')}`,
-        num:  n++,
+        num:  base + i,
         name: `Jugador ${i}`,
         team: team.name,
         flag: team.flag,
@@ -92,10 +95,11 @@ export function buildStickers() {
         cat:  'base',
       })
     }
-    // 1 foto grupal
+
+    // pos 13 → Foto del plantel
     out.push({
       id:   `${team.id}-G`,
-      num:  n++,
+      num:  base + 12,
       name: `${team.name} — Plantel`,
       team: team.name,
       flag: team.flag,
@@ -103,18 +107,34 @@ export function buildStickers() {
       type: 'Team Group',
       cat:  'special',
     })
-    // 1 escudo (foil)
+
+    // pos 14-20 → Jugadores 12..18
+    for (let i = 12; i <= 18; i++) {
+      out.push({
+        id:   `${team.id}-P${String(i).padStart(2, '0')}`,
+        num:  base + (i + 1),  // 14..20
+        name: `Jugador ${i}`,
+        team: team.name,
+        flag: team.flag,
+        conf: team.conf,
+        type: 'Player',
+        cat:  'base',
+      })
+    }
+  })
+
+  // 3) FIFA Museum (#969-979) — al FINAL del álbum.
+  MUSEUM_LABELS.forEach((label, i) => {
     out.push({
-      id:   `${team.id}-C`,
-      num:  n++,
-      name: `${team.name} — Escudo`,
-      team: team.name,
-      flag: team.flag,
-      conf: team.conf,
-      type: 'Team Crest',
+      id:   `MUS-${i + 1}`,    // ID legacy estable
+      num:  969 + i,            // 969..979
+      name: label,
+      team: 'FIFA Museum',
+      flag: '🏆',
+      type: 'FIFA Museum',
       cat:  'rare',
     })
-  }
+  })
 
   return out
 }
@@ -125,8 +145,14 @@ export function buildInitialStickerState() {
   return state
 }
 
-// Sanity check
+// Sanity checks en runtime
 if (typeof window !== 'undefined') {
-  const total = buildStickers().length
-  if (total !== 980) console.warn(`buildStickers() devolvió ${total}, esperado 980`)
+  const all = buildStickers()
+  if (all.length !== 980) console.warn(`buildStickers() devolvió ${all.length}, esperado 980`)
+  // Verificar que los nums cubren 0..979 sin huecos ni duplicados
+  const nums = new Set(all.map(s => s.num))
+  if (nums.size !== 980) console.warn('buildStickers(): nums duplicados detectados')
+  for (let n = 0; n < 980; n++) {
+    if (!nums.has(n)) { console.warn(`buildStickers(): falta el num ${n}`); break }
+  }
 }
