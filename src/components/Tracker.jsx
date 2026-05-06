@@ -413,24 +413,6 @@ export default function Tracker({
                 {cfg.label.toUpperCase()}
               </div>
               <div className={s.brandSub}>{cfg.subtitle} · {session.user.email}</div>
-              {myProfile?.slug && myProfile?.marketplace_visible && (
-                <div className={s.brandShare}>
-                  <span className={s.brandShareLabel}>TU LINK</span>
-                  <code className={s.brandShareUrl}>
-                    {typeof window !== 'undefined' ? window.location.origin : ''}/u/{myProfile.slug}
-                  </code>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const url = `${window.location.origin}/u/${myProfile.slug}`
-                      navigator.clipboard?.writeText(url).then(() => flash('🔗 Link copiado', '#FCD34D'))
-                    }}
-                    className={s.brandShareBtn}
-                  >
-                    Copiar
-                  </button>
-                </div>
-              )}
             </div>
             <div className={s.headerActions}>
               {activeAlbums.length >= 2 && onSwitchAlbum && (
@@ -450,6 +432,25 @@ export default function Tracker({
               </div>
             </div>
           </div>
+
+          {myProfile?.slug && myProfile?.marketplace_visible && (
+            <div className={s.brandShareRow}>
+              <span className={s.brandShareLabel}>TU LINK PÚBLICO</span>
+              <code className={s.brandShareUrl}>
+                {typeof window !== 'undefined' ? window.location.origin : ''}/u/{myProfile.slug}
+              </code>
+              <button
+                type="button"
+                onClick={() => {
+                  const url = `${window.location.origin}/u/${myProfile.slug}`
+                  navigator.clipboard?.writeText(url).then(() => flash('🔗 Link copiado', '#FCD34D'))
+                }}
+                className={s.brandShareBtn}
+              >
+                Copiar
+              </button>
+            </div>
+          )}
         </div>
       </header>
 

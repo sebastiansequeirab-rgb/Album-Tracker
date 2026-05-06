@@ -146,75 +146,45 @@ export default function CardsPage({
     exitSelectMode()
   }
 
-  const teamOpts = useMemo(
-    () => [...new Set(ALL_ITEMS.map(c => c.team))].sort(),
-    [ALL_ITEMS]
-  )
+  // Stats por equipo sobre TODA la colección (no solo lo visible) — sirve
+  // para la fila de banderitas-filtro siempre con info estable.
+  const teamFilterStats = useMemo(() => {
+    const map = new Map()
+    for (const c of ALL_ITEMS) {
+      if (!c.team) continue
+      const key = c.team
+      if (!map.has(key)) {
+        map.set(key, { teamName: key, flag: c.flag || '🌐', total: 0, have: 0 })
+      }
+      const t = map.get(key)
+      t.total++
+      const st = gs(c.id)
+      if (st === 'have' || st === 'duplicate') t.have++
+    }
+    // Orden estable: el que aparece primero en ALL_ITEMS (sigue el orden del álbum)
+    return [...map.values()]
+  }, [ALL_ITEMS, gs])
 
   const activePills = []
-  if (fSt   !== 'all') activePills.push({ key: 'st',   label: STATUS_PILL[fSt],                          onRemove: () => setFSt('all') })
-  if (fType !== 'all') activePills.push({ key: 'type', label: TM[fType]?.l || fType,                     onRemove: () => setFType('all') })
-  if (fTeam !== 'all') activePills.push({ key: 'team', label: fTeam,                                     onRemove: () => setFTeam('all') })
-  if (q)               activePills.push({ key: 'q',    label: `“${q}”`,                        onRemove: () => setQ('') })
+  if (fSt   !== 'all') activePills.push({ key: 'st',   label: STATUS_PILL[fSt],   onRemove: () => setFSt('all') })
+  if (fTeam !== 'all') activePills.push({ key: 'team', label: fTeam,              onRemove: () => setFTeam('all') })
+  if (q)               activePills.push({ key: 'q',    label: `“${q}”`,           onRemove: () => setQ('') })
 
   const bulkActive = selectMode && selected.size > 0
 
   return (
     <div className={`${s.page} ${bulkActive ? s.pageBulkActive : ''}`}>
-      {/* ── Filter bar (sticky, broadcast field styling) ──────────────── */}
+      {/* ── Filter bar: search + bulk toggle ──────────────────────────── */}
       <div className={s.filterBar}>
         <label className={s.search} aria-label="Buscar">
           <span className={s.searchIcon} aria-hidden="true"><IconSearch /></span>
           <input
             type="search"
-            placeholder="Jugador, equipo o numero…"
+            placeholder="Buscá jugador, equipo o número…"
             value={q}
             onChange={e => setQ(e.target.value)}
             className={s.searchInput}
           />
-        </label>
-
-        <label className={s.field} aria-label="Estado">
-          <span className={s.fieldLabel}>
-            <span className={s.fieldNum}>01</span>
-            <span className={s.fieldText}>ESTADO</span>
-          </span>
-          <span className={s.selectWrap}>
-            <select value={fSt} onChange={e => setFSt(e.target.value)} className={s.select}>
-              {STATUS_OPTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
-            <span className={s.selectArrow} aria-hidden="true"><IconChevron /></span>
-          </span>
-        </label>
-
-        <label className={s.field} aria-label="Tipo">
-          <span className={s.fieldLabel}>
-            <span className={s.fieldNum}>02</span>
-            <span className={s.fieldText}>TIPO</span>
-          </span>
-          <span className={s.selectWrap}>
-            <select value={fType} onChange={e => setFType(e.target.value)} className={s.select}>
-              <option value="all">Todos los tipos</option>
-              {Object.entries(TM).map(([t, m]) => (
-                <option key={t} value={t}>{m.l}</option>
-              ))}
-            </select>
-            <span className={s.selectArrow} aria-hidden="true"><IconChevron /></span>
-          </span>
-        </label>
-
-        <label className={s.field} aria-label="Equipo">
-          <span className={s.fieldLabel}>
-            <span className={s.fieldNum}>03</span>
-            <span className={s.fieldText}>EQUIPO</span>
-          </span>
-          <span className={s.selectWrap}>
-            <select value={fTeam} onChange={e => setFTeam(e.target.value)} className={s.select}>
-              <option value="all">Todos los equipos</option>
-              {teamOpts.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-            <span className={s.selectArrow} aria-hidden="true"><IconChevron /></span>
-          </span>
         </label>
 
         <button
@@ -226,6 +196,79 @@ export default function CardsPage({
           {selectMode ? <IconCross /> : <IconCheckSquare />}
           <span>{selectMode ? 'CANCELAR' : 'SELECCION MULTIPLE'}</span>
         </button>
+      </div>
+
+      {/* ── Status pills (clickables = filtro de estado) ──────────────── */}
+      <div className={s.statusPills} role="tablist" aria-label="Filtrar por estado">
+        <button
+          type="button"
+          role="tab"
+          aria-pressed={fSt === 'all'}
+          onClick={() => setFSt('all')}
+          className={`${s.statusPill} ${s.statusPillAll} ${fSt === 'all' ? s.statusPillActive : ''}`}
+        >
+          <span>Todas</span>
+          <span className={s.statusPillCount}>{stats.have + stats.dup + stats.miss}</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-pressed={fSt === 'have'}
+          onClick={() => setFSt(fSt === 'have' ? 'all' : 'have')}
+          className={`${s.statusPill} ${s.statusPillHave} ${fSt === 'have' ? s.statusPillActive : ''}`}
+        >
+          <span className={s.statusPillDot} aria-hidden />
+          <span>Tengo</span>
+          <span className={s.statusPillCount}>{stats.have}</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-pressed={fSt === 'duplicate'}
+          onClick={() => setFSt(fSt === 'duplicate' ? 'all' : 'duplicate')}
+          className={`${s.statusPill} ${s.statusPillDup} ${fSt === 'duplicate' ? s.statusPillActive : ''}`}
+        >
+          <span className={s.statusPillDot} aria-hidden />
+          <span>Repetidas</span>
+          <span className={s.statusPillCount}>{stats.dup}</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-pressed={fSt === 'missing'}
+          onClick={() => setFSt(fSt === 'missing' ? 'all' : 'missing')}
+          className={`${s.statusPill} ${s.statusPillMiss} ${fSt === 'missing' ? s.statusPillActive : ''}`}
+        >
+          <span className={s.statusPillDot} aria-hidden />
+          <span>Faltan</span>
+          <span className={s.statusPillCount}>{stats.miss}</span>
+        </button>
+      </div>
+
+      {/* ── Flag filters: chips por país (toggle on/off) ──────────────── */}
+      <div className={s.flagFilters} role="tablist" aria-label="Filtrar por equipo">
+        {teamFilterStats.map(t => {
+          const pct = t.total ? Math.round(t.have / t.total * 100) : 0
+          const active = fTeam === t.teamName
+          const dim = !active && fTeam !== 'all'
+          return (
+            <button
+              key={t.teamName}
+              type="button"
+              role="tab"
+              aria-pressed={active}
+              onClick={() => setFTeam(active ? 'all' : t.teamName)}
+              className={`${s.flagChip} ${active ? s.flagChipActive : ''} ${dim ? s.flagChipDim : ''}`}
+              title={`${t.teamName} · ${pct}% (${t.have}/${t.total})`}
+            >
+              <span className={s.flagChipIcon} aria-hidden>{t.flag}</span>
+              <span className={s.flagChipPct}>{pct}%</span>
+              <span className={s.flagChipBar} aria-hidden>
+                <span className={s.flagChipBarFill} style={{ width: `${pct}%` }} />
+              </span>
+            </button>
+          )
+        })}
       </div>
 
       {/* ── Active filter pills (lower-third style) ────────────────────── */}
@@ -247,29 +290,10 @@ export default function CardsPage({
         </div>
       )}
 
-      {/* ── Section header + summary row ──────────────────────────────── */}
-      <header className={s.summaryHead}>
-        <h3 className={s.summaryTitle}>Resumen</h3>
-        <span className={s.summaryRule} aria-hidden="true" />
-        <span className={s.summaryDots}>
-          <span className={`${s.dotPill} ${s.dotHave}`}>
-            <span className={s.dotMark} aria-hidden="true" />
-            {stats.have}
-          </span>
-          <span className={`${s.dotPill} ${s.dotDup}`}>
-            <span className={s.dotMark} aria-hidden="true" />
-            {stats.dup}
-          </span>
-          <span className={`${s.dotPill} ${s.dotMiss}`}>
-            <span className={s.dotMark} aria-hidden="true" />
-            {stats.miss}
-          </span>
-        </span>
-      </header>
-
+      {/* ── Stats bar: count + hint ───────────────────────────────────── */}
       <div className={s.summary}>
         <span className={s.summaryCount}>{filtered.length}</span>
-        <span className={s.summaryUnit}>cartas</span>
+        <span className={s.summaryUnit}>de {stats.have + stats.dup + stats.miss}</span>
         <span className={s.summaryHint}>
           {selectMode
             ? `· ${selected.size} seleccionada${selected.size !== 1 ? 's' : ''}`
@@ -279,56 +303,45 @@ export default function CardsPage({
 
       {/* ── Layout: cards + side index ─────────────────────────────────── */}
       <div className={s.contentLayout}>
-        {/* Mobile: strip horizontal de equipos */}
-        {grouped.length > 1 && (
-          <nav className={s.teamStripMobile} aria-label="Saltar a equipo">
-            {grouped.map(g => {
-              const pct = g.total ? Math.round((g.have + g.dup) / g.total * 100) : 0
-              return (
-                <button
-                  key={g.teamId}
-                  type="button"
-                  className={s.stripItem}
-                  onClick={() => scrollToTeam(g.teamId)}
-                  title={`${g.teamName} · ${pct}%`}
-                >
-                  <span className={s.stripFlag}>{g.flag}</span>
-                  <span className={s.stripPct}>{pct}%</span>
-                </button>
-              )
-            })}
-          </nav>
-        )}
-
         <div className={s.cardsArea}>
-          {grouped.map(g => (
-            <section key={g.teamId} className={s.teamGroup}>
-              <header id={`team-${g.teamId}`} className={s.teamGroupHead}>
-                <span className={s.teamGroupFlag} aria-hidden>{g.flag}</span>
-                <span className={s.teamGroupName}>{g.teamName}</span>
-                <span className={s.teamGroupRule} aria-hidden />
-                <span className={s.teamGroupCount}>{g.have + g.dup}/{g.total}</span>
-              </header>
-              <div className={s.grid}>
-                {g.cards.map(c => {
-                  const status = gs(c.id)
-                  const isSelected = selectMode && selected.has(c.id)
-                  return (
-                    <StickerCard
-                      key={c.id}
-                      card={c}
-                      status={status}
-                      selected={isSelected}
-                      onToggle={() => {
-                        if (selectMode) toggleSelected(c.id)
-                        else toggle(c.id)
-                      }}
-                    />
-                  )
-                })}
-              </div>
-            </section>
-          ))}
+          {grouped.map(g => {
+            const pct = g.total ? Math.round((g.have + g.dup) / g.total * 100) : 0
+            return (
+              <section key={g.teamId} className={s.teamGroup}>
+                <header id={`team-${g.teamId}`} className={s.teamGroupHead}>
+                  <span className={s.teamGroupTag} aria-hidden>EQUIPO</span>
+                  <span className={s.teamGroupFlag} aria-hidden>{g.flag}</span>
+                  <span className={s.teamGroupName}>{g.teamName}</span>
+                  <span className={s.teamGroupBar} aria-hidden>
+                    <span className={s.teamGroupBarFill} style={{ width: `${pct}%` }} />
+                  </span>
+                  <span className={s.teamGroupCount}>
+                    <strong>{g.have + g.dup}</strong>
+                    <span className={s.teamGroupCountSep}>/</span>
+                    {g.total}
+                  </span>
+                </header>
+                <div className={s.grid}>
+                  {g.cards.map(c => {
+                    const status = gs(c.id)
+                    const isSelected = selectMode && selected.has(c.id)
+                    return (
+                      <StickerCard
+                        key={c.id}
+                        card={c}
+                        status={status}
+                        selected={isSelected}
+                        onToggle={() => {
+                          if (selectMode) toggleSelected(c.id)
+                          else toggle(c.id)
+                        }}
+                      />
+                    )
+                  })}
+                </div>
+              </section>
+            )
+          })}
         </div>
 
         {/* Desktop: slidebar lateral */}
