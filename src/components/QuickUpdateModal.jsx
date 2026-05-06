@@ -30,7 +30,7 @@ const IconSearch = (p) => (
   </svg>
 )
 
-const MAX_RESULTS = 60
+const PAGE_SIZE = 80
 
 export default function QuickUpdateModal({
   open,
@@ -214,7 +214,13 @@ function CardPicker({
   label, hint, placeholder, cards, col, preferStatus,
   query, setQuery, picked, setPicked, otherPicked,
 }) {
-  const filtered = useMemo(() => {
+  const [page, setPage] = useState(1)
+  const [collapsed, setCollapsed] = useState(false)
+
+  // Resetea paginación cuando cambia la query
+  useEffect(() => { setPage(1) }, [query])
+
+  const allMatching = useMemo(() => {
     const q = query.trim().toLowerCase()
     let list = cards
     if (q) {
@@ -225,10 +231,8 @@ function CardPicker({
         (num != null && c.num === num)
       )
     } else {
-      // Sin query: priorizar cartas en el estado deseado
       list = list.filter(c => (col[c.id] || 'missing') === preferStatus)
     }
-    // Sort: estado preferido primero, luego por equipo, luego por num
     return list.slice().sort((a, b) => {
       const aPref = (col[a.id] || 'missing') === preferStatus ? 0 : 1
       const bPref = (col[b.id] || 'missing') === preferStatus ? 0 : 1
@@ -236,8 +240,11 @@ function CardPicker({
       const t = (a.team || '').localeCompare(b.team || '')
       if (t !== 0) return t
       return (a.num || 0) - (b.num || 0)
-    }).slice(0, MAX_RESULTS)
+    })
   }, [cards, col, query, preferStatus])
+
+  const visible = allMatching.slice(0, page * PAGE_SIZE)
+  const hasMore = visible.length < allMatching.length
 
   const togglePick = (id) => {
     setPicked(prev => {
@@ -286,55 +293,85 @@ function CardPicker({
         </div>
       )}
 
-      <div className={s.searchWrap}>
-        <span className={s.searchIcon} aria-hidden><IconSearch /></span>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={placeholder}
-          className={s.search}
-          autoFocus
-        />
+      <div className={s.searchRow}>
+        <div className={s.searchWrap}>
+          <span className={s.searchIcon} aria-hidden><IconSearch /></span>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={placeholder}
+            className={s.search}
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className={s.searchClear}
+              aria-label="Limpiar búsqueda"
+            >
+              <IconClose />
+            </button>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setCollapsed(c => !c)}
+          className={s.toggleListBtn}
+          aria-pressed={collapsed}
+          title={collapsed ? 'Mostrar lista' : 'Ocultar lista'}
+        >
+          {collapsed ? 'MOSTRAR' : 'OCULTAR'}
+        </button>
       </div>
 
-      <ul className={s.results}>
-        {filtered.length === 0 && (
-          <li className={s.resultEmpty}>
-            {query.trim()
-              ? 'Nada matchea con esa búsqueda.'
-              : `No tenés cartas en estado "${preferStatus === 'missing' ? 'falta' : 'repetida'}". Buscá una específica arriba.`}
-          </li>
-        )}
-        {filtered.map(c => {
-          const isPicked = picked.has(c.id)
-          const isInOther = otherPicked.has(c.id)
-          const status = col[c.id] || 'missing'
-          return (
-            <li key={c.id}>
-              <button
-                type="button"
-                onClick={() => togglePick(c.id)}
-                disabled={isInOther}
-                className={`${s.resultRow} ${isPicked ? s.resultRowPicked : ''} ${isInOther ? s.resultRowDisabled : ''}`}
-                title={isInOther ? 'Ya elegida en el otro lado' : ''}
-              >
-                <span className={s.resultCheck} aria-hidden>
-                  {isPicked && <IconCheck />}
-                </span>
-                <span className={s.resultFlag}>{c.flag}</span>
-                <div className={s.resultBody}>
-                  <div className={s.resultName}>{c.name}</div>
-                  <div className={s.resultMeta}>{c.team} · #{c.num} · {c.type}</div>
-                </div>
-                <span className={`${s.resultStatus} ${s[`status_${status}`] || ''}`}>
-                  {status === 'have' ? 'Tengo' : status === 'duplicate' ? 'Repetida' : 'Falta'}
-                </span>
-              </button>
-            </li>
-          )
-        })}
-      </ul>
+      {!collapsed && (
+        <>
+          <ul className={s.results}>
+            {visible.length === 0 && (
+              <li className={s.resultEmpty}>
+                {query.trim()
+                  ? 'Nada matchea con esa búsqueda.'
+                  : `No tenés cartas en estado "${preferStatus === 'missing' ? 'falta' : 'repetida'}". Buscá una específica arriba.`}
+              </li>
+            )}
+            {visible.map(c => {
+              const isPicked = picked.has(c.id)
+              const isInOther = otherPicked.has(c.id)
+              const status = col[c.id] || 'missing'
+              return (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    onClick={() => togglePick(c.id)}
+                    disabled={isInOther}
+                    className={`${s.resultRow} ${isPicked ? s.resultRowPicked : ''} ${isInOther ? s.resultRowDisabled : ''}`}
+                    title={isInOther ? 'Ya elegida en el otro lado' : ''}
+                  >
+                    <span className={s.resultCheck} aria-hidden>
+                      {isPicked && <IconCheck />}
+                    </span>
+                    <span className={s.resultFlag}>{c.flag}</span>
+                    <div className={s.resultBody}>
+                      <div className={s.resultName}>{c.name}</div>
+                      <div className={s.resultMeta}>{c.team} · #{c.num} · {c.type}</div>
+                    </div>
+                    <span className={`${s.resultStatus} ${s[`status_${status}`] || ''}`}>
+                      {status === 'have' ? 'Tengo' : status === 'duplicate' ? 'Repetida' : 'Falta'}
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+          {hasMore && (
+            <button type="button" onClick={() => setPage(p => p + 1)} className={s.loadMore}>
+              Mostrar {Math.min(PAGE_SIZE, allMatching.length - visible.length)} más
+              <span className={s.loadMoreCount}> · {visible.length} de {allMatching.length}</span>
+            </button>
+          )}
+        </>
+      )}
     </section>
   )
 }

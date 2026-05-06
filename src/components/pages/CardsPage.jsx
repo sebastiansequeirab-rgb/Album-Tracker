@@ -67,6 +67,20 @@ const PILL_COLOR = {
   q:    'var(--gold-2)',
 }
 
+function slug(str) {
+  return String(str || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+function scrollToTeam(teamId) {
+  const el = typeof document !== 'undefined' && document.getElementById(`team-${teamId}`)
+  if (!el) return
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 export default function CardsPage({
   filtered,
   ALL_ITEMS,
@@ -87,6 +101,35 @@ export default function CardsPage({
 
   const visible = filtered.slice(0, LIMIT)
   const overflow = filtered.length > LIMIT
+
+  // Agrupar por equipo (manteniendo orden de aparición). Cada grupo lleva un
+  // teamId estable derivado del nombre — sirve para el ancla #team-XXX y el
+  // scroll-spy del slidebar.
+  const grouped = useMemo(() => {
+    const map = new Map()
+    for (const c of visible) {
+      const key = c.team || 'Otros'
+      if (!map.has(key)) {
+        map.set(key, {
+          teamName: key,
+          teamId: slug(key),
+          flag: c.flag || '🌐',
+          conf: c.conf || null,
+          cards: [],
+          have: 0,
+          dup: 0,
+          total: 0,
+        })
+      }
+      const g = map.get(key)
+      g.cards.push(c)
+      g.total++
+      const st = gs(c.id)
+      if (st === 'have') g.have++
+      else if (st === 'duplicate') g.dup++
+    }
+    return [...map.values()]
+  }, [visible, gs])
 
   const toggleSelected = (id) => {
     setSelected(prev => {
@@ -234,24 +277,86 @@ export default function CardsPage({
         </span>
       </div>
 
-      {/* ── Card grid ─────────────────────────────────────────────────── */}
-      <div className={s.grid}>
-        {visible.map(c => {
-          const status = gs(c.id)
-          const isSelected = selectMode && selected.has(c.id)
-          return (
-            <StickerCard
-              key={c.id}
-              card={c}
-              status={status}
-              selected={isSelected}
-              onToggle={() => {
-                if (selectMode) toggleSelected(c.id)
-                else toggle(c.id)
-              }}
-            />
-          )
-        })}
+      {/* ── Layout: cards + side index ─────────────────────────────────── */}
+      <div className={s.contentLayout}>
+        {/* Mobile: strip horizontal de equipos */}
+        {grouped.length > 1 && (
+          <nav className={s.teamStripMobile} aria-label="Saltar a equipo">
+            {grouped.map(g => {
+              const pct = g.total ? Math.round((g.have + g.dup) / g.total * 100) : 0
+              return (
+                <button
+                  key={g.teamId}
+                  type="button"
+                  className={s.stripItem}
+                  onClick={() => scrollToTeam(g.teamId)}
+                  title={`${g.teamName} · ${pct}%`}
+                >
+                  <span className={s.stripFlag}>{g.flag}</span>
+                  <span className={s.stripPct}>{pct}%</span>
+                </button>
+              )
+            })}
+          </nav>
+        )}
+
+        <div className={s.cardsArea}>
+          {grouped.map(g => (
+            <section key={g.teamId} className={s.teamGroup}>
+              <header id={`team-${g.teamId}`} className={s.teamGroupHead}>
+                <span className={s.teamGroupFlag} aria-hidden>{g.flag}</span>
+                <span className={s.teamGroupName}>{g.teamName}</span>
+                <span className={s.teamGroupRule} aria-hidden />
+                <span className={s.teamGroupCount}>{g.have + g.dup}/{g.total}</span>
+              </header>
+              <div className={s.grid}>
+                {g.cards.map(c => {
+                  const status = gs(c.id)
+                  const isSelected = selectMode && selected.has(c.id)
+                  return (
+                    <StickerCard
+                      key={c.id}
+                      card={c}
+                      status={status}
+                      selected={isSelected}
+                      onToggle={() => {
+                        if (selectMode) toggleSelected(c.id)
+                        else toggle(c.id)
+                      }}
+                    />
+                  )
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+
+        {/* Desktop: slidebar lateral */}
+        {grouped.length > 1 && (
+          <aside className={s.teamSidebar} aria-label="Índice de equipos">
+            <div className={s.teamSidebarTitle}>EQUIPOS</div>
+            <div className={s.teamSidebarList}>
+              {grouped.map(g => {
+                const pct = g.total ? Math.round((g.have + g.dup) / g.total * 100) : 0
+                return (
+                  <button
+                    key={g.teamId}
+                    type="button"
+                    className={s.sidebarItem}
+                    onClick={() => scrollToTeam(g.teamId)}
+                  >
+                    <span className={s.sidebarFlag}>{g.flag}</span>
+                    <span className={s.sidebarName}>{g.teamName}</span>
+                    <span className={s.sidebarBar}>
+                      <span className={s.sidebarBarFill} style={{ width: `${pct}%` }} />
+                    </span>
+                    <span className={s.sidebarPct}>{pct}%</span>
+                  </button>
+                )
+              })}
+            </div>
+          </aside>
+        )}
       </div>
 
       {overflow && (

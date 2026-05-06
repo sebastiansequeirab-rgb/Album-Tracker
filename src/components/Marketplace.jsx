@@ -117,8 +117,9 @@ export default function Marketplace({
   const [listings,     setListings]     = useState([])
   const [listingProfiles, setListingProfiles] = useState({}) // user_id -> profile
   const [showCreate,   setShowCreate]   = useState(false)
-  const [filterNum, setFilterNum] = useState('')
-  const [filterConf, setFilterConf] = useState('all')
+  const [filterTeam, setFilterTeam] = useState('all')
+  const [filterPos, setFilterPos] = useState('')
+  const [filterQuery, setFilterQuery] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchSort, setSearchSort] = useState('recent')
   const [mineTab, setMineTab] = useState('repetidas') // 'repetidas' | 'faltantes'
@@ -441,28 +442,40 @@ export default function Marketplace({
   }, [cfg.teams])
 
   const filteredListings = useMemo(() => {
-    const numQuery = filterNum.trim()
-    const matchesNum = (l) => {
-      if (!numQuery) return true
-      const target = numQuery
-      const parts = target.split(/[\s,]+/).filter(Boolean).map(p => parseInt(p, 10)).filter(n => Number.isFinite(n))
-      if (parts.length === 0) return true
+    const pos = filterPos.trim() ? parseInt(filterPos.trim(), 10) : null
+    const q = filterQuery.trim().toLowerCase()
+    return listings.filter(l => {
       const ids = [...(l.offered_ids || []), ...(l.wanted_ids || [])]
-      return ids.some(id => {
-        const c = ITEMS_BY_ID[id]
-        return c && parts.includes(c.num)
-      })
-    }
-    const matchesConf = (l) => {
-      if (filterConf === 'all') return true
-      const ids = [...(l.offered_ids || []), ...(l.wanted_ids || [])]
-      return ids.some(id => {
-        const c = ITEMS_BY_ID[id]
-        return c && teamConf.get(c.team) === filterConf
-      })
-    }
-    return listings.filter(l => matchesNum(l) && matchesConf(l))
-  }, [listings, filterNum, filterConf, ITEMS_BY_ID, teamConf])
+      if (filterTeam !== 'all') {
+        const ok = ids.some(id => {
+          const c = ITEMS_BY_ID[id]
+          if (!c || c.team !== filterTeam) return false
+          return pos == null || c.num === pos
+        })
+        if (!ok) return false
+      } else if (pos != null) {
+        // Sin equipo seleccionado, num solo es match si alguna carta lo tiene
+        // (el match será amplio porque hay 48 stickers con num=N).
+        const ok = ids.some(id => ITEMS_BY_ID[id]?.num === pos)
+        if (!ok) return false
+      }
+      if (q) {
+        const ok = ids.some(id => {
+          const c = ITEMS_BY_ID[id]
+          if (!c) return false
+          return (c.name || '').toLowerCase().includes(q) ||
+                 (c.team || '').toLowerCase().includes(q)
+        })
+        if (!ok) return false
+      }
+      return true
+    })
+  }, [listings, filterTeam, filterPos, filterQuery, ITEMS_BY_ID])
+
+  const allTeamNames = useMemo(
+    () => [...new Set(ALL_ITEMS.map(c => c.team))].filter(t => t).sort(),
+    [ALL_ITEMS]
+  )
   const myMissingSet = useMemo(() => {
     const out = new Set()
     for (const c of ALL_ITEMS) if ((myCol[c.id] || 'missing') === 'missing') out.add(c.id)
@@ -682,32 +695,37 @@ export default function Marketplace({
               <div className={s.listingFilters}>
                 <input
                   type="search"
-                  inputMode="numeric"
-                  placeholder="Filtrar por #"
-                  value={filterNum}
-                  onChange={(e) => setFilterNum(e.target.value)}
+                  placeholder="Buscar por nombre o equipo…"
+                  value={filterQuery}
+                  onChange={(e) => setFilterQuery(e.target.value)}
                   className={s.listingFilterInput}
-                  aria-label="Filtrar por número de sticker"
+                  aria-label="Buscar por nombre o equipo"
                 />
                 <select
-                  value={filterConf}
-                  onChange={(e) => setFilterConf(e.target.value)}
+                  value={filterTeam}
+                  onChange={(e) => setFilterTeam(e.target.value)}
                   className={s.listingFilterSelect}
-                  aria-label="Filtrar por confederación"
+                  aria-label="Filtrar por equipo"
                 >
-                  <option value="all">Todas las confederaciones</option>
-                  <option value="CONMEBOL">CONMEBOL</option>
-                  <option value="UEFA">UEFA</option>
-                  <option value="CONCACAF">CONCACAF</option>
-                  <option value="CAF">CAF</option>
-                  <option value="AFC">AFC</option>
-                  <option value="OFC">OFC</option>
+                  <option value="all">Todos los equipos</option>
+                  {allTeamNames.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
-                {(filterNum || filterConf !== 'all') && (
+                <input
+                  type="number"
+                  min="0" max="20"
+                  inputMode="numeric"
+                  placeholder="#"
+                  value={filterPos}
+                  onChange={(e) => setFilterPos(e.target.value)}
+                  className={s.listingFilterPos}
+                  aria-label="Posición dentro del equipo (1-20)"
+                  title={filterTeam === 'all' ? 'Elegí un equipo primero para que el # sea único' : `Posición dentro de ${filterTeam}`}
+                />
+                {(filterQuery || filterTeam !== 'all' || filterPos) && (
                   <button
                     type="button"
                     className={s.listingFilterClear}
-                    onClick={() => { setFilterNum(''); setFilterConf('all') }}
+                    onClick={() => { setFilterQuery(''); setFilterTeam('all'); setFilterPos('') }}
                   >
                     Limpiar
                   </button>

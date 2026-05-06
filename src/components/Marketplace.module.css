@@ -1338,8 +1338,19 @@
   font-size: 14px;
   min-width: 0;
 }
-.listingFilterInput { flex: 1 1 140px; max-width: 220px; }
-.listingFilterSelect { flex: 1 1 200px; max-width: 260px; }
+.listingFilterInput { flex: 1 1 180px; max-width: 280px; }
+.listingFilterSelect { flex: 1 1 180px; max-width: 240px; }
+.listingFilterPos {
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  border: 1px solid rgba(245, 200, 70, 0.18);
+  border-radius: 3px;
+  padding: 8px 10px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  width: 64px;
+  text-align: center;
+}
 .listingFilterClear {
   background: transparent;
   color: var(--text-secondary);

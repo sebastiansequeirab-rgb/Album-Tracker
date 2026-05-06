@@ -10,10 +10,10 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 4px;
+  gap: 2px;
   width: 100%;
-  min-height: 124px;
-  padding: 24px 14px 38px 16px;
+  min-height: 92px;
+  padding: 18px 14px 28px 16px;
   background: linear-gradient(180deg, rgba(15, 22, 38, 0.78) 0%, rgba(8, 12, 22, 0.92) 100%);
   border: 1px solid rgba(245, 200, 70, 0.08);
   border-left: 2px solid var(--card-bar, rgba(245, 200, 70, 0.18));
@@ -134,8 +134,8 @@
   z-index: 1;
   font-size: 13px;
   font-weight: 500;
-  line-height: 1.25;
-  margin-top: 6px;
+  line-height: 1.2;
+  margin-top: 2px;
   word-break: break-word;
   letter-spacing: 0.01em;
 }
@@ -222,7 +222,7 @@
 /* ── Hide meta team/num inline on smaller cards if needed ───────────────── */
 
 @media (max-width: 540px) {
-  .card { min-height: 118px; padding: 22px 12px 36px 14px; }
+  .card { min-height: 86px; padding: 16px 12px 26px 14px; }
   .name { font-size: 12.5px; }
   .meta { font-size: 10.5px; }
   .chip { font-size: 9px; padding: 2px 5px; top: 7px; right: 7px; }
@@ -237,7 +237,7 @@
   }
 }
 @media (max-width: 380px) {
-  .card { min-height: 110px; padding: 20px 10px 34px 12px; }
+  .card { min-height: 80px; padding: 14px 10px 24px 12px; }
   .name { font-size: 12px; }
   .meta { font-size: 10px; }
   .num { font-size: 11px; }

@@ -157,10 +157,64 @@
 .chipMeta { color: var(--text-secondary, #cbd5e1); font-size: 10.5px; }
 
 /* ───── Search ───── */
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .searchWrap {
   position: relative;
   display: flex;
   align-items: center;
+  flex: 1;
+}
+.searchClear {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.10);
+  color: var(--text-muted);
+  width: 26px;
+  height: 26px;
+  border-radius: 3px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.searchClear:hover { color: #fff; border-color: rgba(255,255,255,0.20); }
+.toggleListBtn {
+  background: rgba(8, 12, 22, 0.55);
+  border: 1px solid rgba(245, 200, 70, 0.18);
+  color: var(--gold-3, #FCD34D);
+  border-radius: 3px;
+  padding: 9px 12px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.toggleListBtn:hover { border-color: var(--gold-3); color: var(--gold-1); }
+.loadMore {
+  background: rgba(8, 12, 22, 0.45);
+  border: 1px solid rgba(245, 200, 70, 0.18);
+  border-left: 2px solid var(--gold-2);
+  color: var(--gold-3);
+  border-radius: 3px;
+  padding: 9px 12px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.10em;
+  cursor: pointer;
+  text-align: center;
+  width: 100%;
+}
+.loadMore:hover { border-color: var(--gold-3); color: var(--gold-1); }
+.loadMoreCount {
+  color: var(--text-faint);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  margin-left: 4px;
 }
 .searchIcon {
   position: absolute;
