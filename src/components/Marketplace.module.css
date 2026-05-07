@@ -53,7 +53,7 @@
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
   scroll-padding-inline: 12px;
-  padding: 4px 2px 6px;
+  padding: 0 2px 6px;
   margin-bottom: 2px;
   position: sticky;
   /* El header del Tracker no se muestra fuera de Home, así que la subnav

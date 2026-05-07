@@ -690,13 +690,15 @@ export default function Marketplace({
   const inProgressTrades = tradeRequests.filter(t => t.status === 'accepted')
   const closedTrades    = tradeRequests.filter(t => ['declined','cancelled','completed'].includes(t.status))
 
-  // Mercado: Ofertas / Trades / Favoritos / Buscar.
+  // Mercado: Ofertas / Trades / Favoritos. (Buscar removido — el filtro
+  // de búsqueda dentro de Ofertas cubre la necesidad.)
   // Chat: Mensajes / Buscar (search apuntado a iniciar conversación).
+  // El estado sub='search' sigue siendo válido programáticamente para
+  // flujos como "crear trade desde una carta faltante".
   const baseSubtabs = [
     { id: 'all',       I: IconBroadcast, l: 'Ofertas' },
     { id: 'inbox',     I: IconHandshake, l: 'Trades',    b: incomingPending.length },
     { id: 'favorites', I: IconStar,      l: 'Favoritos', b: favoriteIdSet.size },
-    { id: 'search',    I: IconSearch,    l: 'Buscar' },
   ]
   // Cuando el tab Chat monta este componente con forceSub='messages',
   // mostramos un toggle Mensajes/Buscar (sin Trades — los Trades viven en Mercado).

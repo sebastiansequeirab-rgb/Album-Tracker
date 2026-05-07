@@ -25,7 +25,7 @@
   position: static;
   z-index: 5;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr;
   gap: var(--sp-2);
   padding: 8px 10px;
   background: linear-gradient(180deg, rgba(8, 12, 22, 0.92) 0%, rgba(6, 10, 18, 0.85) 100%);

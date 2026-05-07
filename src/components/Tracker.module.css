@@ -473,57 +473,15 @@
 }
 
 /* Cuando el header está oculto (todas las tabs excepto Home), el main
-   necesita padding-top para no quedar bajo el notch del iPhone.
-   Tight: solo el respiro mínimo sobre safe-area — el contenido sube
-   todo lo que puede, cierra con la viewfinder reticle y compacta el
-   viewport. */
+   queda flush contra safe-area: el contenido sube todo lo posible.
+   Cada tab provee su propio gold frame al top:
+     · Cartas → .filterBar gold-border
+     · Mercado / Chat → .subnav border-bottom + chips gold-left
+     · Perfil → SectionHead corner brackets
+   No agregamos brackets externos — ya hay frame en cada caso y serían
+   redundantes / colisionarían con el subnav cuando sube. */
 .mainNoHeader {
-  padding-top: calc(4px + env(safe-area-inset-top, 0px));
-}
-
-/* Broadcast Viewfinder Reticle — dos marcas tipo cámara en las esquinas
-   superiores cuando NO hay banner. Concept: marcadores de viewfinder de
-   broadcast (no chrome, no UI). Slow gold pulse sugiere que la página
-   está "live" — coherente con Broadcast × Vault.
-   En desktop el .nav (z-99) los tapa donde no hacen falta. */
-@keyframes vaultPulse {
-  0%, 100% {
-    opacity: 0.50;
-    filter: drop-shadow(0 0 5px rgba(245, 200, 70, 0.10));
-  }
-  50% {
-    opacity: 0.78;
-    filter: drop-shadow(0 0 9px rgba(245, 200, 70, 0.22));
-  }
-}
-
-.mainNoHeader::before,
-.mainNoHeader::after {
-  content: '';
-  position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 4px);
-  width: 12px;
-  height: 12px;
-  border-top: 1px solid var(--gold-3, #FCD34D);
-  pointer-events: none;
-  z-index: 50;
-  animation: vaultPulse 4.2s ease-in-out infinite;
-}
-.mainNoHeader::before {
-  left: 8px;
-  border-left: 1px solid var(--gold-3, #FCD34D);
-}
-.mainNoHeader::after {
-  right: 8px;
-  border-right: 1px solid var(--gold-3, #FCD34D);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mainNoHeader::before,
-  .mainNoHeader::after {
-    animation: none;
-    opacity: 0.55;
-  }
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* ==========================================================================

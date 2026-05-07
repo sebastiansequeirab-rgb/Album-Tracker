@@ -188,7 +188,7 @@ export default function CardsPage({
 
   return (
     <div className={`${s.page} ${bulkActive ? s.pageBulkActive : ''}`}>
-      {/* ── Filter bar: search + bulk toggle ──────────────────────────── */}
+      {/* ── Filter bar: search ──────────────────────────────────────── */}
       <div className={s.filterBar}>
         <label className={s.search} aria-label="Buscar">
           <span className={s.searchIcon} aria-hidden="true"><IconSearch /></span>
@@ -200,16 +200,6 @@ export default function CardsPage({
             className={s.searchInput}
           />
         </label>
-
-        <button
-          type="button"
-          onClick={() => { if (selectMode) exitSelectMode(); else setSelectMode(true) }}
-          className={`${s.selectBtn} ${selectMode ? s.selectBtnActive : ''}`}
-          aria-pressed={selectMode}
-        >
-          {selectMode ? <IconCross /> : <IconCheckSquare />}
-          <span>{selectMode ? 'CANCELAR' : 'SELECCION MULTIPLE'}</span>
-        </button>
       </div>
 
       {/* ── Status pills (clickables = filtro de estado) ──────────────── */}
