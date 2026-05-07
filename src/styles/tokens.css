@@ -196,13 +196,29 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Standalone (PWA / Add to Home Screen iOS) — Safari aplica un buffer
-   implícito arriba de las páginas que no existe en standalone. Sumamos
-   ~60px al --safe-top para emular ese buffer y que el contenido no
-   quede pegado al status bar. Como el subnav sticky usa la misma
-   variable, queda automáticamente alineado sin gaps al scrollear. */
-@media (display-mode: standalone) {
-  :root {
-    --safe-top: calc(env(safe-area-inset-top, 0px) + 60px);
-  }
+/* Standalone (PWA / Add to Home Screen iOS / Bookmark con toolbar
+   oculto) — Safari aplica un buffer implícito arriba de las páginas que
+   no existe en estos modos. La clase .is-standalone se inyecta vía JS
+   en index.html (cubre matchMedia + navigator.standalone legacy iOS).
+   Class-based en lugar de @media (display-mode) porque tiene mejor
+   soporte cross-browser y es 100% reliable. */
+:root.is-standalone {
+  --safe-top: calc(env(safe-area-inset-top, 0px) + 100px);
+}
+
+/* Barra opaca fija que cubre el área --safe-top en standalone. Sin
+   esto, durante el scroll el SectionHead se asoma por encima del subnav
+   sticky (porque la zona buffer queda como "ventana" del documento que
+   pasa por detrás). z-index 80: arriba del subnav (50), abajo de
+   modales (1000). pointer-events:none para que no bloquee taps. */
+:root.is-standalone body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--safe-top);
+  background: var(--bg);
+  z-index: 80;
+  pointer-events: none;
 }

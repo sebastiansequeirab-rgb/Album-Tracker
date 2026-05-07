@@ -52,6 +52,20 @@
         } catch (e) { /* fail open — deja que React haga su flow normal */ }
       })();
     </script>
+    <!-- Standalone detection: agrega clase .is-standalone al <html> cuando
+         la app corre en modo PWA / Add to Home Screen iOS. Más robusto que
+         @media (display-mode: standalone) — cubre BOTH matchMedia (PWA
+         estándar) Y navigator.standalone (legacy iOS). Sync pre-React para
+         que el primer paint ya tenga el padding correcto. -->
+    <script>
+      (function () {
+        try {
+          var s = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+            || (window.navigator && window.navigator.standalone === true);
+          if (s) document.documentElement.classList.add('is-standalone');
+        } catch (e) { /* no-op */ }
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
