@@ -101,6 +101,15 @@ export default function CardsPage({
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState(() => new Set())
   const [showFlagFilters, setShowFlagFilters] = useState(false)
+  // Set de teamIds plegados — tap en el header del equipo expande/colapsa.
+  // Default vacío: todos los equipos arrancan abiertos.
+  const [collapsed, setCollapsed] = useState(() => new Set())
+  const toggleCollapsed = (teamId) => setCollapsed(prev => {
+    const next = new Set(prev)
+    if (next.has(teamId)) next.delete(teamId)
+    else next.add(teamId)
+    return next
+  })
 
   const exitSelectMode = () => { setSelectMode(false); setSelected(new Set()) }
 
@@ -351,9 +360,24 @@ export default function CardsPage({
         <div className={s.cardsArea}>
           {grouped.map(g => {
             const pct = g.total ? Math.round((g.have + g.dup) / g.total * 100) : 0
+            const isCollapsed = collapsed.has(g.teamId)
             return (
               <section key={g.teamId} className={s.teamGroup}>
-                <header id={`team-${g.teamId}`} className={s.teamGroupHead}>
+                <header
+                  id={`team-${g.teamId}`}
+                  className={`${s.teamGroupHead} ${isCollapsed ? s.teamGroupHeadCollapsed : ''}`}
+                  onClick={() => toggleCollapsed(g.teamId)}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={!isCollapsed}
+                  aria-label={`${isCollapsed ? 'Expandir' : 'Colapsar'} ${g.teamName}`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      toggleCollapsed(g.teamId)
+                    }
+                  }}
+                >
                   <span className={s.teamGroupTag} aria-hidden>EQUIPO</span>
                   <span className={s.teamGroupFlag} aria-hidden>{g.flag}</span>
                   <span className={s.teamGroupName}>{g.teamName}</span>
@@ -365,27 +389,32 @@ export default function CardsPage({
                     <span className={s.teamGroupCountSep}>/</span>
                     {g.total}
                   </span>
+                  <span className={s.teamGroupChevron} aria-hidden>
+                    <IconChevron />
+                  </span>
                 </header>
-                <div className={s.grid}>
-                  {g.cards.map(c => {
-                    const status = gs(c.id)
-                    const extra = gx ? gx(c.id) : 0
-                    const isSelected = selectMode && selected.has(c.id)
-                    return (
-                      <StickerCard
-                        key={c.id}
-                        card={c}
-                        status={status}
-                        extra={extra}
-                        selected={isSelected}
-                        onToggle={() => {
-                          if (selectMode) toggleSelected(c.id)
-                          else toggle(c.id)
-                        }}
-                      />
-                    )
-                  })}
-                </div>
+                {!isCollapsed && (
+                  <div className={s.grid}>
+                    {g.cards.map(c => {
+                      const status = gs(c.id)
+                      const extra = gx ? gx(c.id) : 0
+                      const isSelected = selectMode && selected.has(c.id)
+                      return (
+                        <StickerCard
+                          key={c.id}
+                          card={c}
+                          status={status}
+                          extra={extra}
+                          selected={isSelected}
+                          onToggle={() => {
+                            if (selectMode) toggleSelected(c.id)
+                            else toggle(c.id)
+                          }}
+                        />
+                      )
+                    })}
+                  </div>
+                )}
               </section>
             )
           })}

@@ -736,7 +736,7 @@
 .teamGroupHead {
   position: relative;
   display: grid;
-  grid-template-columns: auto auto 1fr auto auto;
+  grid-template-columns: auto auto 1fr auto auto auto;
   align-items: center;
   gap: 8px;
   padding: 8px 12px 8px 10px;
@@ -745,6 +745,16 @@
   border-left: 2px solid var(--gold-2);
   border-radius: 3px;
   scroll-margin-top: 90px;
+  /* Tappable: el header completo abre/cierra el grupo */
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--t-fast), border-color var(--t-fast);
+  /* Reset button defaults cuando se renderea como role=button */
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  width: 100%;
   clip-path: polygon(
     0 0,
     calc(100% - 10px) 0,
@@ -753,6 +763,32 @@
     10px 100%,
     0 calc(100% - 10px)
   );
+}
+.teamGroupHead:hover {
+  background: linear-gradient(180deg, rgba(20, 28, 48, 0.86) 0%, rgba(12, 16, 28, 0.90) 100%);
+  border-color: rgba(245, 200, 70, 0.25);
+}
+.teamGroupHead:focus-visible {
+  outline: 2px solid var(--gold-3);
+  outline-offset: 2px;
+}
+
+/* Chevron: apunta hacia abajo cuando está abierto, rota -90 cuando
+   está plegado. Indica visualmente el estado del grupo. */
+.teamGroupChevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--gold-3);
+  transition: transform 0.2s ease;
+}
+.teamGroupHeadCollapsed .teamGroupChevron {
+  transform: rotate(-90deg);
+}
+.teamGroupHeadCollapsed {
+  border-left-color: rgba(245, 200, 70, 0.45);
 }
 .teamGroupTag {
   font-family: var(--font-display);

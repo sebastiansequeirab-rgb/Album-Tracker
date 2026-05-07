@@ -484,6 +484,17 @@
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+/* En standalone mode (Add to Home Screen / PWA / bookmark instalado en
+   iOS) el contenido se siente demasiado pegado al status bar porque ya
+   no hay URL bar de Safari arriba. Agregamos un buffer de 10px para que
+   los títulos respiren. En el browser normal de Safari esta regla NO
+   aplica — solo cuando la app corre en su propia ventana. */
+@media (display-mode: standalone) {
+  .mainNoHeader {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 10px);
+  }
+}
+
 /* ==========================================================================
    Bar component
    ========================================================================== */
