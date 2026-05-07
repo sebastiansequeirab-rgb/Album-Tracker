@@ -422,9 +422,6 @@ export default function Tracker({
           <div className={s.headerRow}>
             <div className={s.brand}>
               <div className={s.brandTitle} style={{ color: cfg.accent }}>
-                <span className={s.brandIcon} aria-hidden="true">
-                  <img src="/logo-192.png" alt="" width="28" height="28" />
-                </span>
                 {cfg.label.toUpperCase()}
               </div>
               <div className={s.brandSub}>{cfg.subtitle} · {session.user.email}</div>

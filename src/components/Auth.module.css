@@ -30,10 +30,14 @@
   min-height: 100vh;
   min-height: 100dvh; /* honor mobile dynamic viewport */
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  /* honor safe-area-inset-bottom on iPhone (notch / home indicator) */
-  padding: var(--sp-5) var(--sp-5) calc(clamp(120px, 14vh, 180px) + env(safe-area-inset-bottom, 0px));
+  /* card sits hacia abajo: bg trae la marca arriba, form abajo.
+     padding-top deja respirar la marca; padding-bottom honra el home indicator. */
+  padding:
+    clamp(140px, 22vh, 280px)
+    var(--sp-5)
+    calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
   padding-left: max(var(--sp-5), env(safe-area-inset-left, 0px));
   padding-right: max(var(--sp-5), env(safe-area-inset-right, 0px));
   position: relative;
