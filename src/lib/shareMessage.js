@@ -10,13 +10,20 @@ export function buildShareMessage({
   profile,
   items,
   col,
+  extras = {},                    // { [id]: extraCount } — duplicadas adicionales
   totalLabel = 'stickers',
   albumLabel = 'Álbum Panini WC 2026',
   include = 'both',
 } = {}) {
   const total = items.length
   const have = items.filter(c => (col[c.id] || 'missing') !== 'missing').length
-  const dups = items.filter(c => col[c.id] === 'duplicate').length
+  // Cuenta TOTAL de duplicadas: cada carta status='duplicate' cuenta como
+  // 1 + extras[id] (default 1). Esto refleja que el usuario tiene N copias
+  // extra que puede intercambiar.
+  const dups = items.reduce((acc, c) => {
+    if (col[c.id] !== 'duplicate') return acc
+    return acc + 1 + (extras[c.id] || 0)
+  }, 0)
   const missing = total - have
   const pct = total ? Math.round(have / total * 100) : 0
   const profileUrl = profile?.slug ? `${APP_URL}/u/${profile.slug}` : null

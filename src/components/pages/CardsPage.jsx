@@ -90,7 +90,9 @@ export default function CardsPage({
   fType, setFType,
   fTeam, setFTeam,
   gs,
+  gx,
   toggle,
+  setQty,
   bulkUpdate,
   stats,
 }) {
@@ -354,17 +356,20 @@ export default function CardsPage({
                 <div className={s.grid}>
                   {g.cards.map(c => {
                     const status = gs(c.id)
+                    const extra = gx ? gx(c.id) : 0
                     const isSelected = selectMode && selected.has(c.id)
                     return (
                       <StickerCard
                         key={c.id}
                         card={c}
                         status={status}
+                        extra={extra}
                         selected={isSelected}
                         onToggle={() => {
                           if (selectMode) toggleSelected(c.id)
                           else toggle(c.id)
                         }}
+                        onSetQty={setQty ? (qty) => setQty(c.id, qty) : undefined}
                       />
                     )
                   })}

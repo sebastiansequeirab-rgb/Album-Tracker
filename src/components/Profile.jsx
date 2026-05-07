@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
   EMOJI_AVATARS, loadMyProfile, saveMyProfile, deriveDisplayName,
-  MEETING_POINT_TYPES, newMeetingPoint, loadMyTradeHistory, uploadAvatar,
+  MEETING_POINT_TYPES, newMeetingPoint, loadMyTradeHistory, uploadAvatar, saveAvatarUrl,
 } from '../lib/marketplace'
 import { buildShareMessage, copyShareMessage, whatsappHref } from '../lib/shareMessage'
 import { ALBUM_CONFIG, ALBUM_STICKER, ALBUM_ADRENALYN } from '../data'
@@ -224,23 +224,6 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
           />
         </div>
 
-        <div className={s.field}>
-          <FieldLabel num="03">Avatar emoji (alternativa)</FieldLabel>
-          <div className={s.avatarGrid}>
-            {EMOJI_AVATARS.map(em => {
-              const active = profile.avatar_emoji === em
-              return (
-                <button key={em} type="button"
-                  onClick={() => upd('avatar_emoji', em)}
-                  className={`${s.avatarBtn} ${active ? s.avatarBtnActive : ''}`}
-                  aria-pressed={active}>
-                  <span className={s.avatarEmoji}>{em}</span>
-                  {active && <span className={s.avatarCheck} aria-hidden="true"><IconCheck /></span>}
-                </button>
-              )
-            })}
-          </div>
-        </div>
       </section>
 
       {/* ═══════════════════ 02 — CONTACTOS ═══════════════════ */}
@@ -281,55 +264,25 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
           </div>
         </div>
 
-        <div className={s.field}>
-          <FieldLabel num="03">Email de contacto</FieldLabel>
-          <div className={s.inputBox}>
-            <span className={s.inputIcon}><IconMail /></span>
-            <input className={s.input} type="email"
-              value={profile.contact?.email || ''}
-              onChange={e => updContact('email', e.target.value)}
-              placeholder={session.user.email} />
-          </div>
-        </div>
       </section>
 
-      {/* ═══════════════════ 03 — VISIBILIDAD ═══════════════════ */}
-      <section className={s.panel}>
-        <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
-        <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
-        <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
-        <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
+      {/* ═══════════════════ 03 — TU PERFIL PÚBLICO ═══════════════════ */}
+      {profile.slug && (
+        <section className={s.panel}>
+          <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
+          <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
+          <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
+          <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
 
-        <SectionHead
-          num="03"
-          title="VISIBILIDAD"
-          sub="Tú decidís cuándo aparecés en el Marketplace."
-        />
+          <SectionHead
+            num="03"
+            title="TU PERFIL PÚBLICO"
+            sub="Compartí este link y el mensaje pre-armado con coleccionistas."
+          />
 
-        <button type="button"
-          className={`${s.toggleRow} ${visible ? s.toggleRowOn : ''}`}
-          onClick={() => upd('marketplace_visible', !visible)}
-          aria-pressed={visible}>
-          <span className={s.toggleIcon}>
-            <IconGlobe />
-          </span>
-          <div className={s.toggleBody}>
-            <div className={s.toggleTitle}>Aparecer en el Marketplace</div>
-            <div className={s.toggleHint}>
-              {visible
-                ? 'Otros coleccionistas autenticados ven tu nombre, avatar, contactos y matches.'
-                : 'Estás oculto. Activá esto para que otros vean tu listing y propongan trades.'}
-            </div>
-          </div>
-          <span className={`${s.switch} ${visible ? s.switchOn : ''}`} aria-hidden="true">
-            <span className={s.switchKnob} />
-          </span>
-        </button>
-
-        {visible && profile.slug && (
           <PublicLinkBlock profile={profile} session={session} />
-        )}
-      </section>
+        </section>
+      )}
 
       {/* ═══════════════════ 04 — PUNTOS DE ENCUENTRO ═══════════════════ */}
       <section className={s.panel}>
@@ -728,9 +681,24 @@ function AvatarUploader({ session, profile, onChange }) {
     setErr(null); setBusy(true)
     try {
       const url = await uploadAvatar(session.user.id, file)
+      // Persistir al toque al DB para que el cambio sobreviva navegación
+      // sin esperar al click de "Guardar" del form completo.
+      await saveAvatarUrl(session.user.id, url)
       onChange(url)
     } catch (e2) {
       setErr(e2?.message || 'No se pudo subir la imagen.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const onRemove = async () => {
+    setErr(null); setBusy(true)
+    try {
+      await saveAvatarUrl(session.user.id, null)
+      onChange(null)
+    } catch (e2) {
+      setErr(e2?.message || 'No se pudo quitar la imagen.')
     } finally {
       setBusy(false)
     }
@@ -752,7 +720,7 @@ function AvatarUploader({ session, profile, onChange }) {
           <button
             type="button"
             className={s.avatarRemoveBtn}
-            onClick={() => onChange(null)}
+            onClick={onRemove}
             disabled={busy}
           >
             Quitar

@@ -16,3 +16,4 @@ login.PNG
 !public/*.jpg
 !public/*.svg
 !public/*.webmanifest
+.firecrawl/

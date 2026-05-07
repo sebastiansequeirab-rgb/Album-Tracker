@@ -86,6 +86,11 @@ export default function Tracker({
   const ALL_ITEMS = useMemo(() => cfg.buildItems(), [albumType])
   const { TM, CC, ST } = cfg
   const [col,       setCol]       = useState({})
+  // extras[id] = N significa "tengo N repetidas EXTRA" (N >= 0).
+  // Total copias = 1 (have) + 1 (duplicate base) + N (extras) = 2 + N cuando
+  // status === 'duplicate'. Solo aplicable a status === 'duplicate'.
+  const [extras,    setExtras]    = useState({})
+  const MAX_EXTRAS = 4   // cap visual: hasta 5 dups (6 copias). Después → missing.
 
   // Si la URL tiene ?openUser=<id>, abrimos directo el Marketplace > drill-down.
   const initialOpenUser = useMemo(() => {
@@ -108,6 +113,13 @@ export default function Tracker({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Al cambiar de tab, scroll al top — antes el chat se abría pegado abajo
+  // si venías scrolleado desde otra tab (Marketplace persiste mounted).
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.scrollTo(0, 0)
+  }, [tab])
   const [fType,     setFType]     = useState('all')
   const [fSt,       setFSt]       = useState('all')
   const [fTeam,     setFTeam]     = useState('all')
@@ -166,11 +178,12 @@ export default function Tracker({
     let attempt = 0
     setLoaded(false)
     setCol({})
+    setExtras({})
 
     const load = async () => {
       const { data, error } = await supabase
         .from(cfg.table)
-        .select('data')
+        .select('data, extras')
         .eq('user_id', session.user.id)
         .maybeSingle()
 
@@ -188,15 +201,17 @@ export default function Tracker({
       if (!data || !data.data || Object.keys(data.data).length === 0) {
         const init = cfg.buildInitial()
         setCol(init)
+        setExtras({})
         const { error: seedErr } = await supabase
           .from(cfg.table)
-          .upsert({ user_id: session.user.id, data: init }, { onConflict: 'user_id' })
+          .upsert({ user_id: session.user.id, data: init, extras: {} }, { onConflict: 'user_id' })
         if (seedErr) {
           console.error('Initial seed error:', seedErr)
           if (await handleAuthError(seedErr)) return
         }
       } else {
         setCol(data.data)
+        setExtras(data.extras || {})
       }
       setLoaded(true)
     }
@@ -227,9 +242,10 @@ export default function Tracker({
   // ── Save to Supabase (coalesced + retry) ──
   const saveRef = useRef({ inFlight: false, pending: null, retryAt: 0 })
 
-  const save = async (newCol) => {
+  const save = async (newCol, newExtras = null) => {
+    const ex = newExtras !== null ? newExtras : extras
     if (saveRef.current.inFlight) {
-      saveRef.current.pending = newCol
+      saveRef.current.pending = { col: newCol, extras: ex }
       return
     }
     saveRef.current.inFlight = true
@@ -237,7 +253,7 @@ export default function Tracker({
 
     const { error } = await supabase
       .from(cfg.table)
-      .upsert({ user_id: session.user.id, data: newCol }, { onConflict: 'user_id' })
+      .upsert({ user_id: session.user.id, data: newCol, extras: ex }, { onConflict: 'user_id' })
 
     saveRef.current.inFlight = false
 
@@ -246,7 +262,8 @@ export default function Tracker({
       setSaveStatus('error')
       if (await handleAuthError(error)) return
       const delay = Math.min(8000, 1000 * Math.pow(2, saveRef.current.retryAt++))
-      setTimeout(() => save(saveRef.current.pending || newCol), delay)
+      const pending = saveRef.current.pending
+      setTimeout(() => save(pending?.col || newCol, pending?.extras || ex), delay)
       return
     }
 
@@ -254,7 +271,7 @@ export default function Tracker({
     if (saveRef.current.pending) {
       const next = saveRef.current.pending
       saveRef.current.pending = null
-      save(next)
+      save(next.col, next.extras)
       return
     }
     setSaveStatus('saved')
@@ -266,52 +283,116 @@ export default function Tracker({
     setTimeout(() => setToast(null), 2000)
   }
 
+  // Cycle: missing → have → duplicate(0 extras) → duplicate(1) → ... →
+  // duplicate(MAX_EXTRAS) → missing (loop). MAX_EXTRAS=4 → cap en 6 copias.
   const toggle = (id) => {
-    const order = ['missing', 'have', 'duplicate']
     const cur = col[id] || 'missing'
-    const nxt = order[(order.indexOf(cur) + 1) % 3]
-    const nc = { ...col, [id]: nxt }
-    setCol(nc)
-    save(nc)
+    const curEx = extras[id] || 0
+
+    let nc = col, nex = extras, nxt = cur, nxtEx = curEx
+    let msg = '', clr = '#94A3B8'
+
+    if (cur === 'missing') {
+      nc = { ...col, [id]: 'have' }
+      nxt = 'have'
+      msg = '✅ ¡La tienes!'; clr = '#4ADE80'
+    } else if (cur === 'have') {
+      nc = { ...col, [id]: 'duplicate' }
+      nex = { ...extras, [id]: 0 }
+      nxt = 'duplicate'; nxtEx = 0
+      msg = '🔄 Repetida (2 copias)'; clr = '#F59E0B'
+    } else if (cur === 'duplicate') {
+      if (curEx < MAX_EXTRAS) {
+        nex = { ...extras, [id]: curEx + 1 }
+        nxtEx = curEx + 1
+        const total = 2 + nxtEx
+        msg = `🔄 ×${total} copias`; clr = '#F59E0B'
+      } else {
+        // Loop back a missing — limpia extras
+        nc = { ...col, [id]: 'missing' }
+        const _e = { ...extras }; delete _e[id]
+        nex = _e
+        nxt = 'missing'; nxtEx = 0
+        msg = '❌ Faltante'; clr = '#64748B'
+      }
+    }
+
+    setCol(nc); setExtras(nex); save(nc, nex)
     const card = ALL_ITEMS.find(c => c.id === id)
-    const msgs = { have:'✅ ¡La tienes!', duplicate:'🔄 Repetida', missing:'❌ Faltante' }
-    const clrs = { have:'#4ADE80', duplicate:'#F59E0B', missing:'#64748B' }
-    flash(`#${card?.num} ${card?.name} — ${msgs[nxt]}`, clrs[nxt])
+    flash(`#${card?.num} ${card?.name} — ${msg}`, clr)
+  }
+
+  // Setear cantidad exacta — usado por el numeric editor (modo "fix mistake").
+  // qty: 0 = missing, 1 = have, 2..(2+MAX_EXTRAS) = duplicate con N-2 extras.
+  const setQty = (id, qty) => {
+    qty = Math.max(0, Math.min(2 + MAX_EXTRAS, Math.round(qty)))
+    let nc = col, nex = extras
+    if (qty === 0) {
+      nc = { ...col, [id]: 'missing' }
+      const _e = { ...extras }; delete _e[id]
+      nex = _e
+    } else if (qty === 1) {
+      nc = { ...col, [id]: 'have' }
+      const _e = { ...extras }; delete _e[id]
+      nex = _e
+    } else {
+      nc = { ...col, [id]: 'duplicate' }
+      nex = { ...extras, [id]: qty - 2 }
+    }
+    setCol(nc); setExtras(nex); save(nc, nex)
   }
 
   const gs = id => col[id] || 'missing'
+  const gx = id => extras[id] || 0   // extras count — solo significativo si gs(id)==='duplicate'
 
   // Bulk update — UNA sola call a save() para preservar coalescing.
   // Reusable: TeamDrawer (commit 4), CardsPage bulk action bar (commit 5).
+  // Cuando seteamos a missing/have, limpiamos extras (no aplica). Cuando
+  // seteamos a duplicate, dejamos extras como esté (no resetea contador).
   const bulkUpdate = (ids, status) => {
     if (!ids || ids.length === 0) return
     const nc = { ...col }
+    const nex = { ...extras }
     let changed = 0
     ids.forEach(id => {
       if (nc[id] !== status) { nc[id] = status; changed++ }
+      if (status === 'missing' || status === 'have') delete nex[id]
     })
     if (changed === 0) return
-    setCol(nc); save(nc)
+    setCol(nc); setExtras(nex); save(nc, nex)
     const lbl = { have: '✅ Tengo', duplicate: '🔄 Repetidas', missing: '❌ Faltantes' }
     const clr = { have: '#4ADE80', duplicate: '#F59E0B', missing: '#94A3B8' }
     flash(`✨ ${changed} carta${changed !== 1 ? 's' : ''} → ${lbl[status] || status}`, clr[status] || '#94A3B8')
   }
 
   // Registrar movimiento — actualiza colección y registra el trade en history.
+  // Cuando dás una repetida (left + status='duplicate'), decrementamos extras
+  // antes de bajar de duplicate→have (preserva el conteo si tenías N>1 dups).
   const applyQuickTrade = async ({ entered = [], left = [], note, partnerId }) => {
     const nc = { ...col }
+    const nex = { ...extras }
     let changed = 0
     for (const id of entered) {
       if (nc[id] === 'missing' || !nc[id]) { nc[id] = 'have'; changed++ }
     }
     for (const id of left) {
       const cur = nc[id] || 'missing'
-      if (cur === 'duplicate') { nc[id] = 'have'; changed++ }
-      else if (cur === 'have') { nc[id] = 'missing'; changed++ }
+      if (cur === 'duplicate') {
+        const ex = nex[id] || 0
+        if (ex > 0) {
+          nex[id] = ex - 1   // sigue duplicate, una menos
+        } else {
+          nc[id] = 'have'
+          delete nex[id]
+        }
+        changed++
+      } else if (cur === 'have') {
+        nc[id] = 'missing'; changed++
+      }
     }
     if (changed) {
-      setCol(nc)
-      await save(nc)
+      setCol(nc); setExtras(nex)
+      await save(nc, nex)
     }
     try {
       await recordTradeHistory({
@@ -340,7 +421,7 @@ export default function Tracker({
 
   const resetToInitial = async () => {
     const init = cfg.buildInitial()
-    setCol(init); await save(init)
+    setCol(init); setExtras({}); await save(init, {})
     flash('🔄 Restablecido al estado inicial', '#60A5FA')
     setShowReset(false)
   }
@@ -449,10 +530,10 @@ export default function Tracker({
               <div className={s.brandTitle} style={{ color: cfg.accent }}>
                 {cfg.label.toUpperCase()}
               </div>
-              <div className={s.brandSub}>{cfg.subtitle} · {session.user.email}</div>
+              <div className={s.brandSub}>{cfg.subtitle}</div>
             </div>
             <div className={s.headerActions}>
-              {onSwitchAlbum && (
+              {activeAlbums.length >= 2 && onSwitchAlbum && (
                 <AlbumSwitcher
                   albumType={albumType}
                   activeAlbums={activeAlbums}
@@ -475,6 +556,7 @@ export default function Tracker({
               profile: myProfile,
               items: ALL_ITEMS,
               col,
+              extras,
               albumLabel: cfg.label === 'Álbum de Stickers' ? 'Álbum Panini WC 2026' : cfg.label,
               totalLabel: cfg.label === 'Álbum de Stickers' ? 'stickers' : 'cartas',
             })
@@ -581,7 +663,9 @@ export default function Tracker({
                 fType={fType} setFType={setFType}
                 fTeam={fTeam} setFTeam={setFTeam}
                 gs={gs}
+                gx={gx}
                 toggle={toggle}
+                setQty={setQty}
                 bulkUpdate={bulkUpdate}
                 stats={stats}
               />

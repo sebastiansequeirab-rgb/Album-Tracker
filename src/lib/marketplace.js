@@ -5,8 +5,9 @@ export const EMOJI_AVATARS = ['⚽','🥅','🏆','🎯','🔥','💎','⭐','�
 export const DEFAULT_PROFILE = {
   display_name: '',
   avatar_emoji: '⚽',
-  contact: { instagram: '', whatsapp: '', email: '' },
-  marketplace_visible: false,
+  contact: { instagram: '', whatsapp: '' },
+  // Siempre visible en marketplace — no se puede desactivar.
+  marketplace_visible: true,
   meeting_points: [],
 }
 
@@ -68,13 +69,16 @@ export async function loadMyProfile(userId) {
 }
 
 export async function saveMyProfile(userId, profile) {
+  // Strip email del contact — la app ya no lo usa, dejarlo solo desordena.
+  const { email: _omit, ...contactClean } = profile.contact || {}
   const payload = {
     user_id: userId,
     display_name: profile.display_name?.trim() || 'Coleccionista',
     avatar_emoji: profile.avatar_emoji || '⚽',
     avatar_url: profile.avatar_url || null,
-    contact: profile.contact || {},
-    marketplace_visible: !!profile.marketplace_visible,
+    contact: contactClean,
+    // Forzado a true — el toggle de visibilidad se eliminó del Profile.
+    marketplace_visible: true,
     meeting_points: Array.isArray(profile.meeting_points) ? profile.meeting_points : [],
   }
   const { data, error } = await supabase
@@ -98,6 +102,17 @@ export async function uploadAvatar(userId, file) {
   if (upErr) throw upErr
   const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path)
   return pub?.publicUrl || null
+}
+
+// Persiste solo el avatar_url del perfil al toque (sin tener que esperar el
+// click "Guardar" del form completo). Se usa después de uploadAvatar para
+// que el cambio quede grabado aunque el user navegue sin presionar save.
+export async function saveAvatarUrl(userId, avatarUrl) {
+  const { error } = await supabase
+    .from('adrenalyn_profiles')
+    .update({ avatar_url: avatarUrl })
+    .eq('user_id', userId)
+  if (error) throw error
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

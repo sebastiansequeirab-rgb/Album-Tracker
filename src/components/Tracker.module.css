@@ -143,29 +143,35 @@
   letter-spacing: 0.20em;
   color: var(--accent);
   line-height: 1;
-}
-.brandSub {
-  font-size: 11.5px;
-  color: rgba(245, 200, 70, 0.70);
-  font-weight: 600;
-  letter-spacing: 0.18em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 6px;
+  /* Sutil glow para realzar el accent — premium feel */
+  text-shadow: 0 0 22px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.brandSub {
+  font-size: 11px;
+  color: rgba(245, 200, 70, 0.65);
+  font-weight: 600;
+  letter-spacing: 0.20em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 5px;
   text-transform: uppercase;
 }
 
 .brandShareRow {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin-top: 12px;
-  padding: 8px 12px;
-  border: 1px solid rgba(245, 200, 70, 0.16);
+  padding: 7px 10px 7px 12px;
+  border: 1px solid rgba(245, 200, 70, 0.18);
   border-left: 2px solid var(--gold-2, #F5C842);
   border-radius: 3px;
-  background: rgba(8, 12, 22, 0.55);
+  background:
+    linear-gradient(135deg, rgba(245, 200, 70, 0.06) 0%, rgba(8, 12, 22, 0.65) 60%);
   width: 100%;
   flex-wrap: nowrap;
   clip-path: polygon(
@@ -176,6 +182,7 @@
     8px 100%,
     0 calc(100% - 8px)
   );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 .brandShareLabel {
   font-family: var(--font-display);
@@ -1363,8 +1370,13 @@
   .header { padding: calc(2px + env(safe-area-inset-top, 0px)) 0 0; }
   .headerInner { padding: 8px 12px 10px; gap: 8px; }
   .headerRow { gap: 10px; }
-  .brandTitle { font-size: 16px; letter-spacing: 0.10em; }
-  .brandSub { font-size: 10px; letter-spacing: 0.12em; margin-top: 4px; }
+  .brandTitle {
+    font-size: 17px;
+    letter-spacing: 0.14em;
+    /* Limitar el ancho del título así no rompe la fila al haber AlbumSwitcher */
+    max-width: 60vw;
+  }
+  .brandSub { font-size: 9.5px; letter-spacing: 0.18em; margin-top: 3px; max-width: 60vw; }
   .pctBlock { min-width: 0; }
   .pctValue { font-size: 30px; line-height: 1; }
   .pctLabel { font-size: 9px; letter-spacing: 0.14em; margin-top: 2px; }

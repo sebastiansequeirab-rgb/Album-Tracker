@@ -13,28 +13,27 @@ const IconBolt = (p) => (
   </svg>
 )
 
-// Siempre rendea AMBOS álbumes. Si el usuario clickea un álbum no activado,
-// el callback onChange se encarga de activarlo (App.setCurrentAlbum maneja eso).
+// Solo aparece cuando el usuario tiene >=2 álbumes activos (caso opuesto:
+// si solo tiene Stickers, no mostramos el switcher para no confundir).
 export default function AlbumSwitcher({ albumType, onChange, activeAlbums = [ALBUM_ADRENALYN, ALBUM_STICKER] }) {
+  if (activeAlbums.length < 2) return null
+
   const items = [
     { id: ALBUM_ADRENALYN, Icon: IconBolt,  label: ALBUM_LABELS[ALBUM_ADRENALYN], activeCls: s.btnActiveAdrenalyn },
     { id: ALBUM_STICKER,   Icon: IconAlbum, label: ALBUM_LABELS[ALBUM_STICKER],   activeCls: s.btnActiveSticker   },
-  ]
+  ].filter(x => activeAlbums.includes(x.id))
 
   return (
     <div className={s.wrap} role="group" aria-label="Cambiar álbum">
       {items.map(item => {
         const Icon = item.Icon
-        const isCurrent = albumType === item.id
-        const isActivated = activeAlbums.includes(item.id)
         return (
           <button
             key={item.id}
             type="button"
-            onClick={() => !isCurrent && onChange?.(item.id)}
-            className={`${s.btn} ${isCurrent ? item.activeCls : ''} ${!isActivated ? s.btnInactive : ''}`}
-            aria-pressed={isCurrent}
-            title={isActivated ? `Cambiar a ${item.label}` : `Activar ${item.label}`}>
+            onClick={() => albumType !== item.id && onChange?.(item.id)}
+            className={`${s.btn} ${albumType === item.id ? item.activeCls : ''}`}
+            aria-pressed={albumType === item.id}>
             <span className={s.icon} aria-hidden="true"><Icon /></span>
             <span className={s.label}>{item.label}</span>
           </button>
