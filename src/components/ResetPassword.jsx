@@ -38,26 +38,56 @@ export default function ResetPassword() {
   // 'ready' (token válido, dejá al user setear pass), 'invalid' (no hay token).
   const [recoveryStatus, setRecoveryStatus] = useState('pending')
 
-  // Supabase auto-detecta el token del hash (#access_token=...&type=recovery)
-  // y emite PASSWORD_RECOVERY. Si no hay token después de 1.5s, mostramos
-  // mensaje de error con CTA para volver a pedir reset.
+  // Supabase tiene 2 flows de recovery:
+  //   1. Implicit:  URL llega con #access_token=...&type=recovery
+  //                 → Supabase auto-detecta y emite PASSWORD_RECOVERY event
+  //   2. PKCE:      URL llega con ?code=... (más nuevo, default en Supabase v2)
+  //                 → necesitamos exchangeCodeForSession() manual
+  // Manejamos ambos.
   useEffect(() => {
+    let cancelled = false
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setRecoveryStatus('ready')
-      } else if (event === 'SIGNED_IN' && session) {
-        // Si ya está signed-in (token recovery procesado), permitir cambio
+      if (cancelled) return
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
         setRecoveryStatus('ready')
       }
     })
-    // Fallback: si en 1.5s no hubo PASSWORD_RECOVERY, chequear sesión activa.
-    // Usuarios pueden estar logueados normalmente y querer cambiar pass también.
-    const t = setTimeout(async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) setRecoveryStatus('ready')
-      else setRecoveryStatus(prev => prev === 'pending' ? 'invalid' : prev)
-    }, 1500)
+
+    const detect = async () => {
+      try {
+        // ¿Vino con ?code=...? (PKCE flow)
+        const url = new URL(window.location.href)
+        const code = url.searchParams.get('code')
+        if (code) {
+          const { error: exchErr } = await supabase.auth.exchangeCodeForSession(code)
+          if (cancelled) return
+          if (!exchErr) {
+            setRecoveryStatus('ready')
+            // Limpiar el code de la URL para no re-procesarlo en refresh
+            url.searchParams.delete('code')
+            window.history.replaceState({}, '', url.toString())
+            return
+          }
+        }
+        // ¿Ya hay sesión (de implicit flow auto-procesado o user logueado)?
+        const { data: { session } } = await supabase.auth.getSession()
+        if (cancelled) return
+        if (session) setRecoveryStatus('ready')
+      } catch (e) {
+        console.warn('recovery detect error:', e)
+      }
+    }
+    detect()
+
+    // Fallback: 5s para dar tiempo al PASSWORD_RECOVERY event de implicit flow.
+    const t = setTimeout(() => {
+      if (cancelled) return
+      setRecoveryStatus(prev => prev === 'pending' ? 'invalid' : prev)
+    }, 5000)
+
     return () => {
+      cancelled = true
       subscription.unsubscribe()
       clearTimeout(t)
     }

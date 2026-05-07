@@ -142,13 +142,12 @@
   font-size: 26px;
   letter-spacing: 0.20em;
   color: var(--accent);
-  line-height: 1.05;
-  /* Texto completo sin truncar — wrap natural a 2 líneas si no entra */
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-  word-break: keep-all;
-  /* Sutil glow para realzar el accent — premium feel */
+  line-height: 1;
+  /* Compacto en una línea — si no entra, ellipsis (banner sigue del
+     mismo tamaño en lugar de crecer). */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-shadow: 0 0 22px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 .brandSub {
@@ -156,12 +155,12 @@
   color: rgba(245, 200, 70, 0.65);
   font-weight: 600;
   letter-spacing: 0.20em;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   margin-top: 5px;
   text-transform: uppercase;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .brandShareRow {
@@ -204,12 +203,11 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 2px;
   padding: 5px 10px;
-  /* URL completa — wrap natural por character si no entra */
-  overflow: visible;
-  text-overflow: clip;
-  white-space: normal;
-  word-break: break-all;
-  line-height: 1.35;
+  /* URL truncada a 1 línea con ellipsis — el user puede ver completo
+     al copiar o abrir WhatsApp. Visualmente compacto. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   flex: 1;
   min-width: 0;
 }
@@ -250,27 +248,31 @@
 
 @media (max-width: 540px) {
   .brandShareRow {
-    /* En mobile, apilamos: label + url ocupan toda la fila, botones debajo */
+    /* Apilamos: label + url en row 1, botones COPIAR + WHATSAPP en row 2.
+       Eso deja la URL en una sola línea (truncada con ellipsis), y los
+       botones full-width debajo sin que el banner crezca demasiado. */
     flex-wrap: wrap;
-    padding: 8px 11px;
-    gap: 6px 10px;
-    margin-top: 10px;
+    padding: 7px 10px;
+    gap: 6px 8px;
+    margin-top: 8px;
   }
-  .brandShareLabel { font-size: 9px; letter-spacing: 0.18em; }
+  .brandShareLabel {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+  }
   .brandShareUrl {
-    font-size: 10.5px;
-    padding: 5px 9px;
-    flex: 1 1 100%;
-    /* En mobile sí permitimos wrap del URL */
-    word-break: break-all;
+    font-size: 11px;
+    padding: 4px 8px;
+    /* En mobile la URL ocupa el espacio que sobre del label, en una línea */
+    flex: 1 1 0;
+    min-width: 0;
   }
   .brandShareBtn,
   .brandShareWa {
-    padding: 6px 12px;
-    font-size: 10.5px;
+    padding: 5px 11px;
+    font-size: 10px;
     letter-spacing: 0.14em;
-    flex: 1;
-    text-align: center;
+    flex: 1 1 calc(50% - 4px);
     justify-content: center;
   }
 }

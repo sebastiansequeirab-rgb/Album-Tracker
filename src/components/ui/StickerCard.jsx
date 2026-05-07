@@ -37,12 +37,17 @@ function totalCopies(status, extra) {
 }
 
 // Label que se muestra en el chip de estado:
-//   missing   → "FALTA"
-//   have      → "TENGO"
-//   duplicate → "REPETIDA ×2", "×3", "×4"
+//   missing            → "FALTA"
+//   have               → "TENGO"
+//   duplicate ext=0    → "REPETIDA"      (1 dup, 2 copias)
+//   duplicate ext=1    → "REPETIDA ×2"   (2 dups, 3 copias)
+//   duplicate ext=2    → "REPETIDA ×3"   (3 dups, 4 copias)
 function statusLabel(status, extra) {
   if (status === 'have') return 'Tengo'
-  if (status === 'duplicate') return `Repetida ×${2 + (extra || 0)}`
+  if (status === 'duplicate') {
+    const e = extra || 0
+    return e === 0 ? 'Repetida' : `Repetida ×${1 + e}`
+  }
   return 'Falta'
 }
 

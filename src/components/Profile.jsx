@@ -70,11 +70,10 @@ const IconChevron = (p) => (
   </svg>
 )
 
-/* Section header — broadcast pattern: NN / TITLE / rule */
-const SectionHead = ({ num, title, sub }) => (
+/* Section header — broadcast pattern: TITLE / rule (sin numeración) */
+const SectionHead = ({ title, sub }) => (
   <>
     <div className={s.sectionHead}>
-      <span className={s.sectionNum}>{num}</span>
       <h2 className={s.sectionTitle}>{title}</h2>
       <span className={s.sectionRule} />
     </div>
@@ -82,12 +81,20 @@ const SectionHead = ({ num, title, sub }) => (
   </>
 )
 
-/* Numbered field label */
-const FieldLabel = ({ num, children }) => (
+/* Field label sin numeración */
+const FieldLabel = ({ children }) => (
   <label className={s.fieldLabel}>
-    <span className={s.fieldLabelNum}>{num}</span>
     <span className={s.fieldLabelText}>{children}</span>
   </label>
+)
+
+/* Sub-heading dentro de un panel (para separar Puntos de Encuentro
+   dentro del bloque PERFIL sin crear sección nueva). */
+const SubHead = ({ title, sub }) => (
+  <div className={s.subHead}>
+    <h3 className={s.subHeadTitle}>{title}</h3>
+    {sub && <p className={s.subHeadSub}>{sub}</p>}
+  </div>
 )
 
 const MEETING_TYPE_COLORS = {
@@ -183,13 +190,12 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
 
         <SectionHead
-          num="01"
           title="PERFIL"
           sub="Cómo te ven los otros coleccionistas en el Marketplace. Deja al menos un contacto."
         />
 
         <div className={s.field}>
-          <FieldLabel num="01">Nombre para mostrar</FieldLabel>
+          <FieldLabel>Nombre para mostrar</FieldLabel>
           <div className={s.inputBox}>
             <span className={s.inputIcon}><IconUser /></span>
             <input className={s.input} type="text" maxLength={40}
@@ -200,7 +206,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         </div>
 
         <div className={s.field}>
-          <FieldLabel num="02">Foto de perfil</FieldLabel>
+          <FieldLabel>Foto de perfil</FieldLabel>
           <AvatarUploader
             session={session}
             profile={profile}
@@ -210,7 +216,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
 
         <div className={s.fieldGrid}>
           <div className={s.field}>
-            <FieldLabel num="03">Instagram</FieldLabel>
+            <FieldLabel>Instagram</FieldLabel>
             <div className={s.inputBox}>
               <span className={s.inputIcon}><IconInstagram /></span>
               <span className={s.inputAt}>@</span>
@@ -222,7 +228,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
           </div>
 
           <div className={s.field}>
-            <FieldLabel num="04">WhatsApp</FieldLabel>
+            <FieldLabel>WhatsApp</FieldLabel>
             <div className={s.inputBox}>
               <span className={s.inputIcon}><IconWhatsapp /></span>
               <input className={s.input} type="tel"
@@ -233,19 +239,10 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
           </div>
         </div>
 
-      </section>
-
-      {/* ═══════════════════ 02 — PUNTOS DE ENCUENTRO ═══════════════════ */}
-      <section className={s.panel}>
-        <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
-        <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
-        <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
-        <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
-
-        <SectionHead
-          num="02"
+        {/* ── Puntos de encuentro (sub-bloque dentro de PERFIL) ─────── */}
+        <SubHead
           title="PUNTOS DE ENCUENTRO"
-          sub="Lugares donde solés intercambiar cartas. Aparecen como sugerencias cuando alguien te propone un trade."
+          sub="Lugares donde solés intercambiar — aparecen como sugerencias cuando alguien te propone un trade."
         />
 
         {meetingPoints.length === 0 && (
@@ -260,7 +257,6 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
             className={s.mpCard}
             style={{ '--mp-accent': MEETING_TYPE_COLORS[mp.type] || 'var(--gold-3)' }}>
             <div className={s.mpHead}>
-              <span className={s.mpIndex}>{String(idx + 1).padStart(2, '0')}</span>
               <span className={s.mpHeadIcon}><IconPin /></span>
               <button type="button" className={s.mpRemove} onClick={() => removeMeetingPoint(mp.id)} aria-label="Eliminar punto">
                 <IconClose />
@@ -310,7 +306,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         </button>
       </section>
 
-      {/* ═══════════════════ 03 — MIS ÁLBUMES ═══════════════════ */}
+      {/* ═══════════════════ ÁLBUMES ACTIVOS ═══════════════════ */}
       <section className={s.panel}>
         <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
         <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
@@ -318,8 +314,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
 
         <SectionHead
-          num="03"
-          title="MIS ÁLBUMES ACTIVOS"
+          title="ÁLBUMES ACTIVOS"
           sub="Activá los álbumes que coleccionás. Tu progreso se guarda por separado en cada uno y podés alternarlos desde el header."
         />
 

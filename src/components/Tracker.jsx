@@ -305,13 +305,12 @@ export default function Tracker({
       nc = { ...col, [id]: 'duplicate' }
       nex = { ...extras, [id]: 0 }
       nxt = 'duplicate'; nxtEx = 0
-      msg = '🔄 Repetida (2 copias)'; clr = '#F59E0B'
+      msg = '🔄 Repetida'; clr = '#F59E0B'
     } else if (cur === 'duplicate') {
       if (curEx < MAX_EXTRAS) {
         nex = { ...extras, [id]: curEx + 1 }
         nxtEx = curEx + 1
-        const total = 2 + nxtEx
-        msg = `🔄 ×${total} copias`; clr = '#F59E0B'
+        msg = `🔄 Repetida ×${1 + nxtEx}`; clr = '#F59E0B'
       } else {
         // Loop back a missing — limpia extras
         nc = { ...col, [id]: 'missing' }

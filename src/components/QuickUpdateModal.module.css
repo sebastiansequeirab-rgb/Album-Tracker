@@ -42,6 +42,34 @@
     0 0 0 1px rgba(245, 200, 70, 0.05);
   animation: qmScale 0.20s cubic-bezier(0.22,1,0.36,1);
 }
+
+/* iOS bottom-sheet: el modal se ancla al fondo, ocupa ~92dvh, con
+   border-radius solo arriba. Mejor uso del espacio que un modal
+   centrado en pantallas chicas. */
+@media (max-width: 540px) {
+  .backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .card {
+    max-width: 100%;
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 18px 18px 0 0;
+    clip-path: none;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    gap: 12px;
+    animation: qmSlide 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* Esconder los corner brackets en mobile — el sheet rounded-top no
+     los necesita. */
+  .bracket { display: none; }
+}
+
+@keyframes qmSlide {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 @keyframes qmScale {
   from { opacity: 0; transform: scale(0.97); }
   to   { opacity: 1; transform: scale(1); }
@@ -374,11 +402,15 @@
 .ctaGhost:hover { color: #fff; }
 
 @media (max-width: 540px) {
-  .card { padding: 26px 18px 18px; gap: 14px; }
   .title { font-size: 19px; }
-  .results { max-height: 240px; }
-  .resultRow { grid-template-columns: 20px 20px 1fr auto; padding: 7px 8px; }
+  /* Lista de resultados con max-height pegado al sheet height */
+  .results { max-height: 38dvh; }
+  /* Touch targets ≥44px en filas seleccionables */
+  .resultRow { grid-template-columns: 20px 20px 1fr auto; padding: 10px 8px; min-height: 44px; }
   .resultName { font-size: 13.5px; }
   .resultMeta { font-size: 11px; }
   .chipName { max-width: 96px; }
+  /* CTAs full-width, fáciles de tocar */
+  .ctaStack { flex-direction: column; gap: 8px; }
+  .cta, .ctaGhost { width: 100%; min-height: 48px; padding: 12px 18px; font-size: 13.5px; }
 }

@@ -1391,19 +1391,28 @@
 }
 
 .bannerAuthor {
-  flex: 1;
+  /* Solo avatar + nombre — sin flex:1 para que NO ocupe todo el row.
+     Así el espacio entre author y favStar queda como zona de expand
+     (gestionada por el wrapper del banner). */
+  flex: 0 1 auto;
   display: flex;
   align-items: center;
   gap: 12px;
   background: transparent;
   border: 0;
-  padding: 0;
+  padding: 4px 6px 4px 0;
+  border-radius: 6px;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
   min-width: 0;
+  max-width: 70%;
 }
 .bannerAuthor:hover .userName { color: var(--gold-1); }
+.bannerAuthor:active { background: rgba(245, 200, 70, 0.04); }
+@media (hover: none) {
+  .bannerAuthor:hover .userName { color: var(--text); }
+}
 
 .listingFilters {
   display: flex;

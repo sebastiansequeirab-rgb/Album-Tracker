@@ -169,9 +169,15 @@ export default function CardsPage({
 
   const activePills = []
   if (fSt !== 'all') activePills.push({ key: 'st', label: STATUS_PILL[fSt], onRemove: () => setFSt('all') })
-  if (Array.isArray(fTeam) && fTeam.length > 0) {
-    const lbl = fTeam.length === 1 ? fTeam[0] : `${fTeam.length} países`
-    activePills.push({ key: 'team', label: lbl, onRemove: () => setFTeam([]) })
+  // Una pill por país — el user las puede quitar individualmente.
+  if (Array.isArray(fTeam)) {
+    fTeam.forEach((teamName) => {
+      activePills.push({
+        key: `team-${teamName}`,
+        label: teamName,
+        onRemove: () => setFTeam(fTeam.filter(t => t !== teamName)),
+      })
+    })
   }
   if (q) activePills.push({ key: 'q', label: `“${q}”`, onRemove: () => setQ('') })
 
@@ -322,7 +328,11 @@ export default function CardsPage({
               type="button"
               onClick={p.onRemove}
               className={s.activePill}
-              style={{ ['--pill-bar']: PILL_COLOR[p.key] || 'var(--gold-3)' }}
+              style={{
+                ['--pill-bar']:
+                  PILL_COLOR[p.key]
+                  || (p.key.startsWith('team-') ? PILL_COLOR.team : 'var(--gold-3)'),
+              }}
               aria-label={`Quitar filtro ${p.label}`}
             >
               <span className={s.activePillLabel}>{p.label}</span>
