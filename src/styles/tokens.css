@@ -122,13 +122,9 @@
   --nav-h: 42px;
   --bottom-pad: 80px;
 
-  /* Safe-area top — single source of truth para padding del main y
-     sticky offset del subnav. iOS Safari aplica un buffer implícito
-     arriba de las páginas (~60px, probablemente reserva visual de la
-     URL bar) que NO existe en standalone (PWA / home-screen). El
-     override @media (display-mode: standalone) emula ese buffer para
-     que ambas vistas se vean iguales y el subnav sticky siempre quede
-     alineado con el contenido. */
+  /* Safe-area top — usado en .mainNoHeader padding-top y .subnav sticky
+     offset. iOS maneja env() correctamente tanto en Safari browser
+     como en standalone (Add to Home Screen / PWA). */
   --safe-top: env(safe-area-inset-top, 0px);
 
   /* Transitions */
@@ -196,29 +192,3 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Standalone (PWA / Add to Home Screen iOS / Bookmark con toolbar
-   oculto) — Safari aplica un buffer implícito arriba de las páginas que
-   no existe en estos modos. La clase .is-standalone se inyecta vía JS
-   en index.html (cubre matchMedia + navigator.standalone legacy iOS).
-   Class-based en lugar de @media (display-mode) porque tiene mejor
-   soporte cross-browser y es 100% reliable. */
-:root.is-standalone {
-  --safe-top: calc(env(safe-area-inset-top, 0px) + 100px);
-}
-
-/* Barra opaca fija que cubre el área --safe-top en standalone. Sin
-   esto, durante el scroll el SectionHead se asoma por encima del subnav
-   sticky (porque la zona buffer queda como "ventana" del documento que
-   pasa por detrás). z-index 80: arriba del subnav (50), abajo de
-   modales (1000). pointer-events:none para que no bloquee taps. */
-:root.is-standalone body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--safe-top);
-  background: var(--bg);
-  z-index: 80;
-  pointer-events: none;
-}
