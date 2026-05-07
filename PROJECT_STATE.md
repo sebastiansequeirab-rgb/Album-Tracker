@@ -7,16 +7,23 @@
 
 ## 🔥 Próxima tarea (open issue para nueva sesión)
 
-**Banner-less pages se ven "descuadradas y sin terminar"**: el header del Tracker ahora se oculta en Cartas/Mercado/Chat/Perfil (`{tab === 'dashboard' && (...)}`). El espacio se libera pero las páginas se ven sin marco/cierre visual. Falta:
+**Banner-less pages se ven "descuadradas y sin terminar"** — pero el user **NO quiere nuevo chrome / banner / mini-header**. Quiere que la página se sienta terminada sin agregar UI que haga ruido o interfiera con la funcionalidad.
 
-- Algún elemento de "frame" visual en el top de cada página no-Home (¿un thin gold rule? ¿un mini-header con el nombre del tab? ¿un brand strip slim?).
-- Verificar que el `mainNoHeader` padding-top respeta safe-area pero no se siente vacío.
-- El subnav del Mercado ya se sticky a `top: env(safe-area-inset-top)` — buen comienzo. Las otras tabs no tienen ese mismo elemento de cierre.
-- Idea: **slim brand bar fijo** (40-48px alto) con solo el album label + count + SALIR icon. Diferenciado del banner full de Home pero presente en todas las tabs para dar "marco".
+**Direcciones aceptables (sin chrome nuevo):**
+- **Inset shadow / vignette** en el top del `main` para dar "depth" sin agregar elemento.
+- **Soft gold gradient fade** en los primeros 12-20px del main (decorativo, no clickable).
+- **Top hairline** 1px gold sutil al inicio del main para "cerrar" visualmente.
+- Ajustar el padding-top / safe-area de `.mainNoHeader` para que el contenido no se sienta pegado al notch.
+- Ajustar el background del `.app` o `body` para que tenga un radial sutil al top.
+
+**Direcciones NO aceptables:**
+- Slim brand bar / mini-header con texto.
+- Volver el banner aunque sea slim.
+- Cualquier UI clickable o que ocupe altura útil.
 
 **Files involved:**
 - `src/components/Tracker.jsx` líneas ~528-603 (header conditional + main padding).
-- `src/components/Tracker.module.css` `.header`, `.headerCompact`, `.mainNoHeader`.
+- `src/components/Tracker.module.css` `.header`, `.headerCompact`, `.mainNoHeader`, `.app`.
 
 ---
 
