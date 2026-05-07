@@ -1,16 +1,18 @@
 // Panini FIFA World Cup 2026 Sticker Album (oficial Latam) — 980 stickers
 //
-// Numeración del álbum:
+// Numeración del álbum (orden de render):
 //   Intro:  9 stickers — código 00 (Panini Logo) + FWC-1..FWC-8 (emblemas,
 //           mascotas, eslogan, balón oficial, países sede). Internamente
 //           num=0..8.
+//   Museum: 11 stickers — código FWC-9..FWC-19 (campeones históricos).
+//           Internamente num=1..11. Render junto al intro al COMIENZO
+//           (excepción al orden del álbum físico) — todos los FWC quedan
+//           agrupados al frente.
 //   Equipo: 48 selecciones × 20 stickers — codes XXX-1..XXX-20.
 //             #1     → Escudo
 //             #2-12  → 11 jugadores
 //             #13    → Foto del plantel
 //             #14-20 → 7 jugadores
-//   Museum: 11 stickers — código FWC-9..FWC-19 (campeones históricos).
-//           Internamente num=1..11.
 //
 // Los nombres reales vienen de panini-checklist.json (parseo del checklist
 // oficial Panini WC 2026 — fuente cartophilic-info-exch.blogspot.com).
@@ -58,7 +60,24 @@ export function buildStickers() {
     })
   })
 
-  // 2) 48 equipos × 20 stickers — num 1..20 LOCAL al equipo.
+  // 2) FIFA Museum — num 1..11 — códigos FWC-9..FWC-19.
+  // Render junto al intro al comienzo (los FWC van todos agrupados al
+  // frente como solicitó el usuario, aunque en el álbum físico el museo
+  // viene al final).
+  checklist.museum.forEach((entry) => {
+    out.push({
+      id:   `MUS-${entry.num}`,
+      num:  entry.num,                  // 1..11
+      code: entry.code,                 // "FWC-9"..."FWC-19"
+      name: entry.name,
+      team: 'FIFA Museum',
+      flag: '🏆',
+      type: 'FIFA Museum',
+      cat:  'rare',
+    })
+  })
+
+  // 3) 48 equipos × 20 stickers — num 1..20 LOCAL al equipo.
   STICKER_TEAMS.forEach((team) => {
     const teamData = checklist.teams[team.id] || {}
 
@@ -119,20 +138,6 @@ export function buildStickers() {
         cat:  'base',
       })
     }
-  })
-
-  // 3) FIFA Museum — num 1..11 — códigos FWC-9..FWC-19.
-  checklist.museum.forEach((entry) => {
-    out.push({
-      id:   `MUS-${entry.num}`,
-      num:  entry.num,                  // 1..11
-      code: entry.code,                 // "FWC-9"..."FWC-19"
-      name: entry.name,
-      team: 'FIFA Museum',
-      flag: '🏆',
-      type: 'FIFA Museum',
-      cat:  'rare',
-    })
   })
 
   return out
