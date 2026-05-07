@@ -166,9 +166,9 @@
 .brandShareRow {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  padding: 4px 8px 4px 10px;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 3px 7px 3px 9px;
   border: 1px solid rgba(245, 200, 70, 0.18);
   border-left: 2px solid var(--gold-2, #F5C842);
   border-radius: 3px;
@@ -247,28 +247,27 @@
 
 @media (max-width: 540px) {
   .brandShareRow {
-    /* Compact 1-row: label + url + botones en una sola línea, todo más
-       chiquito. Mitad del tamaño que tenía antes. */
+    /* Compact 1-row: label + url + botones en una sola línea, slim. */
     flex-wrap: nowrap;
-    padding: 4px 7px;
-    gap: 5px;
-    margin-top: 6px;
+    padding: 3px 6px;
+    gap: 4px;
+    margin-top: 5px;
   }
   .brandShareLabel {
-    font-size: 8px;
-    letter-spacing: 0.16em;
+    font-size: 7.5px;
+    letter-spacing: 0.14em;
   }
   .brandShareUrl {
-    font-size: 9.5px;
-    padding: 3px 6px;
+    font-size: 9px;
+    padding: 2px 5px;
     flex: 1 1 0;
     min-width: 0;
   }
   .brandShareBtn,
   .brandShareWa {
-    padding: 3px 8px;
-    font-size: 8.5px;
-    letter-spacing: 0.12em;
+    padding: 3px 7px;
+    font-size: 8px;
+    letter-spacing: 0.10em;
     flex-shrink: 0;
     justify-content: center;
   }
