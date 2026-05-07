@@ -17,3 +17,8 @@ login.PNG
 !public/*.svg
 !public/*.webmanifest
 .firecrawl/
+
+# Reference / mockup files (no se trackean)
+CLAUDE_CODE_SPEC_WC2026.md
+mockups/
+PITCH.md
