@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   EMOJI_AVATARS, loadMyProfile, saveMyProfile, deriveDisplayName,
   MEETING_POINT_TYPES, newMeetingPoint, loadMyTradeHistory, uploadAvatar,
 } from '../lib/marketplace'
 import { buildShareMessage, copyShareMessage, whatsappHref } from '../lib/shareMessage'
-import { ALBUM_CONFIG } from '../data'
+import { ALBUM_CONFIG, ALBUM_STICKER, ALBUM_ADRENALYN } from '../data'
+import { supabase } from '../supabaseClient'
+import { exportListPdf } from '../lib/exportPdf'
 import { activateAlbum, deactivateAlbum } from '../lib/album'
-import { ALBUM_ADRENALYN, ALBUM_STICKER } from '../data'
 import s from './Profile.module.css'
 
 /* ── Inline SVG icons (no emoji in UI chrome) ───────────────────────────── */
@@ -488,30 +489,47 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
 
 function MyListsSection({ userId, profile }) {
   const [tab, setTab] = useState('repetidas')
-  const [data, setData] = useState({ items: [], col: {}, loading: true })
+  const [data, setData] = useState({ items: [], col: {}, loading: true, cfg: null, error: null })
 
   useEffect(() => {
+    if (!userId) return
     let cancelled = false
-    const album = (profile?.active_albums && profile.active_albums[0]) || 'sticker'
-    const cfg = ALBUM_CONFIG[album] || ALBUM_CONFIG['sticker']
-    const items = cfg.buildItems()
+
+    const album = (profile?.active_albums && profile.active_albums[0]) || ALBUM_STICKER
+    const cfg = ALBUM_CONFIG[album] || ALBUM_CONFIG[ALBUM_STICKER] || ALBUM_CONFIG[ALBUM_ADRENALYN]
+    if (!cfg || typeof cfg.buildItems !== 'function') {
+      setData({ items: [], col: {}, loading: false, cfg: null, error: 'no-cfg' })
+      return
+    }
+    let items = []
+    try { items = cfg.buildItems() }
+    catch (e) {
+      console.warn('MyLists buildItems failed:', e)
+      setData({ items: [], col: {}, loading: false, cfg, error: 'no-items' })
+      return
+    }
+
     ;(async () => {
-      const { supabase } = await import('../supabaseClient')
-      const { data: row } = await supabase
-        .from(cfg.table)
-        .select('data')
-        .eq('user_id', userId)
-        .maybeSingle()
-      if (cancelled) return
-      setData({ items, col: row?.data || {}, loading: false, cfg })
+      try {
+        const { data: row } = await supabase
+          .from(cfg.table)
+          .select('data')
+          .eq('user_id', userId)
+          .maybeSingle()
+        if (cancelled) return
+        setData({ items, col: row?.data || {}, loading: false, cfg, error: null })
+      } catch (e) {
+        console.warn('MyLists load failed:', e)
+        if (!cancelled) setData({ items, col: {}, loading: false, cfg, error: 'load-failed' })
+      }
     })()
     return () => { cancelled = true }
   }, [userId, profile?.active_albums])
 
   const filtered = useMemo(() => {
-    if (data.loading) return []
+    if (data.loading || !Array.isArray(data.items)) return []
     return data.items.filter(c => {
-      const st = data.col[c.id] || 'missing'
+      const st = data.col?.[c.id] || 'missing'
       return tab === 'repetidas' ? st === 'duplicate' : st === 'missing'
     })
   }, [data, tab])
@@ -526,15 +544,18 @@ function MyListsSection({ userId, profile }) {
     return [...m.values()]
   }, [filtered])
 
-  const exportPdf = async () => {
-    const { exportListPdf } = await import('../lib/exportPdf')
-    exportListPdf({
-      items: filtered,
-      title: tab === 'repetidas' ? 'Mis Repetidas' : 'Mis Faltantes',
-      subtitle: data.cfg?.label || '',
-      username: profile?.display_name,
-      publicUrl: profile?.slug ? `${window.location.origin}/u/${profile.slug}` : null,
-    })
+  const exportPdf = () => {
+    try {
+      exportListPdf({
+        items: filtered,
+        title: tab === 'repetidas' ? 'Mis Repetidas' : 'Mis Faltantes',
+        subtitle: data.cfg?.label || '',
+        username: profile?.display_name,
+        publicUrl: profile?.slug ? `${window.location.origin}/u/${profile.slug}` : null,
+      })
+    } catch (e) {
+      console.warn('exportPdf failed:', e)
+    }
   }
 
   return (
@@ -606,45 +627,64 @@ function MyListsSection({ userId, profile }) {
 
 function PublicLinkBlock({ profile, session }) {
   const [feedback, setFeedback] = useState(null)
+  const [waHref, setWaHref] = useState('#')
+
+  const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/u/${profile?.slug || ''}`
+
   const buildMsg = async () => {
-    // Carga la colección viva del usuario para incluir lista actualizada
-    const album = (profile.active_albums && profile.active_albums[0]) || 'sticker'
-    const cfg = ALBUM_CONFIG[album] || ALBUM_CONFIG['sticker']
-    const items = cfg.buildItems()
-    const { supabase } = await import('../supabaseClient')
-    const { data } = await supabase
-      .from(cfg.table)
-      .select('data')
-      .eq('user_id', session.user.id)
-      .maybeSingle()
-    const col = data?.data || {}
-    return buildShareMessage({
-      profile,
-      items,
-      col,
-      albumLabel: cfg.label === 'Álbum de Stickers' ? 'Álbum Panini WC 2026' : cfg.label,
-      totalLabel: cfg.label === 'Álbum de Stickers' ? 'stickers' : 'cartas',
-    })
+    if (!profile?.slug || !session?.user?.id) {
+      return `Mira mi álbum: ${url}`
+    }
+    const album = (profile.active_albums && profile.active_albums[0]) || ALBUM_STICKER
+    const cfg = ALBUM_CONFIG[album] || ALBUM_CONFIG[ALBUM_STICKER]
+    if (!cfg) return `Mira mi álbum: ${url}`
+    let items = []
+    try { items = cfg.buildItems() } catch { /* sin-op */ }
+    let col = {}
+    try {
+      const { data } = await supabase
+        .from(cfg.table)
+        .select('data')
+        .eq('user_id', session.user.id)
+        .maybeSingle()
+      col = data?.data || {}
+    } catch (e) {
+      console.warn('share msg: load col failed:', e)
+    }
+    try {
+      return buildShareMessage({
+        profile,
+        items,
+        col,
+        albumLabel: cfg.label === 'Álbum de Stickers' ? 'Álbum Panini WC 2026' : cfg.label,
+        totalLabel: cfg.label === 'Álbum de Stickers' ? 'stickers' : 'cartas',
+      })
+    } catch (e) {
+      console.warn('buildShareMessage failed:', e)
+      return `Mira mi álbum: ${url}`
+    }
   }
-  const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/u/${profile.slug}`
 
   const onCopy = async () => {
-    const msg = await buildMsg()
     try {
+      const msg = await buildMsg()
       await copyShareMessage(msg)
       setFeedback('📋 Mensaje copiado · pegalo en WhatsApp')
-    } catch {
+    } catch (e) {
+      console.warn('copy failed:', e)
       setFeedback('No se pudo copiar')
     }
     setTimeout(() => setFeedback(null), 3000)
   }
-  const [waHref, setWaHref] = useState('#')
+
   useEffect(() => {
     let cancelled = false
-    buildMsg().then(msg => { if (!cancelled) setWaHref(whatsappHref(msg)) })
+    buildMsg()
+      .then(msg => { if (!cancelled) setWaHref(whatsappHref(msg)) })
+      .catch(e => { console.warn('precompute waHref failed:', e) })
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile.slug, profile.display_name])
+  }, [profile?.slug, profile?.display_name])
 
   return (
     <div className={s.publicLinkRow}>
