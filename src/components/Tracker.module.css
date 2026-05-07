@@ -83,30 +83,29 @@
 .header {
   background: linear-gradient(180deg, rgba(8, 12, 22, 0.96) 0%, rgba(6, 10, 18, 0.92) 100%);
   border-bottom: 1px solid rgba(245, 200, 70, 0.12);
-  padding: calc(14px + env(safe-area-inset-top, 0px)) var(--sp-4) 12px;
+  /* Padding adicional mínimo: 4px arriba sobre la safe-area, así el banner
+     queda casi pegado al notch sin tocarlo. */
+  padding: calc(4px + env(safe-area-inset-top, 0px)) var(--sp-4) 10px;
   position: sticky;
   top: 0;
   z-index: 100;
   backdrop-filter: blur(12px) saturate(140%);
   -webkit-backdrop-filter: blur(12px) saturate(140%);
-  transition:
-    padding 0.20s cubic-bezier(0.4, 0, 0.2, 1),
-    border-color 0.20s ease,
-    box-shadow 0.20s ease;
-  /* Promote a su propia capa para que las transitions corran en GPU */
-  will-change: padding;
+  /* Solo animar shadow (cheap). El collapse usa display:none para snap. */
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
-/* Compact mode: header se reduce en scroll-down. La row con TU LINK
-   se colapsa, el título se achica, queda una barra slim sticky. */
+/* Compact mode: TU LINK row + brandSub desaparecen instantáneamente
+   (display:none). Eso elimina el lag de animar max-height/font-size de
+   varios elementos a la vez. */
 .header.headerCompact {
-  padding: calc(6px + env(safe-area-inset-top, 0px)) var(--sp-4) 6px;
+  padding: calc(2px + env(safe-area-inset-top, 0px)) var(--sp-4) 4px;
   border-bottom-color: rgba(245, 200, 70, 0.22);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
 }
 .header.headerCompact .brandTitle {
-  font-size: 18px;
-  letter-spacing: 0.14em;
+  font-size: 17px;
+  letter-spacing: 0.12em;
 }
 .header.headerCompact .brandSub {
   display: none;
@@ -117,43 +116,12 @@
 .header.headerCompact .pctLabel {
   display: none;
 }
-.header.headerCompact .iconBtn {
-  transform: scale(0.92);
-}
 .header.headerCompact .headerRow {
   margin-bottom: 0;
 }
-/* Esconder brandShareRow al colapsar — slide-up + fade */
+/* Snap: brandShareRow se va instantáneo para no animar max-height (caro). */
 .header.headerCompact .brandShareRow {
-  max-height: 0;
-  opacity: 0;
-  margin-top: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-/* Estado expandido: la row se mide para que la transición sea suave */
-.brandShareRow {
-  transition:
-    max-height 0.22s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.16s ease,
-    margin 0.22s ease,
-    padding 0.22s ease;
-  max-height: 80px;
-}
-/* Transiciones del title/pct para movimiento parejo. Cubic-bezier estándar
-   de Material Design (más rápido al inicio) para que se sienta responsivo. */
-.brandTitle,
-.brandSub,
-.pctValue,
-.pctLabel,
-.iconBtn {
-  transition:
-    font-size 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-    letter-spacing 0.18s ease,
-    transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.14s ease;
+  display: none;
 }
 .headerInner {
   max-width: var(--container-max);
@@ -1232,7 +1200,7 @@
 
   /* Header compact: smaller logo, tighter spacing, hide email */
   .header {
-    padding: calc(10px + env(safe-area-inset-top, 0px)) var(--sp-3) 10px;
+    padding: calc(2px + env(safe-area-inset-top, 0px)) var(--sp-3) 8px;
   }
   .brandTitle {
     font-size: 18px;
@@ -1391,9 +1359,9 @@
    iOS / Mobile polish — apretar densidad, no romper Mac.
    ============================================================================= */
 @media (max-width: 540px) {
-  /* Header: padding más chico, pct más compacto */
-  .header { padding: calc(12px + env(safe-area-inset-top, 0px)) 0 0; }
-  .headerInner { padding: 10px 12px 12px; gap: 8px; }
+  /* Header: padding más chico, pct más compacto. Banner pegado al notch. */
+  .header { padding: calc(2px + env(safe-area-inset-top, 0px)) 0 0; }
+  .headerInner { padding: 8px 12px 10px; gap: 8px; }
   .headerRow { gap: 10px; }
   .brandTitle { font-size: 16px; letter-spacing: 0.10em; }
   .brandSub { font-size: 10px; letter-spacing: 0.12em; margin-top: 4px; }

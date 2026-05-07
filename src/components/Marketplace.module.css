@@ -1243,10 +1243,10 @@
   border: 1px solid rgba(245, 200, 70, 0.10);
   border-left: 2px solid var(--gold-5);
   border-radius: 3px;
-  padding: var(--sp-4);
+  padding: var(--sp-3);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
+  gap: 10px;
   clip-path: polygon(
     0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px)
   );
@@ -1298,8 +1298,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--sp-3);
-  padding-bottom: var(--sp-3);
+  gap: 10px;
+  padding-bottom: 10px;
   border-bottom: 1px solid rgba(245, 200, 70, 0.08);
 }
 
@@ -1498,10 +1498,10 @@
   border: 1px solid rgba(245, 200, 70, 0.08);
   border-left: 2px solid rgba(245, 200, 70, 0.32);
   border-radius: 3px;
-  padding: 11px 14px;
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 .bannerInfoLine {
   font-size: 12.5px;
@@ -1770,9 +1770,9 @@
   .drillTab { padding: 14px 8px; min-height: 48px; font-size: 10.5px; letter-spacing: 0.14em; }
 
   /* Banner: tighter padding, full-width 1-col actions stack */
-  .banner { padding: var(--sp-3); gap: var(--sp-2); }
-  .bannerHead { padding-bottom: 10px; gap: 10px; }
-  .bannerSection { gap: 6px; }
+  .banner { padding: 10px 12px; gap: 8px; }
+  .bannerHead { padding-bottom: 8px; gap: 10px; }
+  .bannerSection { gap: 5px; }
   .bannerSectionTitle { font-size: 10.5px; letter-spacing: 0.20em; gap: 7px; }
   .bannerInfo { padding: 9px 11px; gap: 5px; }
   .bannerInfoLine { font-size: 12px; gap: 8px; }
@@ -1895,9 +1895,9 @@
   .userActions > button { font-size: 10.5px; padding: 7px 9px; letter-spacing: 0.10em; }
 
   /* Banner de oferta */
-  .banner { padding: 12px; gap: 10px; }
-  .bannerHead { gap: 10px; padding-bottom: 8px; }
-  .bannerSection { gap: 6px; }
+  .banner { padding: 10px; gap: 8px; }
+  .bannerHead { gap: 8px; padding-bottom: 6px; }
+  .bannerSection { gap: 5px; }
   .bannerSectionTitle { font-size: 10.5px; letter-spacing: 0.18em; }
   .bannerActions > button {
     padding: 8px 10px !important;
@@ -1905,7 +1905,7 @@
     letter-spacing: 0.10em !important;
     min-width: 0;
   }
-  .miniCard { padding: 6px 8px; gap: 6px; }
+  .miniCard { padding: 5px 8px; gap: 6px; }
   .miniCardName { font-size: 12px; }
   .miniCardMeta { font-size: 10px; }
   .miniCardNum { font-size: 11px; }

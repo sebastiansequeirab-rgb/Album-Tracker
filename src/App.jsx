@@ -6,6 +6,7 @@ import Tracker from './components/Tracker'
 import AlbumOnboarding from './components/AlbumOnboarding'
 import PublicProfile from './components/PublicProfile'
 import { ensureMyProfile } from './lib/marketplace'
+import { activateAlbum } from './lib/album'
 import { ALBUM_ADRENALYN, ALBUM_STICKER, ALBUM_TYPES } from './data'
 
 const ALBUM_STORAGE_KEY = 'adrenalyn:currentAlbum'
@@ -37,10 +38,19 @@ function MainApp() {
   const [profileLoading, setProfileLoading] = useState(false)
   const [currentAlbum, setCurrentAlbumRaw] = useState(readStoredAlbum())
 
-  const setCurrentAlbum = useCallback((album) => {
+  const setCurrentAlbum = useCallback(async (album) => {
     setCurrentAlbumRaw(album)
     if (album) persistAlbum(album)
-  }, [])
+    // Si el usuario clickea un álbum no activado en el AlbumSwitcher
+    // (que ahora siempre muestra los 2), lo activamos al vuelo.
+    if (!album || !session?.user?.id) return
+    try {
+      const next = await activateAlbum(album, session.user.id)
+      setProfile(p => p ? { ...p, active_albums: next } : p)
+    } catch (err) {
+      console.warn('activateAlbum failed:', err)
+    }
+  }, [session])
 
   // Boot: validar sesión existente con el server, signOut si JWT roto
   useEffect(() => {

@@ -452,7 +452,7 @@ export default function Tracker({
               <div className={s.brandSub}>{cfg.subtitle} · {session.user.email}</div>
             </div>
             <div className={s.headerActions}>
-              {activeAlbums.length >= 2 && onSwitchAlbum && (
+              {onSwitchAlbum && (
                 <AlbumSwitcher
                   albumType={albumType}
                   activeAlbums={activeAlbums}
