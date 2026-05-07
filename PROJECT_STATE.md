@@ -13,7 +13,7 @@ App **React + Vite + Supabase** para seguimiento personal de dos álbumes:
 
 Cada usuario marca cartas como `missing → have → duplicate` y participa en un **marketplace social** con chat realtime, listings públicas, trade requests, favoritos, link público de perfil compartible, mensaje WhatsApp formateado, y avatares con foto real.
 
-- **Producción**: https://album-tracker-three.vercel.app ✅
+- **Producción**: https://wc2026albumtracker.vercel.app ✅
 - **Repo**: https://github.com/sebastiansequeirab-rgb/Album-Tracker (`main`, auto-deploy Vercel ~30s)
 - **Owner**: Sebastian Sequeira `sebastiansequeirab@gmail.com`
 - **Working dir local**: `/Users/sebastiansequeira/Documents/adrenalyn-tracker 2/`
@@ -68,7 +68,7 @@ Cada usuario marca cartas como `missing → have → duplicate` y participa en u
 
 ### Auth
 - Email + password. **Email confirmation desactivada** (intencional — Site URL apunta a Skolar).
-- Si se reactiva: pasar `options.emailRedirectTo: 'https://album-tracker-three.vercel.app'` en signUp. NO cambiar Site URL global.
+- Si se reactiva: pasar `options.emailRedirectTo: 'https://wc2026albumtracker.vercel.app'` en signUp. NO cambiar Site URL global.
 
 ### Migraciones aplicadas
 - `migrations/2026-05-06-public-profile-and-trade-history.sql` (slug, trades_completed, trade_history, completed_at, RLS anon, trigger).
@@ -241,7 +241,7 @@ Formato:
 ✅ 58/980 stickers   🔄 8 repetidas   ❌ 914 faltantes
 
 🔗 *Mi perfil con la lista completa:*
-https://album-tracker-three.vercel.app/u/sebastian-xxxxxx
+https://wc2026albumtracker.vercel.app/u/sebastian-xxxxxx
 
 ━━━ ❌ ME FALTAN  (914) ━━━
 🇩🇪  *Alemania*  (20)
@@ -251,7 +251,7 @@ https://album-tracker-three.vercel.app/u/sebastian-xxxxxx
 ━━━━━━━━━━━━━━━━━━━━━━━
 ¿Cambiamos? 🤝
 Sumate al tracker y armamos el álbum:
-https://album-tracker-three.vercel.app
+https://wc2026albumtracker.vercel.app
 ```
 
 Botón **Copiar** en banner del header Y en Perfil ahora copia este mensaje (no solo URL). Botón verde **WhatsApp** abre `wa.me/?text=` con el mensaje precargado.

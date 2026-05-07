@@ -78,7 +78,7 @@ export default function Auth() {
     }
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        emailRedirectTo: 'https://album-tracker-three.vercel.app',
+        emailRedirectTo: 'https://wc2026albumtracker.vercel.app',
       })
       if (error) throw error
       setOk(`Te enviamos un link a ${email} para resetear tu contraseña.`)

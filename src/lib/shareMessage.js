@@ -4,7 +4,7 @@
    El receptor ve la lista completa para revisar contra su álbum sin abrir
    el perfil web. */
 
-const APP_URL = 'https://album-tracker-three.vercel.app'
+const APP_URL = 'https://wc2026albumtracker.vercel.app'
 
 export function buildShareMessage({
   profile,
