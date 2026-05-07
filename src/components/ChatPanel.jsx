@@ -3,6 +3,7 @@ import {
   loadMyThreads, loadThreadMessages, sendMessage, markThreadRead,
   loadProfile, subscribeToInbox,
 } from '../lib/marketplace'
+import Avatar from './ui/Avatar'
 import s from './ChatPanel.module.css'
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -200,7 +201,7 @@ export default function ChatPanel({
             type="button">
             <IconArrowLeft size={16}/>
           </button>
-          <div className={s.threadAvatar}>{activeProfile?.avatar_emoji || '👤'}</div>
+          <div className={s.threadAvatar}><Avatar profile={activeProfile} size={36} /></div>
           <div className={s.threadHeadBody}>
             <div className={s.threadHeadName}>
               {activeProfile?.display_name || (loadingThread ? 'Cargando…' : 'Coleccionista')}
@@ -342,7 +343,7 @@ export default function ChatPanel({
                 type="button"
                 onClick={() => setActiveCpId(t.counterpart_id)}
                 className={`${s.threadItem} ${hasUnread ? s.threadItemUnread : ''}`}>
-                <div className={s.threadItemAvatar}>{prof?.avatar_emoji || '👤'}</div>
+                <div className={s.threadItemAvatar}><Avatar profile={prof} size={42} /></div>
                 <div className={s.threadItemBody}>
                   <div className={s.threadItemHead}>
                     <span className={s.threadItemName}>{prof?.display_name || 'Coleccionista'}</span>

@@ -13,6 +13,7 @@ import TradeRequestModal from './TradeRequestModal'
 import CreatePublicListingModal from './CreatePublicListingModal'
 import ChatPanel from './ChatPanel'
 import TypeDonut from './ui/TypeDonut'
+import Avatar from './ui/Avatar'
 import { exportListPdf } from '../lib/exportPdf'
 import s from './Marketplace.module.css'
 
@@ -534,7 +535,7 @@ export default function Marketplace({
 
         <div className={s.detailHead}>
           <Brackets/>
-          <div className={s.detailAvatar}>{prof?.avatar_emoji || '👤'}</div>
+          <div className={s.detailAvatar}><Avatar profile={prof} size={64} /></div>
           <div className={s.detailBody}>
             <div className={s.detailName}>{prof?.display_name || 'Coleccionista'}</div>
             <div className={s.detailSub}>
@@ -829,7 +830,7 @@ export default function Marketplace({
               {searchView.map(p => (
                 <div key={p.user_id} className={s.userCard}>
                   <div className={s.userCardHead} onClick={() => onSelectUser(p.user_id)}>
-                    <div className={s.userAvatar}>{p.avatar_emoji}</div>
+                    <div className={s.userAvatar}><Avatar profile={p} size={42} /></div>
                     <div className={s.userMeta}>
                       <div className={s.userName}>{p.display_name}</div>
                       <div className={s.userSub}>{p.ownHave}/{totalItems} cartas · {p.ownDups} repetidas</div>
@@ -915,7 +916,7 @@ export default function Marketplace({
                       return (
                         <div key={p.user_id} className={`${s.userCard} ${dimmed ? s.userCardDim : ''}`}>
                           <div className={s.userCardHead} onClick={() => onSelectUser(p.user_id)}>
-                            <div className={s.userAvatar}>{p.avatar_emoji}</div>
+                            <div className={s.userAvatar}><Avatar profile={p} size={42} /></div>
                             <div className={s.userMeta}>
                               <div className={s.userName}>{p.display_name}</div>
                               <div className={s.userSub}>{colCount}/{totalItems} cartas</div>
@@ -1248,7 +1249,7 @@ function ListingBanner({ listing, author, itemsById, myCol, isMine, isFavorite, 
 
       <div className={s.bannerHead}>
         <button onClick={onViewProfile} className={s.bannerAuthor} type="button">
-          <div className={s.userAvatar}>{author?.avatar_emoji || '👤'}</div>
+          <div className={s.userAvatar}><Avatar profile={author} size={42} /></div>
           <div className={s.userMeta}>
             <div className={s.userName}>{author?.display_name || 'Coleccionista'}</div>
             <div className={s.userSub}>
@@ -1474,7 +1475,7 @@ function TradeRow({ trade, profile, itemsById, isIncoming, onAccept, onReject, o
   return (
     <div className={s.tradeRow}>
       <div className={s.tradeRowHead}>
-        <div className={s.userAvatar}>{profile?.avatar_emoji || '👤'}</div>
+        <div className={s.userAvatar}><Avatar profile={profile} size={36} /></div>
         <div className={s.userMeta}>
           <div className={s.userName}>{profile?.display_name || 'Coleccionista'}</div>
           <div className={s.userSub}>

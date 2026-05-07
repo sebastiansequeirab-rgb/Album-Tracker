@@ -12,7 +12,6 @@ import Flag from './Flag'
 import Marketplace from './Marketplace'
 import Profile from './Profile'
 import DashboardPage from './pages/DashboardPage'
-import TeamsPage from './pages/TeamsPage'
 import CardsPage from './pages/CardsPage'
 import ProgressBar from './ui/ProgressBar'
 import QuickUpdateModal from './QuickUpdateModal'
@@ -41,13 +40,6 @@ const IconDash = (p) => (
     <rect x="14" y="3"  width="7" height="7" />
     <rect x="3" y="14" width="7" height="7" />
     <rect x="14" y="14" width="7" height="7" />
-  </svg>
-)
-const IconGlobe = (p) => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
-    <circle cx="12" cy="12" r="10" />
-    <line x1="2" y1="12" x2="22" y2="12" />
-    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
   </svg>
 )
 const IconCards = (p) => (
@@ -91,7 +83,7 @@ export default function Tracker({
   const [tab,       setTab]       = useLocalStorageState(
     'adrenalyn:lastTab',
     'dashboard',
-    (v) => ['dashboard','teams','cards','marketplace','profile'].includes(v)
+    (v) => ['dashboard','cards','marketplace','profile'].includes(v)
   )
   const [fType,     setFType]     = useState('all')
   const [fSt,       setFSt]       = useState('all')
@@ -459,7 +451,6 @@ export default function Tracker({
         <div className={s.navInner}>
           {[
             { id:'dashboard',   I: IconDash,     l:'Home' },
-            { id:'teams',       I: IconGlobe,    l:'Equipos' },
             { id:'cards',       I: IconCards,    l:'Cartas' },
             { id:'marketplace', I: IconExchange, l:'Marketplace', b: unread > 0 ? unread : stats.dup, dot: unread > 0 },
             { id:'profile',     I: IconUser,     l:'Perfil' },
@@ -499,29 +490,9 @@ export default function Tracker({
                 toggle={toggle}
                 setShowQuickTrade={setShowQuickTrade}
                 setTab={setTab}
+                setFTeam={setFTeam}
                 setSelTeam={setSelTeam}
                 segments={segments}
-              />
-            </motion.div>
-          )}
-
-          {tab === 'teams' && (
-            <motion.div
-              key="teams"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <TeamsPage
-                teamStats={teamStats}
-                ALL_ITEMS={ALL_ITEMS}
-                TM={TM}
-                gs={gs}
-                toggle={toggle}
-                bulkUpdate={bulkUpdate}
-                selTeam={selTeam}
-                setSelTeam={setSelTeam}
               />
             </motion.div>
           )}

@@ -3,13 +3,11 @@ import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { ALBUM_CONFIG, ALBUM_STICKER } from '../data'
 
-const SPECIAL_TYPES = new Set(['Intro', 'FIFA Museum'])
-
 export default function PublicProfile() {
   const { slug } = useParams()
   const [state, setState] = useState({ status: 'loading', profile: null, col: {} })
-  const [showFaltantes, setShowFaltantes] = useState(false)
-  const [showRepetidas, setShowRepetidas] = useState(false)
+  const [showFaltantes, setShowFaltantes] = useState(true)
+  const [showRepetidas, setShowRepetidas] = useState(true)
 
   useEffect(() => {
     let cancelled = false
@@ -33,6 +31,7 @@ export default function PublicProfile() {
           .eq('user_id', profile.user_id)
           .maybeSingle()
         const col = data?.data || {}
+        // (avatar_url se intenta leer abajo si la columna existe)
 
         if (!cancelled) setState({ status: 'ready', profile, col })
       } catch (err) {
@@ -65,44 +64,24 @@ export default function PublicProfile() {
       <div style={cardStyle}>
         {/* ── HERO ───────────────────────────────────────────────── */}
         <header style={heroStyle}>
-          <div style={{ fontSize: 64, lineHeight: 1 }}>{profile.avatar_emoji || '⚽'}</div>
+          <Avatar profile={profile} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={heroNameStyle}>{profile.display_name || 'Coleccionista'}</div>
             <div style={heroSubStyle}>
               ÁLBUM PANINI WC 2026
               {profile.trades_completed > 0 && ` · ${profile.trades_completed} trades`}
             </div>
+            <div style={heroStatsRow}>
+              <span style={heroStatsBig}>{have}</span>
+              <span style={heroStatsSep}>/</span>
+              <span style={heroStatsTot}>{total}</span>
+              <span style={heroStatsLabel}>STICKERS</span>
+            </div>
           </div>
           <div style={progressCircle(pct)}>
             <div style={pctNum}>{pct}%</div>
-            <div style={pctLbl}>{have}/{total}</div>
           </div>
         </header>
-
-        {/* ── PROGRESO POR PAÍS ──────────────────────────────────── */}
-        <section style={sectionStyle}>
-          <h2 style={sectionTitle}>Progreso por país</h2>
-          <div style={{ display: 'grid', gap: 6 }}>
-            {stats.byTeam.map(t => (
-              <TeamRow key={t.teamName} team={t} />
-            ))}
-          </div>
-        </section>
-
-        {/* ── ESPECIALES (Intro + Museum) ────────────────────────── */}
-        {stats.specials.total > 0 && (
-          <section style={sectionStyle}>
-            <h2 style={sectionTitle}>Especiales</h2>
-            <div style={{ fontSize: 13, color: '#aaa', marginBottom: 8 }}>
-              Cubierta, mascota, balón, ciudades sede, trofeo, museo histórico.
-            </div>
-            <ProgressBarLine
-              have={stats.specials.have}
-              total={stats.specials.total}
-              color="#F5C842"
-            />
-          </section>
-        )}
 
         {/* ── DESPLEGABLE: FALTANTES ─────────────────────────────── */}
         <Disclosure
@@ -132,88 +111,32 @@ export default function PublicProfile() {
   )
 }
 
+function Avatar({ profile }) {
+  if (profile.avatar_url) {
+    return (
+      <img
+        src={profile.avatar_url}
+        alt={profile.display_name || 'Avatar'}
+        style={avatarImgStyle}
+      />
+    )
+  }
+  return <div style={avatarEmojiStyle}>{profile.avatar_emoji || '⚽'}</div>
+}
+
 /* ─────────────────────────────────────────────────────────────── */
 
 function computeStats(items, col) {
-  const byTeamMap = new Map()
-  let specialHave = 0
-  let specialTotal = 0
   let totalHave = 0
   const missingItems = []
   const duplicateItems = []
-
   for (const it of items) {
     const status = col[it.id] || 'missing'
     if (status === 'have' || status === 'duplicate') totalHave++
     if (status === 'missing') missingItems.push(it)
     if (status === 'duplicate') duplicateItems.push(it)
-
-    if (SPECIAL_TYPES.has(it.type)) {
-      specialTotal++
-      if (status !== 'missing') specialHave++
-      continue
-    }
-    const key = it.team || 'Otros'
-    if (!byTeamMap.has(key)) {
-      byTeamMap.set(key, { teamName: key, flag: it.flag || '🌐', conf: it.conf || null, total: 0, have: 0 })
-    }
-    const t = byTeamMap.get(key)
-    t.total++
-    if (status !== 'missing') t.have++
   }
-
-  const byTeam = [...byTeamMap.values()].sort((a, b) => {
-    const aPct = a.total ? a.have / a.total : 0
-    const bPct = b.total ? b.have / b.total : 0
-    return bPct - aPct
-  })
-
-  return {
-    byTeam,
-    specials: { have: specialHave, total: specialTotal },
-    totalHave,
-    missingItems,
-    duplicateItems,
-  }
-}
-
-function TeamRow({ team }) {
-  const pct = team.total ? Math.round(team.have / team.total * 100) : 0
-  return (
-    <div style={teamRowStyle}>
-      <span style={{ fontSize: 18, lineHeight: 1, width: 22 }}>{team.flag}</span>
-      <span style={{
-        flex: 1, fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: '#fff',
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-      }}>{team.teamName}</span>
-      <ProgressBarLine have={team.have} total={team.total} color={pct === 100 ? '#22C55E' : '#F5C842'} compact />
-      <span style={{
-        fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, color: '#FCD34D',
-        letterSpacing: '0.04em', minWidth: 48, textAlign: 'right',
-      }}>{team.have}/{team.total}</span>
-    </div>
-  )
-}
-
-function ProgressBarLine({ have, total, color = '#F5C842', compact = false }) {
-  const pct = total ? (have / total) * 100 : 0
-  return (
-    <div style={{
-      flex: compact ? 1 : 'unset', minWidth: compact ? 80 : 0,
-      maxWidth: compact ? 200 : '100%',
-      height: compact ? 6 : 10,
-      background: 'rgba(245, 200, 70, 0.10)',
-      borderRadius: 4, overflow: 'hidden',
-    }}>
-      <div style={{
-        height: '100%',
-        width: `${pct}%`,
-        background: `linear-gradient(90deg, ${color}cc, ${color})`,
-        borderRadius: 4,
-        boxShadow: pct > 0 ? `0 0 6px ${color}aa` : 'none',
-      }} />
-    </div>
-  )
+  return { totalHave, missingItems, duplicateItems }
 }
 
 function Disclosure({ title, count, open, onToggle, children }) {
@@ -313,17 +236,47 @@ const heroSubStyle = {
   fontSize: 11.5, color: '#FCD34D', letterSpacing: '0.18em',
   textTransform: 'uppercase', fontWeight: 700, marginTop: 4,
 }
+const heroStatsRow = {
+  display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 10,
+  flexWrap: 'wrap',
+}
+const heroStatsBig = {
+  fontFamily: "'Bebas Neue', sans-serif", fontSize: 38, color: '#fff',
+  letterSpacing: '0.02em', lineHeight: 1,
+  filter: 'drop-shadow(0 0 12px rgba(245,200,70,0.40))',
+}
+const heroStatsSep = {
+  fontFamily: "'Bebas Neue', sans-serif", fontSize: 26, color: '#475569',
+  margin: '0 4px',
+}
+const heroStatsTot = {
+  fontFamily: "'Bebas Neue', sans-serif", fontSize: 26, color: '#94a3b8',
+  letterSpacing: '0.04em',
+}
+const heroStatsLabel = {
+  fontFamily: "'Bebas Neue', sans-serif", fontSize: 11, color: '#FCD34D',
+  letterSpacing: '0.24em', marginLeft: 8,
+}
+const avatarImgStyle = {
+  width: 76, height: 76, borderRadius: '50%',
+  objectFit: 'cover',
+  border: '2px solid #F5C842',
+  boxShadow: '0 0 18px rgba(245,200,70,0.35)',
+  flexShrink: 0,
+}
+const avatarEmojiStyle = {
+  fontSize: 56, lineHeight: 1, width: 76, height: 76,
+  display: 'grid', placeItems: 'center',
+  borderRadius: '50%', background: 'rgba(245, 200, 70, 0.06)',
+  border: '1px solid rgba(245,200,70,0.18)',
+  flexShrink: 0,
+}
 const sectionStyle = {
   padding: '14px 0', borderBottom: '1px solid #1f2540',
 }
 const sectionTitle = {
   fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: '0.18em',
   color: '#FCD34D', margin: '0 0 8px', textTransform: 'uppercase',
-}
-const teamRowStyle = {
-  display: 'flex', alignItems: 'center', gap: 10,
-  padding: '5px 4px', borderRadius: 3,
-  background: 'rgba(8, 12, 22, 0.45)',
 }
 const disclosureBtn = {
   display: 'flex', alignItems: 'center', gap: 8, width: '100%',
@@ -337,18 +290,19 @@ const disclosureCaret = {
   width: 14, textAlign: 'center',
 }
 const progressCircle = (pct) => ({
-  width: 72, height: 72, borderRadius: '50%',
+  width: 88, height: 88, borderRadius: '50%',
   background: `conic-gradient(#F5C842 ${pct * 3.6}deg, rgba(245, 200, 70, 0.10) 0deg)`,
   display: 'grid', placeItems: 'center', position: 'relative',
   flexShrink: 0,
+  boxShadow: '0 0 24px rgba(245, 200, 70, 0.20)',
 })
 const pctNum = {
-  fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, color: '#FCD34D',
-  letterSpacing: '0.02em', filter: 'drop-shadow(0 0 8px rgba(245,200,70,0.6))',
-}
-const pctLbl = {
-  position: 'absolute', bottom: -18, left: 0, right: 0,
-  fontSize: 9.5, color: '#888', letterSpacing: '0.08em', textAlign: 'center',
+  fontFamily: "'Bebas Neue', sans-serif", fontSize: 28, color: '#FCD34D',
+  letterSpacing: '0.02em',
+  filter: 'drop-shadow(0 0 10px rgba(245,200,70,0.7))',
+  width: 70, height: 70, borderRadius: '50%',
+  background: '#0d111c',
+  display: 'grid', placeItems: 'center',
 }
 const footerStyle = { paddingTop: 18, textAlign: 'center' }
 const ctaStyle = {

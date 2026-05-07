@@ -96,6 +96,7 @@ export default function CardsPage({
 }) {
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState(() => new Set())
+  const [showFlagFilters, setShowFlagFilters] = useState(false)
 
   const exitSelectMode = () => { setSelectMode(false); setSelected(new Set()) }
 
@@ -245,30 +246,59 @@ export default function CardsPage({
         </button>
       </div>
 
-      {/* ── Flag filters: chips por país (toggle on/off) ──────────────── */}
-      <div className={s.flagFilters} role="tablist" aria-label="Filtrar por equipo">
-        {teamFilterStats.map(t => {
-          const pct = t.total ? Math.round(t.have / t.total * 100) : 0
-          const active = fTeam === t.teamName
-          const dim = !active && fTeam !== 'all'
-          return (
-            <button
-              key={t.teamName}
-              type="button"
-              role="tab"
-              aria-pressed={active}
-              onClick={() => setFTeam(active ? 'all' : t.teamName)}
-              className={`${s.flagChip} ${active ? s.flagChipActive : ''} ${dim ? s.flagChipDim : ''}`}
-              title={`${t.teamName} · ${pct}% (${t.have}/${t.total})`}
+      {/* ── Flag filters bar (collapsible) ─────────────────────────────── */}
+      <div className={s.flagBar}>
+        <button
+          type="button"
+          onClick={() => setShowFlagFilters(v => !v)}
+          className={`${s.flagBarToggle} ${fTeam !== 'all' ? s.flagBarToggleActive : ''}`}
+          aria-expanded={showFlagFilters}
+        >
+          <span className={s.flagBarIcon} aria-hidden>🏁</span>
+          <span className={s.flagBarLabel}>
+            {fTeam !== 'all' ? `Filtrando por ${fTeam}` : 'Filtrar por país'}
+          </span>
+          {fTeam !== 'all' && (
+            <span
+              className={s.flagBarChip}
+              onClick={(e) => { e.stopPropagation(); setFTeam('all') }}
+              role="button"
+              aria-label="Quitar filtro de país"
             >
-              <span className={s.flagChipIcon} aria-hidden>{t.flag}</span>
-              <span className={s.flagChipPct}>{pct}%</span>
-              <span className={s.flagChipBar} aria-hidden>
-                <span className={s.flagChipBarFill} style={{ width: `${pct}%` }} />
-              </span>
-            </button>
-          )
-        })}
+              <IconCross /> limpiar
+            </span>
+          )}
+          <span className={`${s.flagBarChevron} ${showFlagFilters ? s.flagBarChevronOpen : ''}`} aria-hidden>
+            <IconChevron />
+          </span>
+        </button>
+
+        {showFlagFilters && (
+          <div className={s.flagFilters} role="tablist" aria-label="Filtrar por equipo">
+            {teamFilterStats.map(t => {
+              const pct = t.total ? Math.round(t.have / t.total * 100) : 0
+              const active = fTeam === t.teamName
+              const dim = !active && fTeam !== 'all'
+              return (
+                <button
+                  key={t.teamName}
+                  type="button"
+                  role="tab"
+                  aria-pressed={active}
+                  onClick={() => setFTeam(active ? 'all' : t.teamName)}
+                  className={`${s.flagChip} ${active ? s.flagChipActive : ''} ${dim ? s.flagChipDim : ''}`}
+                  title={`${t.teamName} · ${pct}% (${t.have}/${t.total})`}
+                >
+                  <span className={s.flagChipIcon} aria-hidden>{t.flag}</span>
+                  <span className={s.flagChipPct}>{pct}%</span>
+                  <span className={s.flagChipBar} aria-hidden>
+                    <span className={s.flagChipBarFill} style={{ width: `${pct}%` }} />
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── Active filter pills (lower-third style) ────────────────────── */}

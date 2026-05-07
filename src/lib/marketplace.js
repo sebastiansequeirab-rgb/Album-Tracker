@@ -72,6 +72,7 @@ export async function saveMyProfile(userId, profile) {
     user_id: userId,
     display_name: profile.display_name?.trim() || 'Coleccionista',
     avatar_emoji: profile.avatar_emoji || '⚽',
+    avatar_url: profile.avatar_url || null,
     contact: profile.contact || {},
     marketplace_visible: !!profile.marketplace_visible,
     meeting_points: Array.isArray(profile.meeting_points) ? profile.meeting_points : [],
@@ -85,6 +86,20 @@ export async function saveMyProfile(userId, profile) {
   return data
 }
 
+// Sube una imagen de avatar al bucket "avatars/<userId>/<timestamp>.<ext>" y
+// devuelve la URL pública. Reemplaza cualquier avatar previo del usuario.
+export async function uploadAvatar(userId, file) {
+  if (!file) throw new Error('Sin archivo')
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().slice(0, 5)
+  const path = `${userId}/${Date.now()}.${ext}`
+  const { error: upErr } = await supabase.storage
+    .from('avatars')
+    .upload(path, file, { upsert: true, cacheControl: '3600', contentType: file.type })
+  if (upErr) throw upErr
+  const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path)
+  return pub?.publicUrl || null
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Discovery
 // ─────────────────────────────────────────────────────────────────────────────
@@ -94,7 +109,7 @@ export async function loadVisibleProfiles(currentUserId) {
   try {
     const { data, error } = await supabase
       .from('adrenalyn_profiles')
-      .select('user_id, display_name, avatar_emoji, contact, marketplace_visible, meeting_points, updated_at, slug, trades_completed')
+      .select('user_id, display_name, avatar_emoji, avatar_url, contact, marketplace_visible, meeting_points, updated_at, slug, trades_completed')
       .eq('marketplace_visible', true)
       .neq('user_id', currentUserId)
       .order('updated_at', { ascending: false })
@@ -119,7 +134,7 @@ export async function loadProfile(userId) {
   try {
     const { data, error } = await supabase
       .from('adrenalyn_profiles')
-      .select('user_id, display_name, avatar_emoji, contact, marketplace_visible, meeting_points, slug, trades_completed')
+      .select('user_id, display_name, avatar_emoji, avatar_url, contact, marketplace_visible, meeting_points, slug, trades_completed')
       .eq('user_id', userId)
       .maybeSingle()
     if (error) throw error

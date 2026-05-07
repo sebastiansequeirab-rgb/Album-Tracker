@@ -51,6 +51,7 @@ export default function DashboardPage({
   toggle,
   setShowQuickTrade,
   setTab,
+  setFTeam,
   setSelTeam,
   segments = [],
 }) {
@@ -100,7 +101,7 @@ export default function DashboardPage({
           <h3 className={s.panelTitle}>Próximos a Completar</h3>
           <span className={s.panelRule} aria-hidden="true" />
           {upcoming.length > 0 && (
-            <button type="button" onClick={() => setTab('teams')} className={s.panelLink}>
+            <button type="button" onClick={() => { setFTeam?.('all'); setTab('cards') }} className={s.panelLink}>
               Ver todos →
             </button>
           )}
@@ -126,7 +127,7 @@ export default function DashboardPage({
                   key={t.id}
                   variants={itemVariants}
                   type="button"
-                  onClick={() => { setTab('teams'); setSelTeam(t.id) }}
+                  onClick={() => { setFTeam?.(t.name); setTab('cards') }}
                   className={s.upcomingRow}
                 >
                   <span className={s.upcomingRank}>{rank}</span>
@@ -219,7 +220,7 @@ export default function DashboardPage({
         <header className={s.sectionHead}>
           <h3 className={s.sectionTitle}>Equipos con más Faltantes</h3>
           <span className={s.sectionRule} aria-hidden="true" />
-          <button type="button" onClick={() => setTab('teams')} className={s.sectionLink}>
+          <button type="button" onClick={() => { setFTeam?.('all'); setTab('cards') }} className={s.sectionLink}>
             Ver todos →
           </button>
         </header>
@@ -230,7 +231,7 @@ export default function DashboardPage({
               team={{ ...t, confederation: t.conf }}
               have={t.have}
               total={t.tot}
-              onClick={() => { setTab('teams'); setSelTeam(t.id) }}
+              onClick={() => { setFTeam?.(t.name); setTab('cards') }}
             />
           ))}
         </div>

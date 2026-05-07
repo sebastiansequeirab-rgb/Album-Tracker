@@ -846,3 +846,80 @@
 @media (prefers-reduced-motion: reduce) {
   .wrap, .saveBtn::before { animation: none !important; }
 }
+
+/* ===== Avatar uploader ===== */
+.avatarUploader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  background: rgba(8, 12, 22, 0.45);
+  border: 1px solid rgba(245, 200, 70, 0.10);
+  border-left: 2px solid var(--gold-2, #F5C842);
+  border-radius: 3px;
+}
+.avatarPreview {
+  width: 76px; height: 76px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(245, 200, 70, 0.06);
+  border: 1px solid rgba(245, 200, 70, 0.18);
+  flex-shrink: 0;
+  overflow: hidden;
+  box-shadow: 0 0 14px rgba(245, 200, 70, 0.16);
+}
+.avatarPreviewImg {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.avatarPreviewEmoji { font-size: 44px; line-height: 1; }
+.avatarUploaderBody {
+  display: flex; flex-direction: column;
+  gap: 6px; flex: 1; min-width: 0;
+}
+.avatarUploadBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(180deg, #FFE9A8, #F5C842);
+  color: #1a1305;
+  border: none;
+  border-radius: 3px;
+  padding: 8px 16px;
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  cursor: pointer;
+  text-transform: uppercase;
+  align-self: flex-start;
+}
+.avatarUploadBtn:hover { filter: brightness(1.08); }
+.avatarRemoveBtn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: var(--text-muted);
+  border-radius: 3px;
+  padding: 7px 14px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  cursor: pointer;
+  align-self: flex-start;
+}
+.avatarRemoveBtn:hover { color: #fff; border-color: rgba(255,255,255,0.22); }
+.avatarHint {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.avatarErr {
+  font-size: 12px;
+  color: #F87171;
+}
+@media (max-width: 540px) {
+  .avatarUploader { gap: 10px; padding: 10px; }
+  .avatarPreview { width: 64px; height: 64px; }
+  .avatarPreviewEmoji { font-size: 36px; }
+}

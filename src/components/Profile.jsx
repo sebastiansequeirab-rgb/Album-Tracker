@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   EMOJI_AVATARS, loadMyProfile, saveMyProfile, deriveDisplayName,
-  MEETING_POINT_TYPES, newMeetingPoint, loadMyTradeHistory,
+  MEETING_POINT_TYPES, newMeetingPoint, loadMyTradeHistory, uploadAvatar,
 } from '../lib/marketplace'
 import { activateAlbum, deactivateAlbum } from '../lib/album'
 import { ALBUM_ADRENALYN, ALBUM_STICKER } from '../data'
@@ -213,7 +213,16 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         </div>
 
         <div className={s.field}>
-          <FieldLabel num="02">Avatar</FieldLabel>
+          <FieldLabel num="02">Foto de perfil</FieldLabel>
+          <AvatarUploader
+            session={session}
+            profile={profile}
+            onChange={(url) => upd('avatar_url', url)}
+          />
+        </div>
+
+        <div className={s.field}>
+          <FieldLabel num="03">Avatar emoji (alternativa)</FieldLabel>
           <div className={s.avatarGrid}>
             {EMOJI_AVATARS.map(em => {
               const active = profile.avatar_emoji === em
@@ -480,6 +489,64 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         </div>
       )}
 
+    </div>
+  )
+}
+
+function AvatarUploader({ session, profile, onChange }) {
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+
+  const onFile = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // permite re-subir el mismo archivo
+    if (!file) return
+    if (!/^image\//.test(file.type)) {
+      setErr('Tiene que ser una imagen.'); return
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setErr('Máximo 4 MB.'); return
+    }
+    setErr(null); setBusy(true)
+    try {
+      const url = await uploadAvatar(session.user.id, file)
+      onChange(url)
+    } catch (e2) {
+      setErr(e2?.message || 'No se pudo subir la imagen.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className={s.avatarUploader}>
+      <div className={s.avatarPreview}>
+        {profile.avatar_url
+          ? <img src={profile.avatar_url} alt="" className={s.avatarPreviewImg} />
+          : <span className={s.avatarPreviewEmoji}>{profile.avatar_emoji || '⚽'}</span>}
+      </div>
+      <div className={s.avatarUploaderBody}>
+        <label className={s.avatarUploadBtn}>
+          <input type="file" accept="image/*" onChange={onFile} hidden disabled={busy} />
+          {busy ? 'Subiendo…' : (profile.avatar_url ? 'Cambiar foto' : 'Subir foto')}
+        </label>
+        {profile.avatar_url && (
+          <button
+            type="button"
+            className={s.avatarRemoveBtn}
+            onClick={() => onChange(null)}
+            disabled={busy}
+          >
+            Quitar
+          </button>
+        )}
+        {err && <div className={s.avatarErr}>{err}</div>}
+        {!err && (
+          <div className={s.avatarHint}>
+            Imagen real (jpg/png/webp), máximo 4 MB. Se ve en tu perfil público y en marketplace.
+          </div>
+        )}
+      </div>
     </div>
   )
 }
