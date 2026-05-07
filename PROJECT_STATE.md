@@ -1,7 +1,7 @@
 # Adrenalyn Tracker — Estado actual del proyecto
 
 > Brief para una sesión nueva. Lee esto antes de tocar nada.
-> Última actualización: 2026-05-05 (iOS polish post visual rebuild completo).
+> Última actualización: 2026-05-07 (Marketplace v2 + perfil público + avatares + WA share + iOS polish).
 
 ---
 
@@ -9,9 +9,9 @@
 
 App **React + Vite + Supabase** para seguimiento personal de dos álbumes:
 1. **Adrenalyn XL FIFA World Cup 2026** (633 cartas)
-2. **Álbum de Stickers Panini** (980 stickers)
+2. **Álbum de Stickers Panini WC 2026** (980 stickers)
 
-Cada usuario marca cartas como `missing → have → duplicate` y participa en un **marketplace social** con chat realtime, listings públicas, trade requests y favoritos.
+Cada usuario marca cartas como `missing → have → duplicate` y participa en un **marketplace social** con chat realtime, listings públicas, trade requests, favoritos, link público de perfil compartible, mensaje WhatsApp formateado, y avatares con foto real.
 
 - **Producción**: https://album-tracker-three.vercel.app ✅
 - **Repo**: https://github.com/sebastiansequeirab-rgb/Album-Tracker (`main`, auto-deploy Vercel ~30s)
@@ -24,11 +24,13 @@ Cada usuario marca cartas como `missing → have → duplicate` y participa en u
 
 | Capa | Tecnología |
 |---|---|
-| Frontend | React 18 + Vite |
+| Frontend | React 18 + Vite + React Router v6 |
 | Estilos | CSS Modules + CSS Variables (tokens.css) |
 | Animaciones | Framer Motion v12 |
 | Fonts | Bebas Neue (display) + DM Sans (body), Google Fonts |
+| PDF | jsPDF (export Mis Repetidas / Faltantes) |
 | Backend | Supabase (compartido con Skolar — ver abajo) |
+| Storage | Supabase Storage bucket `avatars` (público) |
 | Deploy | Vercel (auto en push a `main`) |
 
 ---
@@ -45,21 +47,32 @@ Cada usuario marca cartas como `missing → have → duplicate` y participa en u
 | Tabla | Descripción |
 |---|---|
 | `adrenalyn_collections` | Colección Adrenalyn XL. `data jsonb { card_id: 'missing'|'have'|'duplicate' }` |
-| `sticker_collections` | Equivalente Panini (sin prefijo, legacy) |
-| `adrenalyn_profiles` | Identidad pública: nombre, avatar_emoji, contactos, meeting_points, marketplace_visible |
-| `adrenalyn_favorites` | Relación unilateral `(user_id, target_id)` |
-| `adrenalyn_messages` | Chat 1:1 con realtime (en publication `supabase_realtime`) |
-| `adrenalyn_trade_requests` | Solicitudes de intercambio estructuradas |
-| `adrenalyn_public_listings` | Ofertas públicas tipo classified |
+| `sticker_collections` | Equivalente Panini (sin prefijo, legacy). |
+| `adrenalyn_profiles` | Identidad pública: `display_name`, `avatar_emoji`, **`avatar_url`** (Storage), `contact`, `meeting_points`, `marketplace_visible` (default **true**), `slug` (unique, backfilleado), `trades_completed`. |
+| `adrenalyn_favorites` | Relación unilateral `(user_id, target_id)`. |
+| `adrenalyn_messages` | Chat 1:1 con realtime (en publication `supabase_realtime`). |
+| `adrenalyn_trade_requests` | Solicitudes de intercambio. Status: `pending`/`accepted`/`declined`/`cancelled`/`completed`. Trigger `adrenalyn_trade_status_complete` incrementa `trades_completed` en ambos perfiles cuando pasa a `completed`. |
+| `adrenalyn_public_listings` | Ofertas públicas tipo classified. Status: `active`/`closed`/`completed`. `completed_at timestamptz`. |
+| `adrenalyn_trade_history` | Historial de cambios concretados (privado). RLS: `auth.uid()=user_id`. |
 
 ### RLS crítica (NO simplificar)
-- `adrenalyn_collections.SELECT`: `auth.uid() = user_id OR (perfil del owner marketplace_visible=true)` — el OR permite matching del marketplace.
+- `adrenalyn_collections.SELECT` (auth): `auth.uid()=user_id OR (perfil del owner marketplace_visible=true)`.
+- `adrenalyn_collections.SELECT` (anon): `marketplace_visible=true` del owner.
+- `sticker_collections.SELECT` (anon): idem.
+- `adrenalyn_profiles.SELECT` (anon): `marketplace_visible=true` (necesario para `/u/:slug`).
 - `adrenalyn_messages.SELECT`: solo `sender_id` o `recipient_id`.
-- Policies completas en Supabase dashboard.
+- `adrenalyn_trade_history.SELECT/INSERT`: solo own user_id.
+
+### Storage
+- Bucket `avatars` (público). RLS: usuarios suben/actualizan solo su carpeta `avatars/<userId>/...`.
 
 ### Auth
 - Email + password. **Email confirmation desactivada** (intencional — Site URL apunta a Skolar).
 - Si se reactiva: pasar `options.emailRedirectTo: 'https://album-tracker-three.vercel.app'` en signUp. NO cambiar Site URL global.
+
+### Migraciones aplicadas
+- `migrations/2026-05-06-public-profile-and-trade-history.sql` (slug, trades_completed, trade_history, completed_at, RLS anon, trigger).
+- `2026-05-07` `avatar_url text` en profiles + UPDATE masivo `marketplace_visible=true` + ALTER DEFAULT true.
 
 ---
 
@@ -68,37 +81,56 @@ Cada usuario marca cartas como `missing → have → duplicate` y participa en u
 ### `Tracker.jsx`
 1. **`upsert` siempre con `{ onConflict: 'user_id' }`** — sin esto, 409 en cada save.
 2. **`.maybeSingle()` en load** — distingue "no hay fila" de "error real".
-3. **Save coalescing con `saveRef`** — garantiza last-write-wins sin races.
-4. **`handleAuthError()`** → refreshSession → si falla → signOut. Evita loops.
+3. **Save coalescing con `saveRef`** — last-write-wins sin races.
+4. **`handleAuthError()`** → refreshSession → si falla → signOut.
+5. **`useLocalStorageState('adrenalyn:lastTab', 'dashboard', validator)`** persiste el tab activo.
+6. **`?openUser=<userId>`** en query string al abrir → tab Marketplace + drill-down auto + URL limpia.
 
 ### `Marketplace.jsx`
-- `TradeRequestModal` y `CreatePublicListingModal` se **montan en el render principal**, no dentro del drill-down. Si se mueven adentro, se desmontarían antes de completar `onSend`.
-- Z-index modales: `1100` (header=100, bottom nav mobile=100, FAB=90).
+- **Sub-tabs simplificados**: `Ofertas` / `Buscar` / `Favoritos`. Mensajes y Trades viven en el tab Chat top-level.
+- Prop `forceSub='messages'` → activa modo chat (toggle Mensajes/Trades).
+- Prop `initialOpenUserId` → dispara `onSelectUser` cuando termina el load.
+- Prop `onGoToChat` → callback al Tracker para redirigir al tab Chat tras enviar/aceptar trade.
+- `TradeRequestModal` y `CreatePublicListingModal` se montan en el render principal, no dentro del drill-down.
+- Z-index modales: `1100`.
 
 ### `ChatPanel.jsx`
 - Realtime callback envuelto en try/catch con validación `if (!newMsg?.sender_id) return`.
-- Lista de hilos siempre visible (nunca pantalla negra).
+- Lista de hilos siempre visible.
 - `useLayoutEffect` + `rootRef.scrollIntoView` para centering al cambiar hilo.
+- Botón **WhatsApp** en threadHead si `partnerProfile.contact.whatsapp` existe.
 
 ### `lib/marketplace.js`
 - `subscribeToInbox` retorna unsub function. **Siempre wrap callback en try/catch**.
+- `loadVisibleProfiles` / `loadProfile` defensivos: `select` con `avatar_url`/`slug`/`trades_completed` y fallback al schema viejo si la columna no existe.
+- `uploadAvatar(userId, file)` → sube a `avatars/<userId>/<ts>.<ext>`, devuelve URL pública.
+- `recordTradeHistory({...})` insert en `adrenalyn_trade_history`.
+
+### `lib/shareMessage.js`
+- `buildShareMessage({profile, items, col, ...})` genera mensaje WhatsApp con caja ASCII gold, barra de progreso ▰▰▱▱, top 6 países por sección con tope de 14 stickers c/u, link al perfil, invitación final.
+- `copyShareMessage(text)` y `whatsappHref(text)` helpers.
+
+### `components/ui/Avatar.jsx`
+- Renderiza `<img>` si `profile.avatar_url`, sino emoji. Acepta `size` y `className`. Fallback `'👤'`.
+- Usado en: Marketplace drill-down, search/favoritos cards, ListingBanner, TradeRow, ChatPanel header + lista, PublicProfile (variante propia).
+
+### **`React imports**` (lección aprendida)
+- ⚠️ Cuando agregás un componente helper en un archivo existente, **chequear que TODOS los hooks que usa estén en el `import { ... } from 'react'`**. Bug `ReferenceError: useMemo is not defined` rompió Profile en prod por olvidar `useMemo` en el import.
 
 ---
 
 ## Diseño — "Broadcast × Vault"
 
-Visual rebuild completo completado (commits 15-23 + iOS polish commit).
-
 ### Design system
-- **Paleta**: dark `#06080F`, cards translúcidas con backdrop-blur, accent gold `#F5C842` / `#FCD34D`
-- **Fuentes**: Bebas Neue (números, títulos, etiquetas uppercase) + DM Sans (body, labels)
+- **Paleta**: dark `#06080F`, cards translúcidas con backdrop-blur, accent gold `#F5C842` / `#FCD34D`.
+- **Fuentes**: Bebas Neue (números, títulos, etiquetas uppercase) + DM Sans (body, labels).
 - **Elementos clave**:
-  - Chamfered corners TR+BL via `clip-path: polygon(0 0, calc(100%-Npx) 0, 100% Npx, 100% 100%, Npx 100%, 0 calc(100%-Npx))`
-  - Gold left bar: `border-left: 2px solid <color>` en inputs/cards/panels
-  - Section headers: `<span num>NN</span> <h3>TITLE</h3> <span rule />`
-  - CTAs: `linear-gradient(180deg, #FFE9A8 0%, #F5C842 30%, #E6A817 70%, #C88A00 100%)`
-  - 4 corner brackets con shimmer stagger animation en modales/auth
-  - `color-mix(in srgb, ...)` para colores derivados
+  - Chamfered corners TR+BL via `clip-path: polygon(0 0, calc(100%-Npx) 0, 100% Npx, 100% 100%, Npx 100%, 0 calc(100%-Npx))`.
+  - Gold left bar: `border-left: 2px solid <color>` en inputs/cards/panels.
+  - CTAs: `linear-gradient(180deg, #FFE9A8 0%, #F5C842 30%, #E6A817 70%, #C88A00 100%)`.
+  - 4 corner brackets con shimmer stagger animation en modales/auth.
+  - WhatsApp btn: `linear-gradient(180deg, #25D366 0%, #128C7E 100%)`.
+  - `color-mix(in srgb, ...)` para colores derivados.
 
 ### Tokens CSS (en `tokens.css` — NO tocar)
 ```css
@@ -114,10 +146,11 @@ Visual rebuild completo completado (commits 15-23 + iOS polish commit).
 ```
 
 ### Responsive
-- **Mac ≥1440px**: grids 4-6 columnas, max-width 1400px centrado, drawers 420px+
-- **iPhone 375-414px**: bottom nav fija, modales bottom-sheet (border-radius 16px top), FAB circular, `100dvh`, safe-area env vars, `font-size: 16px` en inputs (no iOS zoom)
-- `@media (hover: none)` deshabilita hover states en touch
-- `@media (prefers-reduced-motion)` deshabilita animaciones
+- **Mac ≥1100px**: layouts amplios, slidebar lateral desktop en CardsPage, banner Ofertas en 2 cols.
+- **iOS / Mobile ≤540px**: pasada de polish dedicada — paneles 24→14 padding, tipografía reducida, bottom nav de 5 tabs cabe sin scroll, FAB compacto sin label, cards de sticker más bajas (`min-height: 86px`), Profile con scroll dramáticamente reducido.
+- `@media (hover: none)` deshabilita hover states en touch.
+- `@media (prefers-reduced-motion)` deshabilita animaciones.
+- Filtros NO sticky en mobile (fix iOS pegados).
 
 ---
 
@@ -125,67 +158,109 @@ Visual rebuild completo completado (commits 15-23 + iOS polish commit).
 
 ```
 src/
-├── App.jsx                      auth gate
-├── main.jsx
+├── App.jsx                      Routes: /u/:slug → PublicProfile · /* → MainApp
+├── main.jsx                     BrowserRouter wrapper
 ├── supabaseClient.js
-├── data/                        ALBUM_CONFIG, builders (buildInitialState, buildItems)
-├── styles/
-│   ├── tokens.css               CSS vars (NO tocar)
-│   └── global.css               reset, fonts
+├── data/                        ALBUM_CONFIG, builders. ALBUM_STICKER usa numeración LOCAL 1-20 por equipo.
+├── styles/tokens.css + global.css
 ├── lib/
-│   ├── album.js                 loadAlbum, activar/desactivar álbumes
-│   └── marketplace.js           profiles, favoritos, messages, trades, listings
+│   ├── album.js                 loadAlbum, activate/deactivate
+│   ├── marketplace.js           profiles, favoritos, messages, trades, listings, trade_history, uploadAvatar
+│   ├── shareMessage.js          buildShareMessage / copyShareMessage / whatsappHref
+│   ├── exportPdf.js             jsPDF — exportListPdf (Mis Repetidas/Faltantes)
+│   └── useLocalStorageState.js  hook genérico
 └── components/
-    ├── Auth.jsx + .module.css                    login/registro con BG image
-    ├── AlbumOnboarding.jsx + .module.css         primer uso: elegir álbum
-    ├── AlbumSwitcher.jsx + .module.css           toggle Adrenalyn ↔ Stickers
-    ├── Flag.jsx                                  SVG flags de flagcdn.com
-    ├── Tracker.jsx + .module.css                 shell principal: header, nav, 5 tabs
-    ├── Marketplace.jsx + .module.css             sub-tabs, drill-down, listings
-    ├── Profile.jsx + .module.css                 identidad + meeting points
-    ├── TradeRequestModal.jsx + .module.css
-    ├── CreatePublicListingModal.jsx + .module.css
-    ├── ChatPanel.jsx + .module.css               lista hilos + hilo activo + realtime
+    ├── Auth.jsx
+    ├── AlbumOnboarding.jsx
+    ├── AlbumSwitcher.jsx
+    ├── Tracker.jsx              shell: header con link público full-width, bottom nav 5 tabs, FAB Registrar
+    ├── PublicProfile.jsx        ruta /u/:slug — CTA "HACER TRADE" arriba, hero compacto, disclosures
+    ├── Marketplace.jsx          sub-tabs: Ofertas/Buscar/Favoritos. Drill-down con TypeDonut.
+    ├── Profile.jsx              IDENTIDAD / CONTACTOS / VISIBILIDAD + AvatarUploader + PublicLinkBlock + MyListsSection + TradeHistorySection
+    ├── ChatPanel.jsx            chat 1:1 con realtime + botón WhatsApp en header
+    ├── TradeRequestModal.jsx    permite ofrecer cualquier carta own (have/duplicate)
+    ├── CreatePublicListingModal.jsx
+    ├── QuickUpdateModal.jsx     "Registrar Movimiento" — search por nombre/equipo/num + paginación
     ├── pages/
-    │   ├── DashboardPage.jsx + .module.css       stats, por tipo, próximos, faltantes
-    │   ├── TeamsPage.jsx + .module.css           grid selecciones, drawer por equipo
-    │   └── CardsPage.jsx + .module.css           catálogo con filtros y bulk actions
+    │   ├── DashboardPage.jsx + .module.css     Home: TypeDonut + CTA "Registrar Movimiento" + Próximos + Equipos faltantes
+    │   ├── CardsPage.jsx + .module.css         catálogo agrupado por equipo + slidebar desktop + flag chips collapsible
+    │   └── TeamsPage.jsx                       LEGACY — ya no se monta. Tab Equipos eliminado.
     └── ui/
-        ├── StatCard.jsx + .module.css            stat card grande Bebas
-        ├── TeamCard.jsx + .module.css            card selección con bandera
-        ├── TeamDrawer.jsx + .module.css          drawer lateral/bottom con cartas
-        ├── StickerCard.jsx + .module.css         card individual de carta/sticker
-        ├── SegmentedProgress.jsx + .module.css   barra progreso segmentada (topbar)
-        ├── ProgressBar.jsx + .module.css         barra simple para cards/rows
-        ├── BulkUpdateModal.jsx + .module.css     actualizar N cartas por número
-        ├── ConfBadge.jsx                         badge confederación con color
-        └── Flag.jsx                              (alias)
+        ├── Avatar.jsx                 imagen real o emoji
+        ├── StatCard.jsx
+        ├── TeamCard.jsx
+        ├── TeamDrawer.jsx
+        ├── StickerCard.jsx + .module.css       compacta (min-height 92px desktop, 86 mobile)
+        ├── SegmentedProgress.jsx
+        ├── ProgressBar.jsx
+        ├── BulkUpdateModal.jsx                 LEGACY — ya no se monta.
+        ├── ConfBadge.jsx
+        ├── Flag.jsx
+        └── TypeDonut.jsx + .module.css         donut SVG segmentado por tipo
 ```
 
 ---
 
-## Login (Auth.jsx)
-- BG image: `public/login-bg.jpg` (foto del usuario con packs WC2026 + features bar baked-in)
-- Card central chamfered con hero "WORLD CUP 2026" + subtitulo + form
-- Recordarme + ¿Olvidaste? en la misma fila
-- Mobile: `min-height: 100dvh`, `padding-bottom` calculado para no tapar la features bar del BG
+## Tabs (5)
+
+1. **Home** — TypeDonut con leyenda + barras gold con glow + animación al cargar; CTA "Registrar Movimiento"; "Próximos a Completar" + "Equipos con más Faltantes" (links scrollean a Cartas con filtro de país).
+2. **Cartas** — search bar + selección múltiple. Status pills (Tengo/Repetidas/Faltan) clickeables = filtro. Banner desplegable "Filtrar por país" con chips de banderas (toggle on/off). Cards agrupadas por país con header Vault. Slidebar lateral en desktop ≥1100px.
+3. **Mercado** — sub-tabs Ofertas/Buscar/Favoritos. Drill-down con TypeDonut + libertad para ofrecer haves. Filtros Ofertas: search + dropdown equipo + #1-20.
+4. **Chat** — monta Marketplace con `forceSub='messages'` → toggle Mensajes/Trades en sub-nav. ChatPanel realtime + botón WhatsApp.
+5. **Perfil** — IDENTIDAD (display_name, AvatarUploader con foto real + emoji alternativo). CONTACTOS (IG/WA/email). VISIBILIDAD (toggle marketplace_visible default true; PublicLinkBlock con copy mensaje WA + botón verde WhatsApp directo). PUNTOS DE ENCUENTRO. **MIS LISTAS** (toggle Repetidas/Faltantes + exportar PDF). **MIS TRADES** (historial de `trade_history`). MIS ÁLBUMES (toggle activate/deactivate).
 
 ---
 
-## Tabs implementados
+## Numeración del sticker album (Panini WC 2026)
 
-1. **Dashboard** — 4 StatCards Bebas (total/tengo/faltan/reps), CTA bulk update, "Por Tipo" con barras de progreso, "Próximos a Completar" (ranking con ratio have/total), "Equipos con más faltantes"
-2. **Equipos** — grid por confederación con ProgressBar por equipo, drawer de cartas al hacer click
-3. **Cartas** — catálogo filtrable por status/tipo/equipo/búsqueda, bulk actions (sticky bar), selección múltiple
-4. **Marketplace** — sub-tabs: Todos / Favoritos / Mensajes / Bandeja / Mi lista
-5. **Perfil** — display_name, avatar emoji (grid de 16), IG/WhatsApp/email, meeting points, mis álbumes
+⚠️ **NO es global.** Cada sección tiene su propia numeración:
+- **Intro**: #00-08 (9 stickers).
+- **Equipos**: 48 × 20 stickers, num **LOCAL 1-20** por bloque.
+  - #1 → Escudo (foil) `XXX-C`
+  - #2-12 → 11 jugadores `XXX-P01..P11`
+  - #13 → Foto plantel `XXX-G`
+  - #14-20 → 7 jugadores `XXX-P12..P18`
+- **FIFA Museum**: #1-11 (al final del álbum).
+
+IDs estables — los nombres de jugadores son placeholders genéricos ("Jugador 1", etc.). El usuario reemplaza con la lista real cuando reciba el álbum oficial.
+
+Para Adrenalyn XL la numeración global tradicional 1-633 sigue intacta.
+
+---
+
+## Mensaje WhatsApp (`shareMessage.js`)
+
+Formato:
+```
+╔═══════════════════════════╗
+  ⚽  ÁLBUM PANINI WC 2026
+╚═══════════════════════════╝
+
+👤  *Sebastian*
+▰▰▱▱▱▱▱▱▱▱▱▱▱▱  6%
+✅ 58/980 stickers   🔄 8 repetidas   ❌ 914 faltantes
+
+🔗 *Mi perfil con la lista completa:*
+https://album-tracker-three.vercel.app/u/sebastian-xxxxxx
+
+━━━ ❌ ME FALTAN  (914) ━━━
+🇩🇪  *Alemania*  (20)
+     #1 · #2 · #3 · #4 · …+6
+🇪🇸 🇮🇹 🇫🇷 🇧🇷 🇦🇷  +832 en 42 países más → mira mi perfil
+
+━━━━━━━━━━━━━━━━━━━━━━━
+¿Cambiamos? 🤝
+Sumate al tracker y armamos el álbum:
+https://album-tracker-three.vercel.app
+```
+
+Botón **Copiar** en banner del header Y en Perfil ahora copia este mensaje (no solo URL). Botón verde **WhatsApp** abre `wa.me/?text=` con el mensaje precargado.
 
 ---
 
 ## Cuenta de testing
-
-- **Diego**: `Diegobuenano0808@gmail.com` / `Diego04` — tiene 74 missing seedeados
-- Útil para testear marketplace con 2 sesiones (Sebastian + Diego)
+- **Diego**: `Diegobuenano0808@gmail.com` / `Diego04`
+- Útil para testear marketplace con 2 sesiones (Sebastian + Diego).
 
 ---
 
@@ -193,7 +268,7 @@ src/
 
 ```bash
 cd "/Users/sebastiansequeira/Documents/adrenalyn-tracker 2"
-npm run dev       # localhost:5180
+npm run dev       # localhost:5173 (puede saltar a 5174/5175 si está ocupado)
 npm run build     # 0 errores antes de cualquier commit
 git push          # auto-deploy Vercel ~30s
 ```
@@ -205,26 +280,45 @@ git push          # auto-deploy Vercel ~30s
 ## Smoke test backend
 
 ```sql
--- Verificar tablas
-SELECT tablename FROM pg_tables
-WHERE schemaname='public' AND tablename LIKE 'adrenalyn_%';
--- Esperado: collections, profiles, favorites, messages, trade_requests, public_listings
-
--- Verificar realtime
-SELECT tablename FROM pg_publication_tables
-WHERE pubname='supabase_realtime' AND tablename='adrenalyn_messages';
+SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename LIKE 'adrenalyn_%';
+SELECT count(*) FILTER (WHERE marketplace_visible) AS visible, count(*) AS total FROM adrenalyn_profiles;
+SELECT count(*) FROM adrenalyn_trade_history;
+SELECT id, name, public FROM storage.buckets WHERE id='avatars';
 ```
 
 ---
 
 ## Pendientes / ideas registradas
 
-### Housekeeping menor
-- Rotar `service_role` secret (estuvo brevemente en Vercel el 2026-05-01)
-- `adrenalyn.set_updated_at` con search_path mutable (warning advisor menor, no bloqueante)
+### Housekeeping
+- Rotar `service_role` secret (estuvo brevemente en Vercel el 2026-05-01).
+- `adrenalyn.set_updated_at` con search_path mutable (warning advisor menor, no bloqueante).
+- Bundle JS >1.1MB — considerar code-split de jspdf y framer-motion en chunks separados (`build.rollupOptions.output.manualChunks`).
 
-### Marketplace v2.x (no implementado)
-- Tracking de trades cerrados (confirmar intercambio completado)
-- Botón "Reportar usuario"
-- Friends-only listings (solo para favoritos)
-- Notificaciones push del navegador
+### UX próximas iteraciones
+- Profile Picture: agregar crop tool al subir avatar (hoy se sube tal cual).
+- Mensaje WhatsApp: opción de elegir "solo faltantes" / "solo repetidas" / "ambas" al copiar.
+- Search del Marketplace: agregar filtro "online ahora" o "activo en últimos 7 días".
+- Contar "stickers que TÚ podés dar" en cada user card del search/favoritos (ya existe en `iHaveTheyWant`, falta surface en search view).
+- Notificaciones push del navegador para nuevos mensajes / trades.
+- Trade history en perfil ajeno (no solo contador `trades_completed`).
+
+### Bugs conocidos / lecciones
+- ⚠️ **SIEMPRE chequear imports de hooks de React** al agregar componentes nuevos en archivos existentes. El bug "useMemo is not defined" en `19c8726` rompió Profile en prod.
+- Vercel deploy a veces sirve bundle JS nuevo con HTML viejo cacheado durante 30-60s post-push. Hard refresh (Cmd+Shift+R) lo arregla.
+
+---
+
+## Commits recientes
+```
+19c8726 fix(profile): import useMemo + dedupe ALBUM imports + guards defensivos
+b075f91 feat(ios-polish): mercado simplificado + perfil compacto + WA top
+3fbd878 feat: visible default + tab Chat + open user + WA share + iOS polish
+f2f5d0d feat: 4 tabs + flag filter collapsible + perfil público minimal + avatar real
+217a2aa feat(cards/banner): banderas como filtros + headers Vault + link full-width
+3751908 feat(cards/marketplace/profile): mejoras visuales + UX correcciones
+f44881f feat(quick-update): rename to Registrar Movimiento + buscador por nombre
+b39c119 fix(stickers): numeración local por equipo (no global)
+317122b fix(stickers): numeración oficial Panini WC 2026
+1f43f99 feat: marketplace v2 — trades, perfil público, PDF, Quick Update
+```
