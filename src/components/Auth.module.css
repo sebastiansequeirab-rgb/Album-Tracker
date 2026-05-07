@@ -35,8 +35,10 @@
   background-position: 50% 0%;
   background-repeat: no-repeat;
 
-  padding-left:  max(var(--sp-5), env(safe-area-inset-left, 0px));
-  padding-right: max(var(--sp-5), env(safe-area-inset-right, 0px));
+  /* 9% inset matches the bg's gold frame outline → form vive DENTRO del frame.
+     Ajustá en breakpoints chicos donde el bg se cropea distinto. */
+  padding-left:  max(9%, env(safe-area-inset-left, 0px));
+  padding-right: max(9%, env(safe-area-inset-right, 0px));
   padding-bottom: max(var(--sp-4), env(safe-area-inset-bottom, 0px));
 }
 
@@ -567,8 +569,9 @@
 
 @media (max-width: 540px) {
   .wrap {
-    padding-left: max(var(--sp-3), env(safe-area-inset-left, 0px));
-    padding-right: max(var(--sp-3), env(safe-area-inset-right, 0px));
+    /* Match bg's frame inset exactly. La frame del bg arranca a ~9% del borde. */
+    padding-left: max(9%, env(safe-area-inset-left, 0px));
+    padding-right: max(9%, env(safe-area-inset-right, 0px));
   }
   .welcome {
     gap: 7px;
