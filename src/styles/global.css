@@ -14,6 +14,12 @@ html, body, #root {
 
 body {
   min-height: 100vh;
+  /* Safe-area padding aplicado al body — iOS Safari standalone (PWA /
+     Add to Home Screen) a veces NO computa env() correctamente en
+     descendientes hasta que se aplica al body explícitamente. Esto
+     resuelve el contenido pegado al notch en home-screen. */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 input, select, textarea, button {
