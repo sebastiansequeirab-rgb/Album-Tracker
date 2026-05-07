@@ -35,6 +35,8 @@
   .quickCtaRow { grid-template-columns: 1fr 1fr; }
 }
 
+/* CTA outlined estilo "broadcast vault" — bg dark con borde gold sutil
+   y glow exterior. Texto gold/amber arriba + subtitle blanco tenue. */
 .quickCta {
   position: relative;
   display: flex;
@@ -42,55 +44,35 @@
   justify-content: space-between;
   gap: var(--sp-4);
   width: 100%;
-  height: 84px;
-  padding: 0 28px 0 24px;
+  min-height: 84px;
+  padding: 16px 22px 16px 18px;
   background:
-    linear-gradient(135deg, #FFE9A8 0%, #F5C842 32%, #E6A817 70%, #C88A00 100%);
-  border: none;
-  border-radius: 3px;
+    radial-gradient(120% 200% at 0% 50%, rgba(245, 200, 70, 0.08) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(15, 22, 38, 0.78) 0%, rgba(8, 12, 22, 0.92) 100%);
+  border: 1px solid rgba(245, 200, 70, 0.32);
+  border-radius: 14px;
   cursor: pointer;
   font-family: var(--font-body);
   text-align: left;
-  color: #0A0A0A;
-  clip-path: polygon(
-    0 0,
-    calc(100% - 14px) 0,
-    100% 14px,
-    100% 100%,
-    14px 100%,
-    0 calc(100% - 14px)
-  );
+  color: var(--gold-1);
   box-shadow:
-    0 14px 32px rgba(230, 168, 23, 0.30),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.20);
-  transition: transform 0.14s ease, box-shadow 0.22s ease, filter 0.18s ease;
+    0 0 0 1px rgba(245, 200, 70, 0.06),
+    0 18px 40px rgba(0, 0, 0, 0.45),
+    0 0 28px rgba(245, 200, 70, 0.10);
+  transition: transform 0.14s ease, box-shadow 0.22s ease, border-color 0.18s ease, background 0.22s ease;
   overflow: hidden;
-}
-.quickCta::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -130%;
-  width: 60%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-  transform: skewX(-18deg);
-  transition: left 0.85s ease;
-  pointer-events: none;
 }
 .quickCta:hover {
   transform: translateY(-1px);
-  filter: brightness(1.04);
+  border-color: rgba(245, 200, 70, 0.55);
   box-shadow:
-    0 18px 38px rgba(230, 168, 23, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.20);
+    0 0 0 1px rgba(245, 200, 70, 0.12),
+    0 22px 50px rgba(0, 0, 0, 0.55),
+    0 0 36px rgba(245, 200, 70, 0.18);
 }
-.quickCta:hover::before { left: 130%; }
 .quickCta:active { transform: translateY(0); }
 .quickCta:focus-visible {
-  outline: 2px solid #0A0A0A;
+  outline: 2px solid var(--gold-3);
   outline-offset: 2px;
 }
 
@@ -98,48 +80,59 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1.5px solid rgba(10, 10, 10, 0.32);
-  border-radius: 3px;
-  color: #0A0A0A;
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid rgba(245, 200, 70, 0.32);
+  border-radius: 6px;
+  color: var(--gold-2);
   flex-shrink: 0;
+  background: rgba(245, 200, 70, 0.04);
 }
 
-.quickCtaCopy { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.quickCtaCopy { display: flex; flex-direction: column; gap: 5px; min-width: 0; flex: 1; }
 .quickCtaTitle {
   font-family: var(--font-display);
   font-size: 22px;
-  letter-spacing: 0.18em;
-  color: #0A0A0A;
+  letter-spacing: 0.10em;
+  color: var(--gold-1);
   text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-shadow: 0 0 14px rgba(245, 200, 70, 0.30);
 }
 .quickCtaSub {
-  font-size: 12px;
-  color: rgba(10, 10, 10, 0.68);
-  letter-spacing: 0.04em;
+  font-size: 12.5px;
+  color: rgba(240, 244, 255, 0.72);
+  letter-spacing: 0.02em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .quickCtaArrow {
-  color: #0A0A0A;
+  color: var(--gold-2);
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 44px;
   height: 44px;
-  border: 1.5px solid rgba(10, 10, 10, 0.4);
+  border: 1.5px solid rgba(245, 200, 70, 0.38);
   border-radius: 999px;
-  transition: transform 0.18s ease, background 0.18s ease;
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
 }
 .quickCta:hover .quickCtaArrow {
   transform: translateX(4px);
-  background: rgba(10, 10, 10, 0.08);
+  background: rgba(245, 200, 70, 0.10);
+  border-color: rgba(245, 200, 70, 0.60);
+}
+
+@media (max-width: 540px) {
+  .quickCta { min-height: 74px; padding: 13px 16px 13px 14px; gap: var(--sp-3); border-radius: 12px; }
+  .quickCtaIcon { width: 38px; height: 38px; }
+  .quickCtaTitle { font-size: 18px; letter-spacing: 0.08em; }
+  .quickCtaSub { font-size: 11.5px; }
+  .quickCtaArrow { width: 38px; height: 38px; }
 }
 
 /* ===== Panel ===== */

@@ -166,9 +166,9 @@
 .brandShareRow {
   display: flex;
   align-items: center;
-  gap: 5px;
-  margin-top: 6px;
-  padding: 3px 7px 3px 9px;
+  gap: 6px;
+  margin-top: 7px;
+  padding: 4px 9px 4px 11px;
   border: 1px solid rgba(245, 200, 70, 0.18);
   border-left: 2px solid var(--gold-2, #F5C842);
   border-radius: 3px;
@@ -188,7 +188,7 @@
 }
 .brandShareLabel {
   font-family: var(--font-display);
-  font-size: 9px;
+  font-size: 10.5px;
   letter-spacing: 0.20em;
   color: var(--gold-3, #FCD34D);
   text-transform: uppercase;
@@ -197,12 +197,12 @@
 }
 .brandShareUrl {
   font-family: ui-monospace, SFMono-Regular, monospace;
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--text);
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 2px;
-  padding: 3px 7px;
+  padding: 5px 9px;
   /* URL truncada a 1 línea con ellipsis. */
   overflow: hidden;
   text-overflow: ellipsis;
@@ -215,9 +215,9 @@
   color: #1a1305;
   border: none;
   border-radius: 3px;
-  padding: 4px 10px;
+  padding: 6px 12px;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   cursor: pointer;
   text-transform: uppercase;
@@ -234,9 +234,9 @@
   text-decoration: none;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 3px;
-  padding: 4px 9px;
+  padding: 6px 11px;
   font-family: var(--font-display);
-  font-size: 9.5px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   flex-shrink: 0;
@@ -247,26 +247,27 @@
 
 @media (max-width: 540px) {
   .brandShareRow {
-    /* Compact 1-row: label + url + botones en una sola línea, slim. */
+    /* Compact 1-row: label + url + botones en una sola línea — un poco
+       más alta que antes (+20%) sin volver a romper el banner. */
     flex-wrap: nowrap;
-    padding: 3px 6px;
-    gap: 4px;
-    margin-top: 5px;
+    padding: 4px 8px;
+    gap: 5px;
+    margin-top: 6px;
   }
   .brandShareLabel {
-    font-size: 7.5px;
+    font-size: 9px;
     letter-spacing: 0.14em;
   }
   .brandShareUrl {
-    font-size: 9px;
-    padding: 2px 5px;
+    font-size: 10.5px;
+    padding: 4px 7px;
     flex: 1 1 0;
     min-width: 0;
   }
   .brandShareBtn,
   .brandShareWa {
-    padding: 3px 7px;
-    font-size: 8px;
+    padding: 4px 9px;
+    font-size: 9.5px;
     letter-spacing: 0.10em;
     flex-shrink: 0;
     justify-content: center;
