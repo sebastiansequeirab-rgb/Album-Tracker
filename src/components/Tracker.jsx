@@ -526,7 +526,9 @@ export default function Tracker({
         </div>
       )}
 
-      {/* Header dinámico — colapsa en scroll */}
+      {/* Header — solo visible en Home. En las otras tabs se libera todo
+          el espacio vertical para el contenido del tab. */}
+      {tab === 'dashboard' && (
       <header className={`${s.header} ${headerCompact ? s.headerCompact : ''}`}>
         <div className={s.headerInner}>
           <div className={s.headerRow}>
@@ -599,6 +601,7 @@ export default function Tracker({
           })()}
         </div>
       </header>
+      )}
 
       {/* Nav */}
       <nav className={s.nav}>
@@ -623,7 +626,7 @@ export default function Tracker({
         </div>
       </nav>
 
-      <main className={s.main}>
+      <main className={`${s.main} ${tab !== 'dashboard' ? s.mainNoHeader : ''}`}>
         <AnimatePresence mode="wait" initial={false}>
           {tab === 'dashboard' && (
             <motion.div

@@ -5,6 +5,7 @@ import {
 } from '../lib/marketplace'
 import { ALBUM_STICKER, ALBUM_ADRENALYN } from '../data'
 import { activateAlbum, deactivateAlbum } from '../lib/album'
+import { supabase } from '../supabaseClient'
 import s from './Profile.module.css'
 
 /* ── Inline SVG icons (no emoji in UI chrome) ───────────────────────────── */
@@ -372,6 +373,15 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
           <span>{err}</span>
         </div>
       )}
+
+      {/* Cerrar sesión — el header no muestra SALIR fuera de Home,
+          así que lo dejamos accesible siempre desde Profile. */}
+      <button
+        type="button"
+        className={s.logoutBtn}
+        onClick={() => supabase.auth.signOut()}>
+        Cerrar sesión
+      </button>
 
     </div>
   )

@@ -47,19 +47,19 @@
    bg so content scrolling underneath doesn't bleed through. */
 .subnav {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
-  scroll-padding-inline: 16px;
-  padding: 8px 2px 10px;
-  margin-bottom: 4px;
+  scroll-padding-inline: 12px;
+  padding: 4px 2px 6px;
+  margin-bottom: 2px;
   position: sticky;
-  top: 90px;                              /* desktop: just under Tracker header */
+  /* El header del Tracker no se muestra fuera de Home, así que la subnav
+     se queda en top:0 (con safe-area para el notch del iPhone). */
+  top: env(safe-area-inset-top, 0px);
   z-index: 50;
-  /* Bg sólido (no fade transparente) — antes el gradient transparente al final
-     dejaba ver el contenido scrolleando atrás como "fantasma" amarillo. */
   background: rgba(6, 8, 15, 0.98);
   border-bottom: 1px solid rgba(245, 200, 70, 0.10);
   backdrop-filter: blur(10px) saturate(140%);
@@ -70,24 +70,23 @@
 
 .subnavBtn {
   flex-shrink: 0;
-  min-height: 40px;
-  padding: 10px 16px;
+  min-height: 34px;
+  padding: 6px 12px;
   background: rgba(15, 22, 38, 0.55);
   border: 1px solid rgba(245, 200, 70, 0.10);
   border-left: 2px solid rgba(245, 200, 70, 0.16);
   color: var(--text-muted);
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.10em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   white-space: nowrap;
   cursor: pointer;
   border-radius: 3px;
-  /* Slight chamfer on TR + BL — broadcast signature */
   clip-path: polygon(
     0 0,
     calc(100% - 8px) 0,
@@ -138,34 +137,34 @@
 .sectionHead {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding-bottom: 12px;
-  margin-top: 4px;
+  gap: 8px;
+  padding-bottom: 6px;
+  margin-top: 2px;
   border-bottom: 1px solid rgba(245, 200, 70, 0.10);
 }
 .sectionNum {
   font-family: var(--font-display);
-  font-size: 14px;
-  letter-spacing: 0.14em;
+  font-size: 12px;
+  letter-spacing: 0.10em;
   color: var(--gold-3);
 }
 .sectionTitle {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 14px;
-  letter-spacing: 0.32em;
+  font-size: 12px;
+  letter-spacing: 0.22em;
   color: var(--text);
   text-transform: uppercase;
   font-weight: 400;
 }
 .sectionCount {
   font-family: var(--font-display);
-  font-size: 12px;
-  letter-spacing: 0.06em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--gold-2);
   background: rgba(245, 200, 70, 0.10);
   border: 1px solid rgba(245, 200, 70, 0.22);
-  padding: 1px 8px;
+  padding: 1px 7px;
   border-radius: 999px;
 }
 .sectionRule {
@@ -176,10 +175,10 @@
   min-width: 16px;
 }
 .sectionSub {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
-  letter-spacing: 0.06em;
-  margin: -4px 0 4px;
+  letter-spacing: 0.04em;
+  margin: -2px 0 2px;
   text-transform: uppercase;
 }
 
@@ -1491,9 +1490,9 @@
 .listingFilters {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: var(--sp-3);
-  padding: 10px 12px;
+  gap: 6px;
+  margin-bottom: var(--sp-2);
+  padding: 6px 8px;
   background: rgba(8, 12, 22, 0.45);
   border: 1px solid rgba(245, 200, 70, 0.10);
   border-left: 2px solid rgba(245, 200, 70, 0.35);
@@ -1506,10 +1505,11 @@
   color: #fff;
   border: 1px solid rgba(245, 200, 70, 0.18);
   border-radius: 3px;
-  padding: 8px 10px;
+  padding: 6px 9px;
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 12.5px;
   min-width: 0;
+  height: 34px;
 }
 .listingFilterInput { flex: 1 1 180px; max-width: 280px; }
 .listingFilterSelect { flex: 1 1 180px; max-width: 240px; }
@@ -1518,10 +1518,11 @@
   color: #fff;
   border: 1px solid rgba(245, 200, 70, 0.18);
   border-radius: 3px;
-  padding: 8px 10px;
+  padding: 6px 9px;
   font-family: var(--font-body);
-  font-size: 14px;
-  width: 64px;
+  font-size: 12.5px;
+  width: 56px;
+  height: 34px;
   text-align: center;
 }
 .listingFilterClear {

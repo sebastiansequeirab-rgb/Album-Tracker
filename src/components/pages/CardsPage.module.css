@@ -7,7 +7,7 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
   padding-bottom: 96px;
 }
 /* En mobile el bulk bar se sienta sobre el bottom nav (78px + safe-area).
@@ -27,13 +27,13 @@
   display: grid;
   grid-template-columns: 1fr auto;
   gap: var(--sp-2);
-  padding: 14px 16px;
+  padding: 8px 10px;
   background: linear-gradient(180deg, rgba(8, 12, 22, 0.92) 0%, rgba(6, 10, 18, 0.85) 100%);
   border: 1px solid rgba(245, 200, 70, 0.10);
   border-radius: 3px;
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
-  align-items: end;
+  align-items: center;
   clip-path: polygon(
     0 0,
     calc(100% - 10px) 0,
@@ -56,12 +56,12 @@
   position: relative;
   display: flex;
   align-items: center;
-  height: 44px;
+  height: 38px;
   background: rgba(10, 16, 30, 0.78);
   border: 1px solid rgba(245, 200, 70, 0.10);
   border-left: 2px solid var(--gold-5);
   border-radius: 3px;
-  padding: 0 12px;
+  padding: 0 10px;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 .search:focus-within {
@@ -180,19 +180,19 @@
 /* — "Seleccionar varios" CTA ghost — */
 .selectBtn {
   position: relative;
-  height: 44px;
-  padding: 0 16px;
+  height: 38px;
+  padding: 0 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: 7px;
   background: transparent;
   border: 1px solid rgba(245, 200, 70, 0.28);
   border-radius: 3px;
   color: var(--gold-2);
   font-family: var(--font-display);
-  font-size: 12px;
-  letter-spacing: 0.22em;
+  font-size: 11px;
+  letter-spacing: 0.16em;
   cursor: pointer;
   white-space: nowrap;
   transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
@@ -222,16 +222,16 @@
   background: linear-gradient(180deg, #FFE9A8 0%, #F5C842 30%, #E6A817 70%, #C88A00 100%);
 }
 
-/* — Filter bar responsive — */
+/* — Filter bar responsive — más compacto en mobile */
 @media (max-width: 720px) {
   .filterBar {
-    grid-template-columns: 1fr;
-    gap: 7px;
-    padding: 10px 12px;
+    grid-template-columns: 1fr auto;
+    gap: 6px;
+    padding: 6px 8px;
   }
-  .search    { height: 44px; }
-  .selectBtn { height: 44px; font-size: 12px; letter-spacing: 0.16em; }
-  .searchInput { font-size: 14px; }
+  .search    { height: 36px; }
+  .selectBtn { height: 36px; font-size: 10px; letter-spacing: 0.14em; padding: 0 10px; }
+  .searchInput { font-size: 13px; }
 }
 
 /* ===== Active filter pills (lower-third style) ================================ */
@@ -304,22 +304,22 @@
 .summaryHead {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding-bottom: 10px;
+  gap: 8px;
+  padding-bottom: 6px;
   border-bottom: 1px solid rgba(245, 200, 70, 0.10);
   flex-wrap: wrap;
 }
 .summaryNum {
   font-family: var(--font-display);
-  font-size: 14px;
-  letter-spacing: 0.14em;
+  font-size: 12px;
+  letter-spacing: 0.10em;
   color: var(--gold-3);
 }
 .summaryTitle {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 14px;
-  letter-spacing: 0.32em;
+  font-size: 11.5px;
+  letter-spacing: 0.20em;
   color: var(--text);
   text-transform: uppercase;
 }
@@ -589,22 +589,22 @@
 .statusPills {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 4px 0 6px;
+  gap: 5px;
+  padding: 2px 0 4px;
 }
 .statusPill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: rgba(8, 12, 22, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 999px;
-  padding: 6px 14px;
+  padding: 4px 10px;
   cursor: pointer;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   transition: border-color 0.15s, color 0.15s, background 0.15s, box-shadow 0.18s;
 }
 .statusPill:hover { color: #fff; border-color: rgba(255, 255, 255, 0.20); }
@@ -615,10 +615,10 @@
 }
 .statusPillCount {
   font-family: var(--font-display);
-  letter-spacing: 0.06em;
-  font-size: 13px;
+  letter-spacing: 0.04em;
+  font-size: 11.5px;
   color: inherit;
-  margin-left: 2px;
+  margin-left: 1px;
 }
 .statusPillAll  { --pill-color: var(--gold-3); }
 .statusPillHave { --pill-color: var(--status-have); color: var(--status-have); }
@@ -738,8 +738,8 @@
   display: grid;
   grid-template-columns: auto auto 1fr auto auto;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px 12px 12px;
+  gap: 8px;
+  padding: 8px 12px 8px 10px;
   background: linear-gradient(180deg, rgba(15, 22, 38, 0.78) 0%, rgba(8, 12, 22, 0.85) 100%);
   border: 1px solid rgba(245, 200, 70, 0.12);
   border-left: 2px solid var(--gold-2);
@@ -912,13 +912,13 @@
 .flagBarToggle {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   background: rgba(8, 12, 22, 0.55);
   border: 1px solid rgba(245, 200, 70, 0.10);
   border-left: 2px solid var(--gold-2);
   border-radius: 3px;
-  padding: 9px 12px 9px 14px;
+  padding: 6px 10px 6px 12px;
   cursor: pointer;
   text-align: left;
   font-family: var(--font-body);
@@ -927,6 +927,7 @@
   clip-path: polygon(
     0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)
   );
+  min-height: 36px;
 }
 .flagBarToggle:hover { border-color: rgba(245, 200, 70, 0.25); }
 .flagBarToggleActive {

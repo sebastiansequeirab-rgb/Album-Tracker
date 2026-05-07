@@ -1,0 +1,117 @@
+<!--
+  WC Album Tracker · Email template — Confirm signup
+  ==========================================================================
+  Pegar este HTML en Supabase Dashboard:
+    Auth → Email Templates → Confirm signup → Source (HTML view)
+
+  Variables Supabase usadas:
+    {{ .ConfirmationURL }} — URL con token de confirmación
+    {{ .Email }}           — email del nuevo usuario
+
+  IMPORTANTE: La app actualmente tiene email confirmation DESACTIVADA porque
+  el Supabase Site URL apunta a Skolar y compartimos auth provider. Si la
+  reactivás, primero pasar `options.emailRedirectTo: 'https://wc2026albumtracker.vercel.app'`
+  en signUp para que el redirect post-confirm vaya a nuestro dominio
+  (NO al de Skolar).
+-->
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Confirma tu cuenta · WC Album Tracker</title>
+  </head>
+  <body style="margin:0; padding:0; background:#06080F; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#F0F4FF;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#06080F; padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <!-- Card -->
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px; background:#0d111c; border:1px solid rgba(245,200,70,0.18); border-radius:8px; overflow:hidden;">
+
+            <!-- Header con logo + brand -->
+            <tr>
+              <td style="padding:28px 28px 18px; text-align:center; border-bottom:1px solid rgba(245,200,70,0.12); background:linear-gradient(180deg, rgba(245,200,70,0.06) 0%, rgba(8,12,22,0) 100%);">
+                <div style="font-family: 'Bebas Neue', Impact, sans-serif; font-size:24px; letter-spacing:0.18em; color:#FCD34D; font-weight:700;">
+                  ⚽ WC ALBUM TRACKER
+                </div>
+                <div style="font-size:11px; letter-spacing:0.20em; color:rgba(245,200,70,0.65); font-weight:600; text-transform:uppercase; margin-top:6px;">
+                  FIFA WC 2026
+                </div>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding:32px 28px 24px;">
+                <h1 style="margin:0 0 14px; font-family: 'Bebas Neue', Impact, sans-serif; font-size:24px; letter-spacing:0.06em; color:#FFE9A8; font-weight:700; text-transform:uppercase;">
+                  Bienvenido coleccionista 🏆
+                </h1>
+                <p style="margin:0 0 18px; font-size:15px; line-height:1.55; color:#F0F4FF;">
+                  Confirmá tu email y empezá a rastrear tu colección Panini WC 2026 + intercambiar con coleccionistas.
+                </p>
+                <p style="margin:0 0 28px; font-size:13.5px; line-height:1.55; color:#9AAEC8;">
+                  Tap en el botón para activar la cuenta de <strong style="color:#FCD34D;">{{ .Email }}</strong>.
+                </p>
+
+                <!-- CTA gold -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 0 auto;">
+                  <tr>
+                    <td align="center" style="border-radius:4px; background:linear-gradient(180deg, #FFE9A8 0%, #F5C842 30%, #E6A817 70%, #C88A00 100%); box-shadow:0 8px 22px rgba(230,168,23,0.32);">
+                      <a href="{{ .ConfirmationURL }}"
+                         style="display:inline-block; padding:14px 32px; font-family: 'Bebas Neue', Impact, sans-serif; font-size:15px; letter-spacing:0.18em; color:#1a1305; text-decoration:none; font-weight:700; text-transform:uppercase;">
+                        Confirmar email →
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:28px 0 0; font-size:12px; line-height:1.55; color:#5A6B85;">
+                  Si el botón no funciona, copiá y pegá esta URL en tu navegador:
+                </p>
+                <p style="margin:6px 0 0; font-size:11.5px; line-height:1.4; color:#9AAEC8; word-break:break-all; font-family: 'SF Mono', ui-monospace, monospace;">
+                  {{ .ConfirmationURL }}
+                </p>
+
+                <!-- Feature teaser -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-top:32px;">
+                  <tr>
+                    <td style="padding:14px 16px; background:rgba(245,200,70,0.04); border:1px solid rgba(245,200,70,0.14); border-left:2px solid #F5C842; border-radius:4px;">
+                      <div style="font-family: 'Bebas Neue', Impact, sans-serif; font-size:12px; letter-spacing:0.18em; color:#FCD34D; text-transform:uppercase; margin-bottom:6px;">
+                        Lo que vas a encontrar
+                      </div>
+                      <ul style="margin:0; padding-left:18px; color:#9AAEC8; font-size:13px; line-height:1.7;">
+                        <li>980 stickers Panini WC 2026 — todos con nombres reales.</li>
+                        <li>Mapa interactivo de progreso por país.</li>
+                        <li>Mercado social con chat realtime y trades.</li>
+                        <li>Mensaje WhatsApp pre-armado con tu lista completa.</li>
+                      </ul>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="padding:18px 28px 22px; border-top:1px solid rgba(245,200,70,0.10); text-align:center;">
+                <div style="font-size:11px; letter-spacing:0.10em; color:#5A6B85; text-transform:uppercase;">
+                  WC Album Tracker · 2026
+                </div>
+                <div style="margin-top:6px;">
+                  <a href="https://wc2026albumtracker.vercel.app" style="color:#FCD34D; text-decoration:none; font-size:11.5px; letter-spacing:0.04em;">
+                    wc2026albumtracker.vercel.app
+                  </a>
+                </div>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Sub-footer disclaimer -->
+          <p style="max-width:520px; margin:18px auto 0; font-size:11px; line-height:1.5; color:#3D5170; text-align:center;">
+            Recibís este email porque te registraste en WC Album Tracker con {{ .Email }}. Si no fuiste vos, ignorá el mensaje — la cuenta no se activará.
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -471,6 +471,12 @@
   padding: var(--sp-4);
 }
 
+/* Cuando el header está oculto (todas las tabs excepto Home), el main
+   necesita padding-top para no quedar bajo el notch del iPhone. */
+.mainNoHeader {
+  padding-top: calc(var(--sp-3) + env(safe-area-inset-top, 0px));
+}
+
 /* ==========================================================================
    Bar component
    ========================================================================== */
