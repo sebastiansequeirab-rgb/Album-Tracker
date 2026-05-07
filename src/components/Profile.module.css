@@ -951,3 +951,182 @@
   .avatarPreview { width: 64px; height: 64px; }
   .avatarPreviewEmoji { font-size: 36px; }
 }
+
+/* =============================================================================
+   iOS Polish — Profile más compacto
+   ============================================================================= */
+@media (max-width: 540px) {
+  .wrap {
+    gap: 12px;
+    padding-bottom: 88px;
+  }
+  .panel {
+    padding: 14px 14px 12px;
+    gap: 10px;
+    clip-path: polygon(
+      0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)
+    );
+  }
+  .sectionHead {
+    padding-bottom: 8px;
+    margin-bottom: 0;
+    gap: 8px;
+  }
+  .sectionTitle { font-size: 12px; letter-spacing: 0.22em; }
+  .sectionNum   { font-size: 12px; }
+  .sectionSub {
+    font-size: 11.5px;
+    margin: 0 0 8px;
+    line-height: 1.4;
+  }
+  .field { gap: 4px; margin-bottom: 8px; }
+  .fieldLabel { font-size: 8.5px; letter-spacing: 0.24em; gap: 8px; }
+  .fieldLabelNum { font-size: 11px; }
+  .inputBox { height: 44px; padding: 0 10px; }
+  .input { font-size: 14px; padding: 0 8px; }
+  .avatarGrid {
+    grid-template-columns: repeat(8, 1fr);
+    gap: 5px;
+  }
+  .avatarBtn {
+    border-radius: 4px;
+  }
+  .avatarEmoji { font-size: 22px; }
+  .avatarUploader {
+    padding: 8px;
+    gap: 10px;
+  }
+  .avatarPreview { width: 56px; height: 56px; }
+  .avatarPreviewEmoji { font-size: 32px; }
+  .avatarUploadBtn { padding: 7px 12px; font-size: 11px; letter-spacing: 0.14em; }
+  .avatarRemoveBtn { padding: 6px 10px; font-size: 10px; }
+  .avatarHint { font-size: 11px; }
+  .toggleRow { padding: 10px 12px !important; gap: 10px !important; }
+  .toggleTitle { font-size: 13px !important; }
+  .toggleHint { font-size: 11px !important; }
+  .publicLinkRow { padding: 10px; }
+  .publicLinkLabel { font-size: 9.5px; letter-spacing: 0.16em; }
+  .publicLinkValue code { font-size: 11.5px; padding: 5px 8px; }
+  .publicLinkCopy,
+  .publicLinkWa { padding: 6px 10px; font-size: 10.5px; letter-spacing: 0.14em; }
+  .publicLinkHelp { font-size: 11px; line-height: 1.35; }
+  .publicLinkFeedback { font-size: 11px; }
+}
+
+/* ===== My Lists section (Mis Repetidas + Faltantes en Perfil) ===== */
+.myLists {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.myListsToggle {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  background: rgba(8, 12, 22, 0.55);
+  border: 1px solid rgba(245, 200, 70, 0.10);
+  border-radius: 4px;
+}
+.myListsBtn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 8px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.myListsBtn:hover { color: #fff; }
+.myListsBtnActive {
+  background: linear-gradient(180deg, rgba(245, 200, 70, 0.18), rgba(245, 200, 70, 0.06));
+  color: var(--gold-1);
+  box-shadow: inset 0 0 0 1px rgba(245, 200, 70, 0.30);
+}
+.myListsActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.myListsExport {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(180deg, #FFE9A8, #F5C842);
+  color: #1a1305;
+  border: none;
+  border-radius: 3px;
+  padding: 7px 12px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.myListsCount {
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--gold-3);
+  letter-spacing: 0.10em;
+  align-self: center;
+  margin-left: auto;
+}
+.myListsEmpty {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 10px 12px;
+  background: rgba(8, 12, 22, 0.45);
+  border-radius: 3px;
+  border-left: 2px solid rgba(245, 200, 70, 0.18);
+}
+.myListsGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.myListsTeamGroup {
+  background: rgba(8, 12, 22, 0.45);
+  border: 1px solid rgba(245, 200, 70, 0.08);
+  border-left: 2px solid rgba(245, 200, 70, 0.30);
+  border-radius: 3px;
+  padding: 8px 10px;
+}
+.myListsTeamHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 12px;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.myListsTeamCount {
+  margin-left: auto;
+  font-family: var(--font-display);
+  color: var(--gold-3);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+.myListsNums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 7px;
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+.myListsNums span {
+  padding: 1px 6px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}

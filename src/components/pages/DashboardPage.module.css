@@ -493,3 +493,22 @@
   .upcomingRow:hover { transform: none; }
   .quickCta:hover { transform: none; }
 }
+
+/* iOS Polish — Home (≤540px) */
+@media (max-width: 540px) {
+  .page { gap: 10px; padding-bottom: 96px; }
+  .donutSection { padding: 10px 12px; }
+  .panel { padding: 12px; gap: 8px; }
+  .panelHead { gap: 8px; padding-bottom: 6px; }
+  .panelTitle { font-size: 14px !important; letter-spacing: 0.20em !important; }
+  .panelLink { font-size: 11px !important; letter-spacing: 0.10em !important; }
+  .upcomingRow { padding: 8px 10px !important; gap: 8px !important; font-size: 12px !important; }
+  .sectionHead { gap: 8px; padding-bottom: 6px; }
+  .sectionTitle { font-size: 14px !important; letter-spacing: 0.20em !important; }
+  .quickCta { height: 64px; padding: 0 14px; gap: 10px; }
+  .quickCtaIcon { width: 32px; height: 32px; }
+  .quickCtaTitle { font-size: 16px; letter-spacing: 0.10em; }
+  .quickCtaSub { font-size: 10.5px; }
+  .quickCtaArrow { width: 36px; height: 36px; }
+  .missingTeamsGrid { gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

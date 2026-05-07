@@ -91,6 +91,7 @@ export default function Marketplace({
   onCompleteTrade,
   forceSub = null,
   initialOpenUserId = null,
+  onGoToChat = null,
   flash,
 }) {
   const cfg = ALBUM_CONFIG[albumType]
@@ -343,10 +344,10 @@ export default function Marketplace({
         meeting_time_label: listing.meeting_time_label || null,
         message: '',
       })
-      flash?.('✅ Trade enviado — revísalo en Trades', '#4ADE80')
+      flash?.('✅ Trade enviado — revísalo en el tab Chat', '#4ADE80')
       const tr = await loadMyTradeRequests(myId)
       setTradeRequests(tr)
-      setSub('inbox')
+      onGoToChat?.()
     } catch (e) {
       console.error('acceptListing error:', e)
       flash?.(`⚠️ ${e?.message || 'No se pudo enviar el trade'}`, '#F87171')
@@ -362,8 +363,8 @@ export default function Marketplace({
       const tr = await loadMyTradeRequests(myId)
       setTradeRequests(tr)
       if (created?.target_id) {
-        flash?.('🤝 Trade enviado — lo verás en Trades', '#4ADE80')
-        setSub('inbox')
+        flash?.('🤝 Trade enviado — lo verás en el tab Chat', '#4ADE80')
+        onGoToChat?.()
       }
     } catch { /* sin-op */ }
   }
@@ -374,7 +375,8 @@ export default function Marketplace({
     setSelUserId(null)
     setSelCol(null)
     setSelProfile(null)
-    setSub('messages')
+    if (isChatMode) setSub('messages')
+    else onGoToChat?.(otherId)
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0)
       requestAnimationFrame(() => window.scrollTo(0, 0))
@@ -648,14 +650,23 @@ export default function Marketplace({
   const inProgressTrades = tradeRequests.filter(t => t.status === 'accepted')
   const closedTrades    = tradeRequests.filter(t => ['declined','cancelled','completed'].includes(t.status))
 
-  const subtabs = [
+  // Sub-tabs limitadas a: Ofertas / Buscar / Favoritos.
+  // Mensajes y Trades viven en el tab Chat (top-level).
+  // Mis Repetidas / Faltantes vive en Perfil.
+  const baseSubtabs = [
     { id: 'all',       I: IconBroadcast, l: 'Ofertas' },
     { id: 'search',    I: IconSearch,    l: 'Buscar' },
     { id: 'favorites', I: IconStar,      l: 'Favoritos', b: favoriteIdSet.size },
-    { id: 'messages',  I: IconChat,      l: 'Mensajes' },
-    { id: 'inbox',     I: IconHandshake, l: 'Trades',    b: incomingPending.length },
-    { id: 'mine',      I: IconList,      l: 'Mis Repetidas', b: myDups.length },
   ]
+  // Cuando el tab Chat monta este componente con forceSub='messages',
+  // usamos un toggle Mensajes/Trades en lugar de la subnav normal.
+  const isChatMode = forceSub === 'messages'
+  const subtabs = isChatMode
+    ? [
+        { id: 'messages', I: IconChat,      l: 'Mensajes' },
+        { id: 'inbox',    I: IconHandshake, l: 'Trades',    b: incomingPending.length },
+      ]
+    : baseSubtabs
 
   return (
     <div className={s.wrap}>

@@ -972,3 +972,26 @@
   transition: transform 0.18s ease;
 }
 .flagBarChevronOpen { transform: rotate(180deg); }
+
+/* iOS Polish — Cards (≤540px) */
+@media (max-width: 540px) {
+  .page { gap: 10px; padding-bottom: 96px; }
+  .filterBar { padding: 8px 10px; gap: 6px; }
+  .statusPills { gap: 5px; padding: 2px 0; }
+  .statusPill { padding: 5px 11px; font-size: 11.5px; gap: 5px; }
+  .statusPillCount { font-size: 12px; }
+  .flagBar { gap: 4px; }
+  .flagBarToggle { padding: 8px 10px; gap: 8px; }
+  .flagBarLabel { font-size: 11px; letter-spacing: 0.14em; }
+  .flagFilters { gap: 4px; }
+  .flagChip { padding: 6px 8px 8px 7px; font-size: 10.5px; }
+  .flagChipIcon { font-size: 14px; }
+  .flagChipPct { font-size: 11px; }
+  .summary { gap: 8px; padding: 4px 2px; }
+  .summaryCount { font-size: 24px !important; }
+  .summaryUnit { font-size: 11px !important; }
+  .summaryHint { font-size: 11px !important; }
+  .teamGroup { gap: 8px; }
+  .teamGroupHead { padding: 9px 10px; gap: 8px; }
+  .grid { gap: 7px; }
+}

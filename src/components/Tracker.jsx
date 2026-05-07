@@ -578,6 +578,7 @@ export default function Tracker({
               myProfile={myProfile}
               initialOpenUserId={initialOpenUser}
               onGoToProfile={() => setTab('profile')}
+              onGoToChat={() => setTab('chat')}
               onUnreadChange={() => {
                 loadUnreadCount(session.user.id).then(setUnread).catch(() => {})
               }}
@@ -612,6 +613,7 @@ export default function Tracker({
                 myCol={col}
                 myProfile={myProfile}
                 onGoToProfile={() => setTab('profile')}
+                onGoToChat={() => {}}
                 onUnreadChange={() => {
                   loadUnreadCount(session.user.id).then(setUnread).catch(() => {})
                 }}

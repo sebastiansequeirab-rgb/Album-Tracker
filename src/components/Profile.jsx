@@ -405,6 +405,12 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         </button>
       </section>
 
+      {/* ═══════════════════ MIS LISTAS ═══════════════════ */}
+      <MyListsSection
+        userId={session.user.id}
+        profile={profile}
+      />
+
       {/* ═══════════════════ MIS TRADES ═══════════════════ */}
       <TradeHistorySection userId={session.user.id} />
 
@@ -477,6 +483,124 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
       )}
 
     </div>
+  )
+}
+
+function MyListsSection({ userId, profile }) {
+  const [tab, setTab] = useState('repetidas')
+  const [data, setData] = useState({ items: [], col: {}, loading: true })
+
+  useEffect(() => {
+    let cancelled = false
+    const album = (profile?.active_albums && profile.active_albums[0]) || 'sticker'
+    const cfg = ALBUM_CONFIG[album] || ALBUM_CONFIG['sticker']
+    const items = cfg.buildItems()
+    ;(async () => {
+      const { supabase } = await import('../supabaseClient')
+      const { data: row } = await supabase
+        .from(cfg.table)
+        .select('data')
+        .eq('user_id', userId)
+        .maybeSingle()
+      if (cancelled) return
+      setData({ items, col: row?.data || {}, loading: false, cfg })
+    })()
+    return () => { cancelled = true }
+  }, [userId, profile?.active_albums])
+
+  const filtered = useMemo(() => {
+    if (data.loading) return []
+    return data.items.filter(c => {
+      const st = data.col[c.id] || 'missing'
+      return tab === 'repetidas' ? st === 'duplicate' : st === 'missing'
+    })
+  }, [data, tab])
+
+  const grouped = useMemo(() => {
+    const m = new Map()
+    for (const it of filtered) {
+      const k = it.team || 'Otros'
+      if (!m.has(k)) m.set(k, { teamName: k, flag: it.flag || '🏳️', cards: [] })
+      m.get(k).cards.push(it)
+    }
+    return [...m.values()]
+  }, [filtered])
+
+  const exportPdf = async () => {
+    const { exportListPdf } = await import('../lib/exportPdf')
+    exportListPdf({
+      items: filtered,
+      title: tab === 'repetidas' ? 'Mis Repetidas' : 'Mis Faltantes',
+      subtitle: data.cfg?.label || '',
+      username: profile?.display_name,
+      publicUrl: profile?.slug ? `${window.location.origin}/u/${profile.slug}` : null,
+    })
+  }
+
+  return (
+    <section className={s.panel}>
+      <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
+      <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
+      <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
+      <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
+
+      <SectionHead
+        num="·"
+        title="MIS LISTAS"
+        sub="Tus repetidas y faltantes — exportá a PDF para compartir."
+      />
+
+      <div className={s.myLists}>
+        <div className={s.myListsToggle}>
+          <button
+            type="button"
+            onClick={() => setTab('repetidas')}
+            className={`${s.myListsBtn} ${tab === 'repetidas' ? s.myListsBtnActive : ''}`}
+          >
+            Repetidas
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('faltantes')}
+            className={`${s.myListsBtn} ${tab === 'faltantes' ? s.myListsBtnActive : ''}`}
+          >
+            Faltantes
+          </button>
+        </div>
+
+        <div className={s.myListsActions}>
+          <button type="button" className={s.myListsExport} onClick={exportPdf} disabled={!filtered.length}>
+            ⬇ Exportar PDF
+          </button>
+          <span className={s.myListsCount}>
+            {filtered.length} {filtered.length === 1 ? 'carta' : 'cartas'}
+          </span>
+        </div>
+
+        {data.loading && <div className={s.myListsEmpty}>Cargando…</div>}
+        {!data.loading && filtered.length === 0 && (
+          <div className={s.myListsEmpty}>
+            {tab === 'repetidas' ? 'Sin repetidas marcadas todavía.' : '¡No te falta ninguna!'}
+          </div>
+        )}
+        {!data.loading && filtered.length > 0 && (
+          <div className={s.myListsGroups}>
+            {grouped.map(g => (
+              <div key={g.teamName} className={s.myListsTeamGroup}>
+                <div className={s.myListsTeamHead}>
+                  <span>{g.flag}</span>
+                  <span>{g.teamName}</span>
+                  <span className={s.myListsTeamCount}>{g.cards.length}</span>
+                </div>
+                <div className={s.myListsNums}>
+                  {g.cards.map(c => <span key={c.id}>#{c.num}</span>)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   )
 }
 

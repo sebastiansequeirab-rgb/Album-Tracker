@@ -1842,3 +1842,77 @@
 @media (max-width: 480px) {
   .listingsGrid { grid-template-columns: 1fr; }
 }
+
+/* =============================================================================
+   iOS Polish — Marketplace + drill-down (≤540px)
+   ============================================================================= */
+@media (max-width: 540px) {
+  .wrap { gap: 10px; padding-bottom: 88px; }
+
+  /* Sub-tab nav: más apretada */
+  .subnav { gap: 4px; padding: 4px 0; }
+  .subnavBtn {
+    padding: 7px 9px !important;
+    font-size: 11px !important;
+    letter-spacing: 0.10em !important;
+    gap: 5px !important;
+    flex: 1 0 auto;
+    min-height: 36px;
+  }
+  .subnavBtn svg { width: 13px !important; height: 13px !important; }
+  .subnavBadge { font-size: 9px !important; padding: 1px 5px !important; }
+
+  /* Section heads: más compactos */
+  .sectionHead { padding-bottom: 6px; gap: 8px; }
+  .sectionTitle { font-size: 12px; letter-spacing: 0.20em; }
+  .sectionIcon svg { width: 14px; height: 14px; }
+  .sectionCount { font-size: 11px; padding: 1px 7px; }
+  .sectionSub { font-size: 11px; line-height: 1.35; margin: 4px 0 6px; }
+
+  /* Listing filters: stacking */
+  .listingFilters { padding: 7px 8px; gap: 6px; }
+  .listingFilterInput,
+  .listingFilterSelect { font-size: 13px; padding: 7px 9px; }
+  .listingFilterPos { width: 56px; padding: 7px 6px; }
+  .listingFilterClear { padding: 6px 9px; font-size: 10px; letter-spacing: 0.08em; }
+
+  /* User cards (search/favoritos): más densos */
+  .usersGrid { gap: 8px; grid-template-columns: 1fr; }
+  .userCard {
+    padding: 10px;
+    gap: 8px;
+    border-radius: 4px;
+  }
+  .userCardHead { gap: 8px; }
+  .userAvatar img { width: 38px; height: 38px; }
+  .userName { font-size: 13px; }
+  .userSub { font-size: 11px; }
+  .matchPill { padding: 6px 8px; font-size: 14px; }
+  .matchLabel { font-size: 8.5px; letter-spacing: 0.10em; }
+  .userActions > button { font-size: 10.5px; padding: 7px 9px; letter-spacing: 0.10em; }
+
+  /* Banner de oferta */
+  .banner { padding: 12px; gap: 10px; }
+  .bannerHead { gap: 10px; padding-bottom: 8px; }
+  .bannerSection { gap: 6px; }
+  .bannerSectionTitle { font-size: 10.5px; letter-spacing: 0.18em; }
+  .bannerActions > button {
+    padding: 8px 10px !important;
+    font-size: 10.5px !important;
+    letter-spacing: 0.10em !important;
+    min-width: 0;
+  }
+  .miniCard { padding: 6px 8px; gap: 6px; }
+  .miniCardName { font-size: 12px; }
+  .miniCardMeta { font-size: 10px; }
+  .miniCardNum { font-size: 11px; }
+
+  /* Drill-down detail head */
+  .detailHead { gap: 10px; padding: 12px 12px 12px 16px; }
+  .detailAvatar { font-size: 36px !important; }
+  .detailAvatar img { width: 56px; height: 56px; }
+  .detailName { font-size: 18px; letter-spacing: 0.14em; }
+  .detailSub  { font-size: 11px; }
+  .detailActions > button { font-size: 10.5px; padding: 7px 10px; letter-spacing: 0.10em; }
+  .detailDonut { padding: 10px; margin: 10px 0; }
+}
