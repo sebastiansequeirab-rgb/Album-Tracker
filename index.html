@@ -32,6 +32,26 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Recovery guard: si el email del reset password redirige al root con
+         ?code=... (porque Supabase Redirect URLs no incluye /reset-password,
+         o el Site URL apunta acá), redirigimos a /reset-password ANTES de
+         que el módulo de Supabase consuma el code automáticamente y nos
+         deje "logueados" sin pedir nueva contraseña. Sync, pre-React. -->
+    <script>
+      (function () {
+        try {
+          var path = window.location.pathname;
+          var search = window.location.search;
+          var hash = window.location.hash || '';
+          var hasCode = /[?&]code=/.test(search);
+          var hashRecovery = /type=recovery/.test(hash);
+          var alreadyOnReset = path === '/reset-password';
+          if ((hasCode || hashRecovery) && !alreadyOnReset) {
+            window.location.replace('/reset-password' + search + hash);
+          }
+        } catch (e) { /* fail open — deja que React haga su flow normal */ }
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
