@@ -423,7 +423,7 @@ export default function Tracker({
             <div className={s.brand}>
               <div className={s.brandTitle} style={{ color: cfg.accent }}>
                 <span className={s.brandIcon} aria-hidden="true">
-                  <img src="/logo-mark.svg" alt="" width="22" height="22" />
+                  <img src="/logo-192.png" alt="" width="28" height="28" />
                 </span>
                 {cfg.label.toUpperCase()}
               </div>

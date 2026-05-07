@@ -66,6 +66,12 @@ export default function PublicProfile() {
   return (
     <div style={pageStyle}>
       <div style={cardStyle}>
+        {/* ── BRAND STRIP ────────────────────────────────────────── */}
+        <Link to="/" style={brandStripStyle} aria-label="WC Album Tracker — Home">
+          <img src="/logo-192.png" alt="" width="28" height="28" style={brandStripLogo} />
+          <span style={brandStripText}>WC ALBUM TRACKER</span>
+        </Link>
+
         {/* ── CTA TOP: Hacer trade ──────────────────────────────── */}
         <Link to={tradeHref} style={topCtaStyle}>
           <span style={topCtaIcon} aria-hidden>🤝</span>
@@ -234,6 +240,27 @@ const cardStyle = {
   border: '1px solid #1f2540',
   borderRadius: 12,
   padding: '20px 18px',
+}
+const brandStripStyle = {
+  display: 'inline-flex', alignItems: 'center', gap: 10,
+  textDecoration: 'none',
+  marginBottom: 14,
+  padding: '6px 10px 6px 6px',
+  background: 'rgba(245, 200, 70, 0.06)',
+  border: '1px solid rgba(245, 200, 70, 0.18)',
+  borderRadius: 999,
+}
+const brandStripLogo = {
+  borderRadius: 6,
+  display: 'block',
+  filter: 'drop-shadow(0 0 8px rgba(245, 200, 70, 0.35))',
+}
+const brandStripText = {
+  fontFamily: "'Bebas Neue', sans-serif",
+  fontSize: 13,
+  color: '#FCD34D',
+  letterSpacing: '0.20em',
+  fontWeight: 600,
 }
 const heroStyle = {
   display: 'flex', alignItems: 'center', gap: 14,

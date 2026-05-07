@@ -120,6 +120,10 @@
   justify-content: center;
   filter: drop-shadow(0 0 8px var(--gold-glow));
 }
+.brandIcon img {
+  border-radius: 6px;
+  display: block;
+}
 .brandSub {
   font-size: 11.5px;
   color: rgba(245, 200, 70, 0.70);
@@ -1340,7 +1344,7 @@
   .headerInner { padding: 10px 12px 12px; gap: 8px; }
   .headerRow { gap: 10px; }
   .brandTitle { font-size: 16px; letter-spacing: 0.10em; }
-  .brandIcon img { width: 18px !important; height: 18px !important; }
+  .brandIcon img { width: 22px !important; height: 22px !important; }
   .brandSub { font-size: 10px; letter-spacing: 0.12em; margin-top: 4px; }
   .pctBlock { min-width: 0; }
   .pctValue { font-size: 30px; line-height: 1; }

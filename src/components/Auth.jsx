@@ -113,19 +113,6 @@ export default function Auth() {
             </div>
           </div>
 
-          <div className={s.hero}>
-            <h1 className={s.heroTitle}>
-              <span>WORLD CUP</span>
-              <span className={s.heroYear}>2026</span>
-            </h1>
-            <div className={s.heroDivider}>
-              <span className={s.dividerLine} />
-              <span className={s.dividerDiamond} />
-              <span className={`${s.dividerLine} ${s.dividerLineRight}`} />
-            </div>
-            <div className={s.heroSubtitle}>Collection Tracker</div>
-          </div>
-
           <div className={s.welcome}>
             <span className={s.welcomeIcon}><IconTrophy /></span>
             <span>Bienvenido,</span>

@@ -11,5 +11,8 @@ login.PNG
 *.jpg
 *.jpeg
 
-# Excepción: bg del login (asset propio del usuario)
-!public/login-bg.jpg
+# Excepción: assets propios servidos desde public/
+!public/*.png
+!public/*.jpg
+!public/*.svg
+!public/*.webmanifest
