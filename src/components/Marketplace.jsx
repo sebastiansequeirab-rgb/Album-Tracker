@@ -1270,6 +1270,7 @@ export default function Marketplace({
 // Sub-componente: banner desglosado de un listing público (full info, no clic-para-expandir)
 // ───────────────────────────────────────────────────────────────────────────
 function ListingBanner({ listing, author, itemsById, myCol, isMine, isFavorite, busyAccept, onToggleFavorite, onChat, onTrade, onAccept, onViewProfile, onDelete, onComplete }) {
+  const [expanded, setExpanded] = useState(false)
   const offeredCards = listing.offered_ids.map(id => itemsById[id]).filter(Boolean)
   const wantedCards  = listing.wanted_ids.map(id => itemsById[id]).filter(Boolean)
 
@@ -1281,13 +1282,14 @@ function ListingBanner({ listing, author, itemsById, myCol, isMine, isFavorite, 
   })()
 
   return (
-    <div className={`${s.banner} ${isPerfectMatch ? s.bannerMatch : ''}`}>
+    <div className={`${s.banner} ${isPerfectMatch ? s.bannerMatch : ''} ${expanded ? s.bannerExpanded : s.bannerCollapsed}`}>
       {isPerfectMatch && (
         <div className={s.matchBadge}>
           <IconSparkle size={12}/> <span>Match Perfecto</span>
         </div>
       )}
 
+      {/* Header: tap on author abre perfil; tap en summary toggle expand */}
       <div className={s.bannerHead}>
         <button onClick={onViewProfile} className={s.bannerAuthor} type="button">
           <div className={s.userAvatar}><Avatar profile={author} size={42} /></div>
@@ -1299,6 +1301,14 @@ function ListingBanner({ listing, author, itemsById, myCol, isMine, isFavorite, 
           </div>
         </button>
         <button
+          onClick={() => setExpanded(v => !v)}
+          className={s.bannerExpandBtn}
+          aria-label={expanded ? 'Cerrar oferta' : 'Ver detalles'}
+          aria-expanded={expanded}
+          type="button">
+          <span className={s.bannerExpandChevron}>{expanded ? '▴' : '▾'}</span>
+        </button>
+        <button
           onClick={onToggleFavorite}
           className={`${s.favStar} ${isFavorite ? s.favStarOn : ''}`}
           aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
@@ -1307,6 +1317,44 @@ function ListingBanner({ listing, author, itemsById, myCol, isMine, isFavorite, 
         </button>
       </div>
 
+      {/* Compact summary cuando está colapsado: mini-chips de los #cards */}
+      {!expanded && (offeredCards.length > 0 || wantedCards.length > 0) && (
+        <button
+          type="button"
+          className={s.bannerCompactRow}
+          onClick={() => setExpanded(true)}
+          aria-label="Ver detalles de la oferta">
+          {offeredCards.length > 0 && (
+            <span className={s.bannerCompactGroup}>
+              <span className={`${s.bannerCompactLabel} ${s.bannerCompactLabelHave}`}>
+                <IconArrowUp size={10}/> OFRECE
+              </span>
+              {offeredCards.slice(0, 4).map(c => (
+                <span key={c.id} className={s.bannerCompactChip}>
+                  {c.flag} #{c.num}
+                </span>
+              ))}
+              {offeredCards.length > 4 && <span className={s.bannerCompactMore}>+{offeredCards.length - 4}</span>}
+            </span>
+          )}
+          {wantedCards.length > 0 && (
+            <span className={s.bannerCompactGroup}>
+              <span className={`${s.bannerCompactLabel} ${s.bannerCompactLabelWant}`}>
+                <IconArrowDown size={10}/> BUSCA
+              </span>
+              {wantedCards.slice(0, 4).map(c => (
+                <span key={c.id} className={s.bannerCompactChip}>
+                  {c.flag} #{c.num}
+                </span>
+              ))}
+              {wantedCards.length > 4 && <span className={s.bannerCompactMore}>+{wantedCards.length - 4}</span>}
+            </span>
+          )}
+        </button>
+      )}
+
+      {/* Detalles + acciones solo cuando expanded */}
+      {expanded && (<>
       <div className={s.bannerColumns}>
         {offeredCards.length > 0 && (
           <div className={s.bannerSection}>
@@ -1407,6 +1455,7 @@ function ListingBanner({ listing, author, itemsById, myCol, isMine, isFavorite, 
           </>
         )}
       </div>
+      </>)}
     </div>
   )
 }

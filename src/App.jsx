@@ -5,6 +5,7 @@ import Auth from './components/Auth'
 import Tracker from './components/Tracker'
 import AlbumOnboarding from './components/AlbumOnboarding'
 import PublicProfile from './components/PublicProfile'
+import ResetPassword from './components/ResetPassword'
 import { ensureMyProfile } from './lib/marketplace'
 import { activateAlbum } from './lib/album'
 import { ALBUM_ADRENALYN, ALBUM_STICKER, ALBUM_TYPES } from './data'
@@ -26,6 +27,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/u/:slug" element={<PublicProfile />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/*" element={<MainApp />} />
     </Routes>
   )
