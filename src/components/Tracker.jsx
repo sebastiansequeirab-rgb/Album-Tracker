@@ -555,7 +555,9 @@ export default function Tracker({
             </div>
           </div>
 
-          {myProfile?.slug && myProfile?.marketplace_visible && (() => {
+          {/* TU LINK row — solo en Home (dashboard). En las otras tabs se libera
+              el espacio para que el banner sea más compacto. */}
+          {tab === 'dashboard' && myProfile?.slug && myProfile?.marketplace_visible && (() => {
             const buildMsg = () => buildShareMessage({
               profile: myProfile,
               items: ALL_ITEMS,
