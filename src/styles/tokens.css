@@ -122,6 +122,15 @@
   --nav-h: 42px;
   --bottom-pad: 80px;
 
+  /* Safe-area top — single source of truth para padding del main y
+     sticky offset del subnav. iOS Safari aplica un buffer implícito
+     arriba de las páginas (~60px, probablemente reserva visual de la
+     URL bar) que NO existe en standalone (PWA / home-screen). El
+     override @media (display-mode: standalone) emula ese buffer para
+     que ambas vistas se vean iguales y el subnav sticky siempre quede
+     alineado con el contenido. */
+  --safe-top: env(safe-area-inset-top, 0px);
+
   /* Transitions */
   --t-fast: 0.12s ease;
   --t-base: 0.2s ease;
@@ -185,4 +194,15 @@
   --t-status: 0.15s;
   --stagger: 0.04s;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Standalone (PWA / Add to Home Screen iOS) — Safari aplica un buffer
+   implícito arriba de las páginas que no existe en standalone. Sumamos
+   ~60px al --safe-top para emular ese buffer y que el contenido no
+   quede pegado al status bar. Como el subnav sticky usa la misma
+   variable, queda automáticamente alineado sin gaps al scrollear. */
+@media (display-mode: standalone) {
+  :root {
+    --safe-top: calc(env(safe-area-inset-top, 0px) + 60px);
+  }
 }

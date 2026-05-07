@@ -56,9 +56,10 @@
   padding: 0 2px 6px;
   margin-bottom: 2px;
   position: sticky;
-  /* El header del Tracker no se muestra fuera de Home, así que la subnav
-     se queda en top:0 (con safe-area para el notch del iPhone). */
-  top: env(safe-area-inset-top, 0px);
+  /* Misma variable que .mainNoHeader padding-top — garantiza que el
+     subnav stick exactamente al borde superior del contenido sin gap
+     en ningún modo (Safari browser + standalone home-screen). */
+  top: var(--safe-top);
   z-index: 50;
   background: rgba(6, 8, 15, 0.98);
   border-bottom: 1px solid rgba(245, 200, 70, 0.10);
@@ -1888,11 +1889,10 @@
     margin-right: calc(var(--sp-3) * -1);
     padding-left: var(--sp-3);
     padding-right: var(--sp-3);
-    /* Sin header en mobile (Mercado/Chat/Cartas/Perfil) — el subnav se
-       queda sticky pegado al safe-area del notch. Antes había un offset
-       de 48px (asumiendo header presente) que dejaba un gap arriba donde
-       se colaba el SectionHead al scrollear. */
-    top: env(safe-area-inset-top, 0px);
+    /* Misma variable --safe-top que la regla default — incluye el
+       buffer de standalone automáticamente cuando aplica. Sin gap,
+       sin overlap con el SectionHead al scrollear. */
+    top: var(--safe-top);
   }
   .modalBackdrop {
     align-items: flex-end;

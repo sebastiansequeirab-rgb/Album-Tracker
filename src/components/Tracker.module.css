@@ -473,21 +473,14 @@
 }
 
 /* Cuando el header está oculto (todas las tabs excepto Home), el main
-   queda flush contra safe-area: el contenido sube todo lo posible.
-   Cada tab provee su propio gold frame al top:
-     · Cartas → .filterBar gold-border
-     · Mercado / Chat → .subnav border-bottom + chips gold-left
-     · Perfil → SectionHead corner brackets
-   No agregamos brackets externos — ya hay frame en cada caso y serían
-   redundantes / colisionarían con el subnav cuando sube.
-
-   UNA sola regla para todos los modos (Safari browser + standalone /
-   bookmark home-screen / PWA): env(safe-area-inset-top) lo maneja iOS
-   y devuelve el valor correcto en cada caso (notch / Dynamic Island).
-   Sin overrides por display-mode → ambas vistas lucen idénticas en el
-   top, lo único que cambia abajo es si hay URL bar de Safari. */
+   usa --safe-top (definida en tokens.css). En Safari browser eso es
+   solo el safe-area-inset-top; en standalone (home-screen / PWA)
+   además incluye un buffer de 60px que emula el padding implícito que
+   Safari mete arriba — sin él, los títulos quedan pegados al status
+   bar. La variable es compartida con el sticky offset del subnav en
+   Marketplace, así nunca hay gap entre subnav y contenido al scrollear. */
 .mainNoHeader {
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: var(--safe-top);
 }
 
 /* ==========================================================================
