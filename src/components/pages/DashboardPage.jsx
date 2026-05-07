@@ -1,9 +1,8 @@
-import { useMemo } from 'react'
 import { motion } from 'framer-motion'
-import Flag from '../Flag'
-import ConfBadge from '../ui/ConfBadge'
-import ProgressBar from '../ui/ProgressBar'
 import TypeDonut from '../ui/TypeDonut'
+import CountryProgressMap from '../ui/CountryProgressMap'
+import { ALBUM_STICKER } from '../../data'
+import { STICKER_TEAMS } from '../../data/teams'
 import s from './DashboardPage.module.css'
 
 const IconArrow = (p) => (
@@ -20,24 +19,6 @@ const IconHandshake = (p) => (
   </svg>
 )
 
-const listVariants = {
-  hidden: { opacity: 1 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.04 } },
-}
-const itemVariants = {
-  hidden:  { opacity: 0, y: 8 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.16, 1, 0.3, 1] } },
-}
-
-const CONF_COLOR = {
-  CONMEBOL: 'var(--conf-conmebol)',
-  UEFA:     'var(--conf-uefa)',
-  CONCACAF: 'var(--conf-concacaf)',
-  CAF:      'var(--conf-caf)',
-  AFC:      'var(--conf-afc)',
-  OFC:      'var(--conf-ofc)',
-}
-
 export default function DashboardPage({
   cfg,
   stats,
@@ -52,14 +33,10 @@ export default function DashboardPage({
   setTab,
   setFTeam,
   setSelTeam,
+  albumType,
+  col,
   segments = [],
 }) {
-  const upcoming = useMemo(() => {
-    return [...teamStats]
-      .filter(t => t.pct > 0 && t.pct < 100)
-      .sort((a, b) => (b.pct - a.pct) || (b.have - a.have))
-      .slice(0, 8)
-  }, [teamStats])
 
   return (
     <div className={s.page}>
@@ -88,61 +65,17 @@ export default function DashboardPage({
         </button>
       )}
 
-      {/* ── 01 Próximos a Completar ──────────────────────────────────────── */}
-      <section className={s.panel}>
-        <header className={s.panelHead}>
-          <h3 className={s.panelTitle}>Próximos a Completar</h3>
-          <span className={s.panelRule} aria-hidden="true" />
-          {upcoming.length > 0 && (
-            <button type="button" onClick={() => { setFTeam?.('all'); setTab('cards') }} className={s.panelLink}>
-              Ver todos →
-            </button>
-          )}
-        </header>
-        {upcoming.length === 0 ? (
-          <div className={s.empty}>
-            {teamStats.some(t => t.pct === 100)
-              ? '¡Todos completos! Empezá uno nuevo desde Equipos.'
-              : 'Marcá tus primeras cartas para ver acá los equipos más cerca de completar.'}
-          </div>
-        ) : (
-          <motion.div
-            className={s.upcomingList}
-            variants={listVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {upcoming.map((t, i) => {
-              const conf = String(t.conf || '').toUpperCase()
-              const rank = String(i + 1).padStart(2, '0')
-              return (
-                <motion.button
-                  key={t.id}
-                  variants={itemVariants}
-                  type="button"
-                  onClick={() => { setFTeam?.(t.name); setTab('cards') }}
-                  className={s.upcomingRow}
-                >
-                  <span className={s.upcomingRank}>{rank}</span>
-                  <span className={s.upcomingFlag}>
-                    <Flag fifa={t.id} emoji={t.flag} size={22} alt={t.name} />
-                  </span>
-                  <span className={s.upcomingName}>{t.name}</span>
-                  {conf && <ConfBadge confederation={conf} size="xs" />}
-                  <span className={s.upcomingBarWrap}>
-                    <ProgressBar
-                      pct={t.pct}
-                      color={CONF_COLOR[conf] || 'var(--accent)'}
-                      height={7}
-                    />
-                  </span>
-                  <span className={s.upcomingFrac}>{t.have}/{t.tot}</span>
-                </motion.button>
-              )
-            })}
-          </motion.div>
-        )}
-      </section>
+      {/* ── Mapa de la Colección (solo Stickers — 48 países × 20) ────────── */}
+      {albumType === ALBUM_STICKER && (
+        <CountryProgressMap
+          teams={STICKER_TEAMS}
+          col={col}
+          onCountrySelect={(teamName) => {
+            setFTeam?.([teamName])
+            setTab?.('cards')
+          }}
+        />
+      )}
 
       {/* ── Raras / Momentum (conditional) ──────────────────────────────── */}
       {(cfg.showRare || cfg.showMomentum) && (

@@ -1,12 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import {
-  EMOJI_AVATARS, loadMyProfile, saveMyProfile, deriveDisplayName,
-  MEETING_POINT_TYPES, newMeetingPoint, loadMyTradeHistory, uploadAvatar, saveAvatarUrl,
+  loadMyProfile, saveMyProfile, deriveDisplayName,
+  MEETING_POINT_TYPES, newMeetingPoint, uploadAvatar, saveAvatarUrl,
 } from '../lib/marketplace'
-import { buildShareMessage, copyShareMessage, whatsappHref } from '../lib/shareMessage'
-import { ALBUM_CONFIG, ALBUM_STICKER, ALBUM_ADRENALYN } from '../data'
-import { supabase } from '../supabaseClient'
-import { exportListPdf } from '../lib/exportPdf'
+import { ALBUM_STICKER, ALBUM_ADRENALYN } from '../data'
 import { activateAlbum, deactivateAlbum } from '../lib/album'
 import s from './Profile.module.css'
 
@@ -29,23 +26,10 @@ const IconWhatsapp = (p) => (
     <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
   </svg>
 )
-const IconMail = (p) => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
-    <rect x="3" y="5" width="18" height="14" rx="2" />
-    <path d="M3 7l9 6 9-6" />
-  </svg>
-)
 const IconPin = (p) => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
     <circle cx="12" cy="10" r="3" />
-  </svg>
-)
-const IconGlobe = (p) => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
-    <circle cx="12" cy="12" r="10" />
-    <path d="M2 12h20" />
-    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
   </svg>
 )
 const IconBook = (p) => (
@@ -191,7 +175,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
   return (
     <div className={s.wrap}>
 
-      {/* ═══════════════════ 01 — IDENTIDAD ═══════════════════ */}
+      {/* ═══════════════════ 01 — PERFIL (Identidad + Contactos) ═══════════════════ */}
       <section className={s.panel}>
         <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
         <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
@@ -200,8 +184,8 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
 
         <SectionHead
           num="01"
-          title="IDENTIDAD"
-          sub="Cómo te ven los otros coleccionistas en el Marketplace."
+          title="PERFIL"
+          sub="Cómo te ven los otros coleccionistas en el Marketplace. Deja al menos un contacto."
         />
 
         <div className={s.field}>
@@ -224,24 +208,9 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
           />
         </div>
 
-      </section>
-
-      {/* ═══════════════════ 02 — CONTACTOS ═══════════════════ */}
-      <section className={s.panel}>
-        <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
-        <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
-        <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
-        <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
-
-        <SectionHead
-          num="02"
-          title="CONTACTOS"
-          sub="Cuando otro coleccionista quiera cambiarte algo, va a ver lo que pongas acá. Deja al menos uno."
-        />
-
         <div className={s.fieldGrid}>
           <div className={s.field}>
-            <FieldLabel num="01">Instagram</FieldLabel>
+            <FieldLabel num="03">Instagram</FieldLabel>
             <div className={s.inputBox}>
               <span className={s.inputIcon}><IconInstagram /></span>
               <span className={s.inputAt}>@</span>
@@ -253,7 +222,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
           </div>
 
           <div className={s.field}>
-            <FieldLabel num="02">WhatsApp</FieldLabel>
+            <FieldLabel num="04">WhatsApp</FieldLabel>
             <div className={s.inputBox}>
               <span className={s.inputIcon}><IconWhatsapp /></span>
               <input className={s.input} type="tel"
@@ -266,25 +235,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
 
       </section>
 
-      {/* ═══════════════════ 03 — TU PERFIL PÚBLICO ═══════════════════ */}
-      {profile.slug && (
-        <section className={s.panel}>
-          <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
-          <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
-          <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
-          <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
-
-          <SectionHead
-            num="03"
-            title="TU PERFIL PÚBLICO"
-            sub="Compartí este link y el mensaje pre-armado con coleccionistas."
-          />
-
-          <PublicLinkBlock profile={profile} session={session} />
-        </section>
-      )}
-
-      {/* ═══════════════════ 04 — PUNTOS DE ENCUENTRO ═══════════════════ */}
+      {/* ═══════════════════ 02 — PUNTOS DE ENCUENTRO ═══════════════════ */}
       <section className={s.panel}>
         <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
         <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
@@ -292,7 +243,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
 
         <SectionHead
-          num="04"
+          num="02"
           title="PUNTOS DE ENCUENTRO"
           sub="Lugares donde solés intercambiar cartas. Aparecen como sugerencias cuando alguien te propone un trade."
         />
@@ -359,16 +310,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         </button>
       </section>
 
-      {/* ═══════════════════ MIS LISTAS ═══════════════════ */}
-      <MyListsSection
-        userId={session.user.id}
-        profile={profile}
-      />
-
-      {/* ═══════════════════ MIS TRADES ═══════════════════ */}
-      <TradeHistorySection userId={session.user.id} />
-
-      {/* ═══════════════════ 05 — MIS ÁLBUMES ═══════════════════ */}
+      {/* ═══════════════════ 03 — MIS ÁLBUMES ═══════════════════ */}
       <section className={s.panel}>
         <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
         <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
@@ -376,7 +318,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
 
         <SectionHead
-          num="05"
+          num="03"
           title="MIS ÁLBUMES ACTIVOS"
           sub="Activá los álbumes que coleccionás. Tu progreso se guarda por separado en cada uno y podés alternarlos desde el header."
         />
@@ -440,229 +382,6 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
   )
 }
 
-function MyListsSection({ userId, profile }) {
-  const [tab, setTab] = useState('repetidas')
-  const [data, setData] = useState({ items: [], col: {}, loading: true, cfg: null, error: null })
-
-  useEffect(() => {
-    if (!userId) return
-    let cancelled = false
-
-    const album = (profile?.active_albums && profile.active_albums[0]) || ALBUM_STICKER
-    const cfg = ALBUM_CONFIG[album] || ALBUM_CONFIG[ALBUM_STICKER] || ALBUM_CONFIG[ALBUM_ADRENALYN]
-    if (!cfg || typeof cfg.buildItems !== 'function') {
-      setData({ items: [], col: {}, loading: false, cfg: null, error: 'no-cfg' })
-      return
-    }
-    let items = []
-    try { items = cfg.buildItems() }
-    catch (e) {
-      console.warn('MyLists buildItems failed:', e)
-      setData({ items: [], col: {}, loading: false, cfg, error: 'no-items' })
-      return
-    }
-
-    ;(async () => {
-      try {
-        const { data: row } = await supabase
-          .from(cfg.table)
-          .select('data')
-          .eq('user_id', userId)
-          .maybeSingle()
-        if (cancelled) return
-        setData({ items, col: row?.data || {}, loading: false, cfg, error: null })
-      } catch (e) {
-        console.warn('MyLists load failed:', e)
-        if (!cancelled) setData({ items, col: {}, loading: false, cfg, error: 'load-failed' })
-      }
-    })()
-    return () => { cancelled = true }
-  }, [userId, profile?.active_albums])
-
-  const filtered = useMemo(() => {
-    if (data.loading || !Array.isArray(data.items)) return []
-    return data.items.filter(c => {
-      const st = data.col?.[c.id] || 'missing'
-      return tab === 'repetidas' ? st === 'duplicate' : st === 'missing'
-    })
-  }, [data, tab])
-
-  const grouped = useMemo(() => {
-    const m = new Map()
-    for (const it of filtered) {
-      const k = it.team || 'Otros'
-      if (!m.has(k)) m.set(k, { teamName: k, flag: it.flag || '🏳️', cards: [] })
-      m.get(k).cards.push(it)
-    }
-    return [...m.values()]
-  }, [filtered])
-
-  const exportPdf = () => {
-    try {
-      exportListPdf({
-        items: filtered,
-        title: tab === 'repetidas' ? 'Mis Repetidas' : 'Mis Faltantes',
-        subtitle: data.cfg?.label || '',
-        username: profile?.display_name,
-        publicUrl: profile?.slug ? `${window.location.origin}/u/${profile.slug}` : null,
-      })
-    } catch (e) {
-      console.warn('exportPdf failed:', e)
-    }
-  }
-
-  return (
-    <section className={s.panel}>
-      <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
-      <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
-      <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
-      <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
-
-      <SectionHead
-        num="·"
-        title="MIS LISTAS"
-        sub="Tus repetidas y faltantes — exportá a PDF para compartir."
-      />
-
-      <div className={s.myLists}>
-        <div className={s.myListsToggle}>
-          <button
-            type="button"
-            onClick={() => setTab('repetidas')}
-            className={`${s.myListsBtn} ${tab === 'repetidas' ? s.myListsBtnActive : ''}`}
-          >
-            Repetidas
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('faltantes')}
-            className={`${s.myListsBtn} ${tab === 'faltantes' ? s.myListsBtnActive : ''}`}
-          >
-            Faltantes
-          </button>
-        </div>
-
-        <div className={s.myListsActions}>
-          <button type="button" className={s.myListsExport} onClick={exportPdf} disabled={!filtered.length}>
-            ⬇ Exportar PDF
-          </button>
-          <span className={s.myListsCount}>
-            {filtered.length} {filtered.length === 1 ? 'carta' : 'cartas'}
-          </span>
-        </div>
-
-        {data.loading && <div className={s.myListsEmpty}>Cargando…</div>}
-        {!data.loading && filtered.length === 0 && (
-          <div className={s.myListsEmpty}>
-            {tab === 'repetidas' ? 'Sin repetidas marcadas todavía.' : '¡No te falta ninguna!'}
-          </div>
-        )}
-        {!data.loading && filtered.length > 0 && (
-          <div className={s.myListsGroups}>
-            {grouped.map(g => (
-              <div key={g.teamName} className={s.myListsTeamGroup}>
-                <div className={s.myListsTeamHead}>
-                  <span>{g.flag}</span>
-                  <span>{g.teamName}</span>
-                  <span className={s.myListsTeamCount}>{g.cards.length}</span>
-                </div>
-                <div className={s.myListsNums}>
-                  {g.cards.map(c => <span key={c.id}>#{c.num}</span>)}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
-  )
-}
-
-function PublicLinkBlock({ profile, session }) {
-  const [feedback, setFeedback] = useState(null)
-  const [waHref, setWaHref] = useState('#')
-
-  const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/u/${profile?.slug || ''}`
-
-  const buildMsg = async () => {
-    if (!profile?.slug || !session?.user?.id) {
-      return `Mira mi álbum: ${url}`
-    }
-    const album = (profile.active_albums && profile.active_albums[0]) || ALBUM_STICKER
-    const cfg = ALBUM_CONFIG[album] || ALBUM_CONFIG[ALBUM_STICKER]
-    if (!cfg) return `Mira mi álbum: ${url}`
-    let items = []
-    try { items = cfg.buildItems() } catch { /* sin-op */ }
-    let col = {}
-    try {
-      const { data } = await supabase
-        .from(cfg.table)
-        .select('data')
-        .eq('user_id', session.user.id)
-        .maybeSingle()
-      col = data?.data || {}
-    } catch (e) {
-      console.warn('share msg: load col failed:', e)
-    }
-    try {
-      return buildShareMessage({
-        profile,
-        items,
-        col,
-        albumLabel: cfg.label === 'Álbum de Stickers' ? 'Álbum Panini WC 2026' : cfg.label,
-        totalLabel: cfg.label === 'Álbum de Stickers' ? 'stickers' : 'cartas',
-      })
-    } catch (e) {
-      console.warn('buildShareMessage failed:', e)
-      return `Mira mi álbum: ${url}`
-    }
-  }
-
-  const onCopy = async () => {
-    try {
-      const msg = await buildMsg()
-      await copyShareMessage(msg)
-      setFeedback('📋 Mensaje copiado · pegalo en WhatsApp')
-    } catch (e) {
-      console.warn('copy failed:', e)
-      setFeedback('No se pudo copiar')
-    }
-    setTimeout(() => setFeedback(null), 3000)
-  }
-
-  useEffect(() => {
-    let cancelled = false
-    buildMsg()
-      .then(msg => { if (!cancelled) setWaHref(whatsappHref(msg)) })
-      .catch(e => { console.warn('precompute waHref failed:', e) })
-    return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.slug, profile?.display_name])
-
-  return (
-    <div className={s.publicLinkRow}>
-      <div className={s.publicLinkLabel}>Tu link público</div>
-      <div className={s.publicLinkValue}>
-        <code>{url}</code>
-        <button type="button" onClick={onCopy} className={s.publicLinkCopy}>
-          Copiar mensaje
-        </button>
-        <a
-          href={waHref}
-          target="_blank" rel="noopener noreferrer"
-          className={s.publicLinkWa}
-        >
-          WhatsApp
-        </a>
-      </div>
-      {feedback && <div className={s.publicLinkFeedback}>{feedback}</div>}
-      <div className={s.publicLinkHelp}>
-        El botón "Copiar mensaje" copia un mensaje listo para pegar en WhatsApp:
-        link a tu perfil + tu lista de faltantes y repetidas con banderas.
-      </div>
-    </div>
-  )
-}
 
 function AvatarUploader({ session, profile, onChange }) {
   const [busy, setBusy] = useState(false)
@@ -734,65 +453,5 @@ function AvatarUploader({ session, profile, onChange }) {
         )}
       </div>
     </div>
-  )
-}
-
-function TradeHistorySection({ userId }) {
-  const [history, setHistory] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    loadMyTradeHistory(userId)
-      .then(data => { if (!cancelled) setHistory(data) })
-      .catch(() => { if (!cancelled) setHistory([]) })
-      .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [userId])
-
-  return (
-    <section className={s.panel}>
-      <span className={`${s.bracket} ${s.tl}`} aria-hidden="true" />
-      <span className={`${s.bracket} ${s.tr}`} aria-hidden="true" />
-      <span className={`${s.bracket} ${s.bl}`} aria-hidden="true" />
-      <span className={`${s.bracket} ${s.br}`} aria-hidden="true" />
-
-      <SectionHead
-        num="·"
-        title="MIS TRADES"
-        sub="Intercambios concretados — historial privado, solo vos lo ves."
-      />
-
-      {loading && (
-        <div className={s.toggleHint} style={{ padding: '12px 0' }}>Cargando…</div>
-      )}
-
-      {!loading && history.length === 0 && (
-        <div className={s.toggleHint} style={{ padding: '12px 0' }}>
-          Aún no registraste ningún cambio. Cuando marques un trade como concretado o uses Intercambio Rápido, aparecerá acá.
-        </div>
-      )}
-
-      {!loading && history.length > 0 && (
-        <div className={s.tradeHistoryList}>
-          {history.map(h => (
-            <div key={h.id} className={s.tradeHistoryRow}>
-              <div className={s.tradeHistoryDate}>
-                {new Date(h.created_at).toLocaleDateString('es-VE', { day: '2-digit', month: 'short' })}
-              </div>
-              <div className={s.tradeHistoryBody}>
-                <div className={s.tradeHistoryLine}>
-                  <strong>+{h.received_ids?.length || 0}</strong> entró
-                  {' · '}
-                  <strong>−{h.given_ids?.length || 0}</strong> salió
-                </div>
-                {h.note && <div className={s.tradeHistoryNote}>"{h.note}"</div>}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
   )
 }

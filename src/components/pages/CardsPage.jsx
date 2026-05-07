@@ -92,7 +92,6 @@ export default function CardsPage({
   gs,
   gx,
   toggle,
-  setQty,
   bulkUpdate,
   stats,
 }) {
@@ -169,9 +168,12 @@ export default function CardsPage({
   }, [ALL_ITEMS, gs])
 
   const activePills = []
-  if (fSt   !== 'all') activePills.push({ key: 'st',   label: STATUS_PILL[fSt],   onRemove: () => setFSt('all') })
-  if (fTeam !== 'all') activePills.push({ key: 'team', label: fTeam,              onRemove: () => setFTeam('all') })
-  if (q)               activePills.push({ key: 'q',    label: `“${q}”`,           onRemove: () => setQ('') })
+  if (fSt !== 'all') activePills.push({ key: 'st', label: STATUS_PILL[fSt], onRemove: () => setFSt('all') })
+  if (Array.isArray(fTeam) && fTeam.length > 0) {
+    const lbl = fTeam.length === 1 ? fTeam[0] : `${fTeam.length} países`
+    activePills.push({ key: 'team', label: lbl, onRemove: () => setFTeam([]) })
+  }
+  if (q) activePills.push({ key: 'q', label: `“${q}”`, onRemove: () => setQ('') })
 
   const bulkActive = selectMode && selected.size > 0
 
@@ -248,24 +250,28 @@ export default function CardsPage({
         </button>
       </div>
 
-      {/* ── Flag filters bar (collapsible) ─────────────────────────────── */}
+      {/* ── Flag filters bar (collapsible) — multi-select ──────────────── */}
       <div className={s.flagBar}>
         <button
           type="button"
           onClick={() => setShowFlagFilters(v => !v)}
-          className={`${s.flagBarToggle} ${fTeam !== 'all' ? s.flagBarToggleActive : ''}`}
+          className={`${s.flagBarToggle} ${fTeam.length > 0 ? s.flagBarToggleActive : ''}`}
           aria-expanded={showFlagFilters}
         >
           <span className={s.flagBarIcon} aria-hidden>🏁</span>
           <span className={s.flagBarLabel}>
-            {fTeam !== 'all' ? `Filtrando por ${fTeam}` : 'Filtrar por país'}
+            {fTeam.length === 0
+              ? 'Filtrar por país'
+              : fTeam.length === 1
+                ? `Filtrando por ${fTeam[0]}`
+                : `Filtrando ${fTeam.length} países`}
           </span>
-          {fTeam !== 'all' && (
+          {fTeam.length > 0 && (
             <span
               className={s.flagBarChip}
-              onClick={(e) => { e.stopPropagation(); setFTeam('all') }}
+              onClick={(e) => { e.stopPropagation(); setFTeam([]) }}
               role="button"
-              aria-label="Quitar filtro de país"
+              aria-label="Quitar filtro de países"
             >
               <IconCross /> limpiar
             </span>
@@ -276,18 +282,22 @@ export default function CardsPage({
         </button>
 
         {showFlagFilters && (
-          <div className={s.flagFilters} role="tablist" aria-label="Filtrar por equipo">
+          <div className={s.flagFilters} role="tablist" aria-label="Filtrar por equipo (multi)">
             {teamFilterStats.map(t => {
               const pct = t.total ? Math.round(t.have / t.total * 100) : 0
-              const active = fTeam === t.teamName
-              const dim = !active && fTeam !== 'all'
+              const active = fTeam.includes(t.teamName)
+              const dim = !active && fTeam.length > 0
               return (
                 <button
                   key={t.teamName}
                   type="button"
                   role="tab"
                   aria-pressed={active}
-                  onClick={() => setFTeam(active ? 'all' : t.teamName)}
+                  onClick={() => {
+                    setFTeam(active
+                      ? fTeam.filter(x => x !== t.teamName)
+                      : [...fTeam, t.teamName])
+                  }}
                   className={`${s.flagChip} ${active ? s.flagChipActive : ''} ${dim ? s.flagChipDim : ''}`}
                   title={`${t.teamName} · ${pct}% (${t.have}/${t.total})`}
                 >
@@ -369,7 +379,6 @@ export default function CardsPage({
                           if (selectMode) toggleSelected(c.id)
                           else toggle(c.id)
                         }}
-                        onSetQty={setQty ? (qty) => setQty(c.id, qty) : undefined}
                       />
                     )
                   })}

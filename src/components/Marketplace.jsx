@@ -1281,17 +1281,34 @@ function ListingBanner({ listing, author, itemsById, myCol, isMine, isFavorite, 
     return wantedAllMine && offeredAllMissing
   })()
 
+  // Click en el banner (excepto author + favStar) toggle expand. stopPropagation
+  // en sub-elementos para que sus clicks no expandan.
+  const handleBannerClick = () => setExpanded(v => !v)
+
   return (
-    <div className={`${s.banner} ${isPerfectMatch ? s.bannerMatch : ''} ${expanded ? s.bannerExpanded : s.bannerCollapsed}`}>
+    <div
+      className={`${s.banner} ${isPerfectMatch ? s.bannerMatch : ''} ${expanded ? s.bannerExpanded : s.bannerCollapsed}`}
+      onClick={handleBannerClick}
+      role="button"
+      tabIndex={0}
+      aria-expanded={expanded}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleBannerClick() }
+      }}
+    >
       {isPerfectMatch && (
         <div className={s.matchBadge}>
           <IconSparkle size={12}/> <span>Match Perfecto</span>
         </div>
       )}
 
-      {/* Header: tap on author abre perfil; tap en summary toggle expand */}
+      {/* Header: tap on author abre perfil; tap en favStar toggle favorito.
+          El resto del banner expande via handleBannerClick del wrapper. */}
       <div className={s.bannerHead}>
-        <button onClick={onViewProfile} className={s.bannerAuthor} type="button">
+        <button
+          onClick={(e) => { e.stopPropagation(); onViewProfile?.() }}
+          className={s.bannerAuthor}
+          type="button">
           <div className={s.userAvatar}><Avatar profile={author} size={42} /></div>
           <div className={s.userMeta}>
             <div className={s.userName}>{author?.display_name || 'Coleccionista'}</div>
@@ -1301,15 +1318,7 @@ function ListingBanner({ listing, author, itemsById, myCol, isMine, isFavorite, 
           </div>
         </button>
         <button
-          onClick={() => setExpanded(v => !v)}
-          className={s.bannerExpandBtn}
-          aria-label={expanded ? 'Cerrar oferta' : 'Ver detalles'}
-          aria-expanded={expanded}
-          type="button">
-          <span className={s.bannerExpandChevron}>{expanded ? '▴' : '▾'}</span>
-        </button>
-        <button
-          onClick={onToggleFavorite}
+          onClick={(e) => { e.stopPropagation(); onToggleFavorite?.() }}
           className={`${s.favStar} ${isFavorite ? s.favStarOn : ''}`}
           aria-label={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
           type="button">
@@ -1319,11 +1328,7 @@ function ListingBanner({ listing, author, itemsById, myCol, isMine, isFavorite, 
 
       {/* Compact summary cuando está colapsado: mini-chips de los #cards */}
       {!expanded && (offeredCards.length > 0 || wantedCards.length > 0) && (
-        <button
-          type="button"
-          className={s.bannerCompactRow}
-          onClick={() => setExpanded(true)}
-          aria-label="Ver detalles de la oferta">
+        <div className={s.bannerCompactRow}>
           {offeredCards.length > 0 && (
             <span className={s.bannerCompactGroup}>
               <span className={`${s.bannerCompactLabel} ${s.bannerCompactLabelHave}`}>
@@ -1350,7 +1355,7 @@ function ListingBanner({ listing, author, itemsById, myCol, isMine, isFavorite, 
               {wantedCards.length > 4 && <span className={s.bannerCompactMore}>+{wantedCards.length - 4}</span>}
             </span>
           )}
-        </button>
+        </div>
       )}
 
       {/* Detalles + acciones solo cuando expanded */}
@@ -1424,7 +1429,7 @@ function ListingBanner({ listing, author, itemsById, myCol, isMine, isFavorite, 
         </div>
       )}
 
-      <div className={s.bannerActions}>
+      <div className={s.bannerActions} onClick={(e) => e.stopPropagation()}>
         {isMine ? (
           <>
             <span className={s.bannerOwnTag}>TU OFERTA</span>

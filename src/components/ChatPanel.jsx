@@ -46,13 +46,12 @@ export default function ChatPanel({
   const scrollRef = useRef(null)
   const rootRef   = useRef(null)
 
-  // Asegurar que el panel quede a la vista cuando montamos / abrimos un hilo
+  // Al cambiar de thread, scroll al top de window. NO usar scrollIntoView
+  // porque mueve el window para hacer visible el panel — eso provocaba que
+  // al entrar al tab Chat la página quedara scrolleada hacia abajo.
   useLayoutEffect(() => {
-    if (rootRef.current && typeof window !== 'undefined') {
-      // Scroll al top de la ventana para que el panel sea visible
+    if (typeof window !== 'undefined') {
       window.scrollTo(0, 0)
-      // Y también scrollIntoView del propio panel por si hay containers anidados
-      rootRef.current.scrollIntoView({ block: 'start', behavior: 'auto' })
     }
   }, [activeCpId])
 
@@ -151,12 +150,16 @@ export default function ChatPanel({
     return () => { cancelled = true }
   }, [activeCpId, myId])  // eslint-disable-line
 
-  // Auto-scroll al fondo cuando cambian mensajes
+  // Auto-scroll al fondo cuando cambian mensajes — SOLO si hay un thread
+  // activo. Sin guard, esto disparaba scroll del window al entrar al tab Chat
+  // (mostrando lista de hilos sin thread activo) y dejaba la pantalla scrolleada
+  // hacia abajo.
   useEffect(() => {
+    if (!activeCpId) return
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages.length])
+  }, [messages.length, activeCpId])
 
   const onSend = async () => {
     const text = draft.trim()

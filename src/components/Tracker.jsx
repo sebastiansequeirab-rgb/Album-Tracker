@@ -90,7 +90,7 @@ export default function Tracker({
   // Total copias = 1 (have) + 1 (duplicate base) + N (extras) = 2 + N cuando
   // status === 'duplicate'. Solo aplicable a status === 'duplicate'.
   const [extras,    setExtras]    = useState({})
-  const MAX_EXTRAS = 4   // cap visual: hasta 5 dups (6 copias). Después → missing.
+  const MAX_EXTRAS = 2   // cap: hasta 3 dups (×2, ×3, ×4). Después loop a missing.
 
   // Si la URL tiene ?openUser=<id>, abrimos directo el Marketplace > drill-down.
   const initialOpenUser = useMemo(() => {
@@ -115,14 +115,19 @@ export default function Tracker({
   }, [])
 
   // Al cambiar de tab, scroll al top — antes el chat se abría pegado abajo
-  // si venías scrolleado desde otra tab (Marketplace persiste mounted).
+  // si venías scrolleado desde otra tab. Aplicamos múltiples veces para
+  // override los efectos de mount de los childs (ChatPanel, Marketplace).
   useEffect(() => {
     if (typeof window === 'undefined') return
     window.scrollTo(0, 0)
+    const t1 = setTimeout(() => window.scrollTo(0, 0), 0)
+    const t2 = setTimeout(() => window.scrollTo(0, 0), 120)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [tab])
   const [fType,     setFType]     = useState('all')
   const [fSt,       setFSt]       = useState('all')
-  const [fTeam,     setFTeam]     = useState('all')
+  // fTeam ahora es array — vacío = todos, sino lista de team names a incluir.
+  const [fTeam,     setFTeam]     = useState([])
   const [q,         setQ]         = useState('')
   const [selTeam,   setSelTeam]   = useState(null)
   const [loaded,    setLoaded]    = useState(false)
@@ -464,7 +469,7 @@ export default function Tracker({
     const st = gs(c.id)
     if (fSt   !== 'all' && st !== fSt)       return false
     if (fType !== 'all' && c.type !== fType) return false
-    if (fTeam !== 'all' && c.team !== fTeam) return false
+    if (fTeam.length > 0 && !fTeam.includes(c.team)) return false
     if (q) {
       const lq = q.toLowerCase()
       if (!c.name.toLowerCase().includes(lq) &&
@@ -641,6 +646,8 @@ export default function Tracker({
                 setTab={setTab}
                 setFTeam={setFTeam}
                 setSelTeam={setSelTeam}
+                albumType={albumType}
+                col={col}
                 segments={segments}
               />
             </motion.div>
@@ -747,13 +754,6 @@ export default function Tracker({
         </AnimatePresence>
       </main>
 
-      {/* FAB Registrar Movimiento — hidden on Home (has inline CTA) */}
-      {tab !== 'dashboard' && (
-        <button onClick={() => setShowQuickTrade(true)} className={s.fab} aria-label="Registrar movimiento">
-          <span className={s.fabIcon} aria-hidden="true"><IconPencil /></span>
-          <span className={s.fabLabel}>REGISTRAR</span>
-        </button>
-      )}
     </div>
   )
 }

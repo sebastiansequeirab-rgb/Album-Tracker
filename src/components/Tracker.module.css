@@ -142,10 +142,12 @@
   font-size: 26px;
   letter-spacing: 0.20em;
   color: var(--accent);
-  line-height: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.05;
+  /* Texto completo sin truncar — wrap natural a 2 líneas si no entra */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: keep-all;
   /* Sutil glow para realzar el accent — premium feel */
   text-shadow: 0 0 22px color-mix(in srgb, var(--accent) 40%, transparent);
 }
@@ -154,11 +156,12 @@
   color: rgba(245, 200, 70, 0.65);
   font-weight: 600;
   letter-spacing: 0.20em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
   margin-top: 5px;
   text-transform: uppercase;
+  line-height: 1.3;
 }
 
 .brandShareRow {
@@ -201,9 +204,12 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 2px;
   padding: 5px 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* URL completa — wrap natural por character si no entra */
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 1.35;
   flex: 1;
   min-width: 0;
 }
@@ -244,14 +250,29 @@
 
 @media (max-width: 540px) {
   .brandShareRow {
-    padding: 7px 10px;
-    gap: 8px;
+    /* En mobile, apilamos: label + url ocupan toda la fila, botones debajo */
+    flex-wrap: wrap;
+    padding: 8px 11px;
+    gap: 6px 10px;
     margin-top: 10px;
   }
   .brandShareLabel { font-size: 9px; letter-spacing: 0.18em; }
-  .brandShareUrl { font-size: 11px; padding: 4px 8px; }
+  .brandShareUrl {
+    font-size: 10.5px;
+    padding: 5px 9px;
+    flex: 1 1 100%;
+    /* En mobile sí permitimos wrap del URL */
+    word-break: break-all;
+  }
   .brandShareBtn,
-  .brandShareWa { padding: 5px 10px; font-size: 10px; letter-spacing: 0.14em; }
+  .brandShareWa {
+    padding: 6px 12px;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+  }
 }
 
 .headerActions {
@@ -1373,10 +1394,9 @@
   .brandTitle {
     font-size: 17px;
     letter-spacing: 0.14em;
-    /* Limitar el ancho del título así no rompe la fila al haber AlbumSwitcher */
-    max-width: 60vw;
+    /* Sin max-width — el título debe verse completo aunque tome 2 líneas */
   }
-  .brandSub { font-size: 9.5px; letter-spacing: 0.18em; margin-top: 3px; max-width: 60vw; }
+  .brandSub { font-size: 9.5px; letter-spacing: 0.18em; margin-top: 3px; }
   .pctBlock { min-width: 0; }
   .pctValue { font-size: 30px; line-height: 1; }
   .pctLabel { font-size: 9px; letter-spacing: 0.14em; margin-top: 2px; }

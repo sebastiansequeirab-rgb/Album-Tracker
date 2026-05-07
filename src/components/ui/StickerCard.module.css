@@ -195,25 +195,48 @@
   z-index: 2;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 7px 3px 6px;
-  border: 1px solid var(--card-bar, rgba(245, 200, 70, 0.18));
+  gap: 5px;
+  padding: 4px 9px 4px 8px;
+  border: 1px solid var(--card-bar, rgba(245, 200, 70, 0.22));
   border-radius: 999px;
-  background: rgba(6, 10, 22, 0.65);
-  font-family: var(--font-body);
-  font-size: 9.5px;
+  background:
+    linear-gradient(180deg, rgba(15, 22, 38, 0.92) 0%, rgba(6, 10, 22, 0.92) 100%);
+  font-family: var(--font-display);
+  font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.10em;
   text-transform: uppercase;
   color: var(--card-bar, var(--text-muted));
   white-space: nowrap;
-  pointer-events: none; /* clicks fall through to the parent button */
-  transition: opacity var(--t-status, 0.15s ease), border-color var(--t-status, 0.15s ease), color var(--t-status, 0.15s ease);
+  pointer-events: none;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: opacity var(--t-status, 0.15s ease), border-color var(--t-status, 0.15s ease), color var(--t-status, 0.15s ease), box-shadow 0.18s ease;
 }
 
-.missing .statusChip { color: var(--text-muted); border-color: rgba(148, 163, 184, 0.18); }
-.have .statusChip    { color: var(--status-have); }
-.duplicate .statusChip { color: var(--status-dup); }
+.statusLabel { line-height: 1; }
+
+.missing .statusChip {
+  color: var(--text-muted);
+  border-color: rgba(148, 163, 184, 0.22);
+}
+.have .statusChip {
+  color: var(--status-have);
+  border-color: color-mix(in srgb, var(--status-have) 50%, transparent);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.45),
+    0 0 12px color-mix(in srgb, var(--status-have) 30%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.duplicate .statusChip {
+  color: var(--status-dup);
+  border-color: color-mix(in srgb, var(--status-dup) 55%, transparent);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.45),
+    0 0 12px color-mix(in srgb, var(--status-dup) 30%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
 
 .statusChip svg {
   flex-shrink: 0;
@@ -244,90 +267,3 @@
   .statusChip { font-size: 8.5px; }
 }
 
-/* ── Qty badge (×N copias) y editor numérico inline ───────────────────── */
-
-.qtyBadge {
-  margin-left: 4px;
-  padding: 1px 5px;
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 10px;
-  color: #FFE9A8;
-}
-
-/* Anchor del lápiz (esquina superior derecha) — pequeño y discreto */
-.qtyEditAnchor {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(245, 200, 70, 0.10);
-  border: 1px solid rgba(245, 200, 70, 0.20);
-  border-radius: 999px;
-  color: var(--gold-3, #FCD34D);
-  cursor: pointer;
-  z-index: 2;
-  transition: background var(--t-fast), border-color var(--t-fast);
-}
-.qtyEditAnchor:hover {
-  background: rgba(245, 200, 70, 0.18);
-  border-color: rgba(245, 200, 70, 0.40);
-}
-
-/* Popup numérico — aparece sobre la card */
-.qtyEditor {
-  position: absolute;
-  top: 36px;
-  right: 6px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: linear-gradient(180deg, #111827 0%, #0a0f1c 100%);
-  border: 1px solid rgba(245, 200, 70, 0.32);
-  border-radius: 6px;
-  padding: 4px 6px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
-  z-index: 5;
-}
-.qtyBtn {
-  width: 26px;
-  height: 26px;
-  border-radius: 4px;
-  background: rgba(245, 200, 70, 0.10);
-  border: 1px solid rgba(245, 200, 70, 0.24);
-  color: var(--gold-1, #FFE9A8);
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.qtyBtn:hover { background: rgba(245, 200, 70, 0.20); }
-.qtyBtn:disabled { opacity: 0.35; cursor: not-allowed; }
-.qtyVal {
-  min-width: 26px;
-  text-align: center;
-  font-family: var(--font-display);
-  font-size: 18px;
-  color: #FFE9A8;
-  font-weight: 700;
-}
-.qtyClose {
-  width: 26px;
-  height: 26px;
-  border-radius: 4px;
-  background: linear-gradient(180deg, #FFE9A8, #F5C842);
-  border: 0;
-  color: #1a1305;
-  font-weight: 700;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
