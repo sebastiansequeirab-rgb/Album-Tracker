@@ -59,9 +59,20 @@ export default function PublicProfile() {
   const have = stats.totalHave
   const pct = total ? Math.round(have / total * 100) : 0
 
+  const tradeHref = profile.user_id
+    ? `/?openUser=${encodeURIComponent(profile.user_id)}`
+    : '/'
+
   return (
     <div style={pageStyle}>
       <div style={cardStyle}>
+        {/* ── CTA TOP: Hacer trade ──────────────────────────────── */}
+        <Link to={tradeHref} style={topCtaStyle}>
+          <span style={topCtaIcon} aria-hidden>🤝</span>
+          <span style={topCtaLabel}>HACER TRADE CON {(profile.display_name || 'COLECCIONISTA').toUpperCase()}</span>
+          <span style={topCtaArrow} aria-hidden>→</span>
+        </Link>
+
         {/* ── HERO ───────────────────────────────────────────────── */}
         <header style={heroStyle}>
           <Avatar profile={profile} />
@@ -104,7 +115,7 @@ export default function PublicProfile() {
         </Disclosure>
 
         <footer style={footerStyle}>
-          <Link to="/" style={ctaStyle}>HACER TRADE — ABRIR APP</Link>
+          <Link to={tradeHref} style={ctaStyle}>HACER TRADE — ABRIR APP</Link>
         </footer>
       </div>
     </div>
@@ -303,6 +314,31 @@ const pctNum = {
   width: 70, height: 70, borderRadius: '50%',
   background: '#0d111c',
   display: 'grid', placeItems: 'center',
+}
+const topCtaStyle = {
+  display: 'flex', alignItems: 'center', gap: 10,
+  padding: '14px 18px',
+  background: 'linear-gradient(180deg, #FFE9A8 0%, #F5C842 30%, #E6A817 70%, #C88A00 100%)',
+  color: '#1a1305',
+  textDecoration: 'none',
+  borderRadius: 4,
+  marginBottom: 16,
+  boxShadow: '0 8px 22px rgba(245, 200, 70, 0.30)',
+  border: '1px solid #C88A00',
+  cursor: 'pointer',
+  transition: 'filter 0.18s ease, transform 0.12s ease',
+}
+const topCtaIcon = { fontSize: 20, lineHeight: 1, flexShrink: 0 }
+const topCtaLabel = {
+  fontFamily: "'Bebas Neue', sans-serif",
+  fontSize: 16, letterSpacing: '0.18em',
+  flex: 1, minWidth: 0, fontWeight: 800,
+  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+}
+const topCtaArrow = {
+  fontFamily: "'Bebas Neue', sans-serif",
+  fontSize: 22, fontWeight: 800,
+  flexShrink: 0,
 }
 const footerStyle = { paddingTop: 18, textAlign: 'center' }
 const ctaStyle = {

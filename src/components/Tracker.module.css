@@ -191,6 +191,26 @@
   font-weight: 700;
 }
 .brandShareBtn:hover { filter: brightness(1.08); }
+
+.brandShareWa {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(180deg, #25D366 0%, #128C7E 100%);
+  color: #fff;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+  padding: 6px 12px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(18, 140, 126, 0.30);
+}
+.brandShareWa:hover { filter: brightness(1.08); }
+
 @media (max-width: 540px) {
   .brandShareRow {
     padding: 7px 10px;
@@ -199,7 +219,8 @@
   }
   .brandShareLabel { font-size: 9px; letter-spacing: 0.18em; }
   .brandShareUrl { font-size: 11px; padding: 4px 8px; }
-  .brandShareBtn { padding: 5px 10px; font-size: 10px; letter-spacing: 0.14em; }
+  .brandShareBtn,
+  .brandShareWa { padding: 5px 10px; font-size: 10px; letter-spacing: 0.14em; }
 }
 
 .headerActions {
@@ -1308,4 +1329,67 @@
   /* Smaller nav labels on tiny phones */
   .navLabel { font-size: 9px; }
   .navIcon { font-size: 19px; }
+}
+
+/* =============================================================================
+   iOS / Mobile polish — apretar densidad, no romper Mac.
+   ============================================================================= */
+@media (max-width: 540px) {
+  /* Header: padding más chico, pct más compacto */
+  .header { padding: 12px 0 0; }
+  .headerInner { padding: 10px 12px 12px; gap: 8px; }
+  .headerRow { gap: 10px; }
+  .brandTitle { font-size: 16px; letter-spacing: 0.10em; }
+  .brandIcon img { width: 18px !important; height: 18px !important; }
+  .brandSub { font-size: 10px; letter-spacing: 0.12em; margin-top: 4px; }
+  .pctBlock { min-width: 0; }
+  .pctValue { font-size: 30px; line-height: 1; }
+  .pctLabel { font-size: 9px; letter-spacing: 0.14em; margin-top: 2px; }
+  .iconBtn {
+    width: 36px; height: 36px;
+    padding: 0;
+  }
+  .iconBtnText { font-size: 11px; padding: 0 10px; width: auto; }
+
+  /* Nav bottom: 5 tabs en mobile, mantener legible y compacto */
+  .nav {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .navInner {
+    padding: 4px 4px;
+    gap: 0;
+  }
+  .navBtn {
+    padding: 6px 4px;
+    min-width: 0;
+    flex: 1 1 0;
+    gap: 2px;
+  }
+  .navIcon svg { width: 18px !important; height: 18px !important; }
+  .navLabel {
+    font-size: 9.5px !important;
+    letter-spacing: 0.10em;
+  }
+  .navBadge { font-size: 9px; padding: 0 4px; min-width: 14px; height: 14px; }
+
+  /* FAB más chico y cerca de la nav */
+  .fab {
+    width: 56px;
+    height: 56px;
+    bottom: calc(80px + env(safe-area-inset-bottom));
+    right: 14px;
+  }
+  .fabLabel { display: none; }
+  .fabIcon svg { width: 20px !important; height: 20px !important; }
+}
+
+@media (max-width: 380px) {
+  .navLabel { font-size: 9px !important; letter-spacing: 0.06em; }
+  .navIcon svg { width: 16px !important; height: 16px !important; }
+  .navBtn { padding: 5px 2px; }
+  .fab {
+    width: 50px;
+    height: 50px;
+    bottom: calc(74px + env(safe-area-inset-bottom));
+  }
 }

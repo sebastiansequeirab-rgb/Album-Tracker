@@ -89,6 +89,8 @@ export default function Marketplace({
   onGoToProfile,
   onUnreadChange,
   onCompleteTrade,
+  forceSub = null,
+  initialOpenUserId = null,
   flash,
 }) {
   const cfg = ALBUM_CONFIG[albumType]
@@ -96,7 +98,7 @@ export default function Marketplace({
   const ITEMS_BY_ID = useMemo(() => Object.fromEntries(ALL_ITEMS.map(c => [c.id, c])), [ALL_ITEMS])
   const TEAMS_LIST  = cfg.teams
   const totalItems  = ALL_ITEMS.length
-  const [sub,         setSub]         = useState('all') // 'all' | 'favorites' | 'messages' | 'inbox' | 'mine'
+  const [sub,         setSub]         = useState(forceSub || 'all') // 'all' | 'search' | 'favorites' | 'messages' | 'inbox' | 'mine'
   const [profiles,    setProfiles]    = useState([])
   const [collections, setCollections] = useState({})
   const [favorites,   setFavorites]   = useState([])
@@ -172,6 +174,15 @@ export default function Marketplace({
     setSelProfile(null)
     /* eslint-disable-next-line */
   }, [myId, albumType])
+
+  // Si arrancamos con ?openUser=<id>, intentamos cargar el drill-down de ese
+  // usuario una vez que `loading` termine.
+  useEffect(() => {
+    if (!initialOpenUserId || loading) return
+    if (initialOpenUserId === myId) return
+    onSelectUser(initialOpenUserId)
+    /* eslint-disable-next-line */
+  }, [initialOpenUserId, loading])
 
   const favoriteIdSet = useMemo(() => new Set(favorites.map(f => f.target_id)), [favorites])
 

@@ -6,6 +6,7 @@ import {
   ensureMyProfile, loadUnreadCount, subscribeToInbox,
   recordTradeHistory, updateTradeRequestStatus,
 } from '../lib/marketplace'
+import { buildShareMessage, copyShareMessage, whatsappHref } from '../lib/shareMessage'
 import { useLocalStorageState } from '../lib/useLocalStorageState'
 import AlbumSwitcher from './AlbumSwitcher'
 import Flag from './Flag'
@@ -48,6 +49,11 @@ const IconCards = (p) => (
     <path d="M8 6V4.5a1.5 1.5 0 0 1 1.5-1.5h9A1.5 1.5 0 0 1 20 4.5v13a1.5 1.5 0 0 1-1.5 1.5H16" />
   </svg>
 )
+const IconChat = (p) => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+)
 const IconExchange = (p) => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
     <polyline points="17 1 21 5 17 9" />
@@ -80,11 +86,28 @@ export default function Tracker({
   const ALL_ITEMS = useMemo(() => cfg.buildItems(), [albumType])
   const { TM, CC, ST } = cfg
   const [col,       setCol]       = useState({})
+
+  // Si la URL tiene ?openUser=<id>, abrimos directo el Marketplace > drill-down.
+  const initialOpenUser = useMemo(() => {
+    if (typeof window === 'undefined') return null
+    try { return new URL(window.location.href).searchParams.get('openUser') } catch { return null }
+  }, [])
   const [tab,       setTab]       = useLocalStorageState(
     'adrenalyn:lastTab',
     'dashboard',
-    (v) => ['dashboard','cards','marketplace','profile'].includes(v)
+    (v) => ['dashboard','cards','marketplace','chat','profile'].includes(v)
   )
+  // Override inicial si llegamos vía link público.
+  useEffect(() => {
+    if (initialOpenUser && tab !== 'marketplace') setTab('marketplace')
+    // limpia el query para que un refresh no vuelva a abrirlo
+    if (initialOpenUser && typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('openUser')
+      window.history.replaceState({}, '', url.toString())
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const [fType,     setFType]     = useState('all')
   const [fSt,       setFSt]       = useState('all')
   const [fTeam,     setFTeam]     = useState('all')
@@ -425,24 +448,45 @@ export default function Tracker({
             </div>
           </div>
 
-          {myProfile?.slug && myProfile?.marketplace_visible && (
-            <div className={s.brandShareRow}>
-              <span className={s.brandShareLabel}>TU LINK PÚBLICO</span>
-              <code className={s.brandShareUrl}>
-                {typeof window !== 'undefined' ? window.location.origin : ''}/u/{myProfile.slug}
-              </code>
-              <button
-                type="button"
-                onClick={() => {
-                  const url = `${window.location.origin}/u/${myProfile.slug}`
-                  navigator.clipboard?.writeText(url).then(() => flash('🔗 Link copiado', '#FCD34D'))
-                }}
-                className={s.brandShareBtn}
-              >
-                Copiar
-              </button>
-            </div>
-          )}
+          {myProfile?.slug && myProfile?.marketplace_visible && (() => {
+            const buildMsg = () => buildShareMessage({
+              profile: myProfile,
+              items: ALL_ITEMS,
+              col,
+              albumLabel: cfg.label === 'Álbum de Stickers' ? 'Álbum Panini WC 2026' : cfg.label,
+              totalLabel: cfg.label === 'Álbum de Stickers' ? 'stickers' : 'cartas',
+            })
+            const url = `${window.location.origin}/u/${myProfile.slug}`
+            return (
+              <div className={s.brandShareRow}>
+                <span className={s.brandShareLabel}>TU LINK</span>
+                <code className={s.brandShareUrl}>{url}</code>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const msg = buildMsg()
+                    copyShareMessage(msg).then(
+                      () => flash('📋 Mensaje copiado · pegalo en WhatsApp', '#FCD34D'),
+                      () => flash('No se pudo copiar', '#F87171')
+                    )
+                  }}
+                  className={s.brandShareBtn}
+                  title="Copia un mensaje completo con tu lista para pegarlo en WhatsApp"
+                >
+                  Copiar
+                </button>
+                <a
+                  href={whatsappHref(buildMsg())}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={s.brandShareWa}
+                  title="Abrir WhatsApp con el mensaje listo"
+                >
+                  WhatsApp
+                </a>
+              </div>
+            )
+          })()}
         </div>
       </header>
 
@@ -452,7 +496,8 @@ export default function Tracker({
           {[
             { id:'dashboard',   I: IconDash,     l:'Home' },
             { id:'cards',       I: IconCards,    l:'Cartas' },
-            { id:'marketplace', I: IconExchange, l:'Marketplace', b: unread > 0 ? unread : stats.dup, dot: unread > 0 },
+            { id:'marketplace', I: IconExchange, l:'Mercado' },
+            { id:'chat',        I: IconChat,     l:'Chat',    b: unread > 0 ? unread : 0, dot: unread > 0 },
             { id:'profile',     I: IconUser,     l:'Perfil' },
           ].map(t => {
             const Icon = t.I
@@ -531,6 +576,7 @@ export default function Tracker({
               albumType={albumType}
               myCol={col}
               myProfile={myProfile}
+              initialOpenUserId={initialOpenUser}
               onGoToProfile={() => setTab('profile')}
               onUnreadChange={() => {
                 loadUnreadCount(session.user.id).then(setUnread).catch(() => {})
@@ -549,6 +595,30 @@ export default function Tracker({
               }}
               flash={flash}
             />
+          )}
+
+          {tab === 'chat' && (
+            <motion.div
+              key="chat-tab"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <Marketplace
+                key="chat-marketplace"
+                session={session}
+                albumType={albumType}
+                myCol={col}
+                myProfile={myProfile}
+                onGoToProfile={() => setTab('profile')}
+                onUnreadChange={() => {
+                  loadUnreadCount(session.user.id).then(setUnread).catch(() => {})
+                }}
+                forceSub="messages"
+                flash={flash}
+              />
+            </motion.div>
           )}
 
           {tab === 'profile' && (

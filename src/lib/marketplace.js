@@ -34,7 +34,7 @@ export async function ensureMyProfile(userId, fallbackEmail) {
     display_name: displayName,
     avatar_emoji: '⚽',
     contact: {},
-    marketplace_visible: false,
+    marketplace_visible: true,
     meeting_points: [],
     slug: makeSlug(displayName, userId),
   }

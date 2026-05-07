@@ -3,6 +3,8 @@ import {
   EMOJI_AVATARS, loadMyProfile, saveMyProfile, deriveDisplayName,
   MEETING_POINT_TYPES, newMeetingPoint, loadMyTradeHistory, uploadAvatar,
 } from '../lib/marketplace'
+import { buildShareMessage, copyShareMessage, whatsappHref } from '../lib/shareMessage'
+import { ALBUM_CONFIG } from '../data'
 import { activateAlbum, deactivateAlbum } from '../lib/album'
 import { ALBUM_ADRENALYN, ALBUM_STICKER } from '../data'
 import s from './Profile.module.css'
@@ -324,22 +326,7 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         </button>
 
         {visible && profile.slug && (
-          <div className={s.publicLinkRow}>
-            <div className={s.publicLinkLabel}>Tu link público</div>
-            <div className={s.publicLinkValue}>
-              <code>{`${typeof window !== 'undefined' ? window.location.origin : ''}/u/${profile.slug}`}</code>
-              <button
-                type="button"
-                onClick={() => {
-                  const url = `${window.location.origin}/u/${profile.slug}`
-                  navigator.clipboard?.writeText(url)
-                }}
-                className={s.publicLinkCopy}
-              >
-                Copiar
-              </button>
-            </div>
-          </div>
+          <PublicLinkBlock profile={profile} session={session} />
         )}
       </section>
 
@@ -489,6 +476,73 @@ export default function Profile({ session, onSaved, onAlbumsChanged }) {
         </div>
       )}
 
+    </div>
+  )
+}
+
+function PublicLinkBlock({ profile, session }) {
+  const [feedback, setFeedback] = useState(null)
+  const buildMsg = async () => {
+    // Carga la colección viva del usuario para incluir lista actualizada
+    const album = (profile.active_albums && profile.active_albums[0]) || 'sticker'
+    const cfg = ALBUM_CONFIG[album] || ALBUM_CONFIG['sticker']
+    const items = cfg.buildItems()
+    const { supabase } = await import('../supabaseClient')
+    const { data } = await supabase
+      .from(cfg.table)
+      .select('data')
+      .eq('user_id', session.user.id)
+      .maybeSingle()
+    const col = data?.data || {}
+    return buildShareMessage({
+      profile,
+      items,
+      col,
+      albumLabel: cfg.label === 'Álbum de Stickers' ? 'Álbum Panini WC 2026' : cfg.label,
+      totalLabel: cfg.label === 'Álbum de Stickers' ? 'stickers' : 'cartas',
+    })
+  }
+  const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/u/${profile.slug}`
+
+  const onCopy = async () => {
+    const msg = await buildMsg()
+    try {
+      await copyShareMessage(msg)
+      setFeedback('📋 Mensaje copiado · pegalo en WhatsApp')
+    } catch {
+      setFeedback('No se pudo copiar')
+    }
+    setTimeout(() => setFeedback(null), 3000)
+  }
+  const [waHref, setWaHref] = useState('#')
+  useEffect(() => {
+    let cancelled = false
+    buildMsg().then(msg => { if (!cancelled) setWaHref(whatsappHref(msg)) })
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile.slug, profile.display_name])
+
+  return (
+    <div className={s.publicLinkRow}>
+      <div className={s.publicLinkLabel}>Tu link público</div>
+      <div className={s.publicLinkValue}>
+        <code>{url}</code>
+        <button type="button" onClick={onCopy} className={s.publicLinkCopy}>
+          Copiar mensaje
+        </button>
+        <a
+          href={waHref}
+          target="_blank" rel="noopener noreferrer"
+          className={s.publicLinkWa}
+        >
+          WhatsApp
+        </a>
+      </div>
+      {feedback && <div className={s.publicLinkFeedback}>{feedback}</div>}
+      <div className={s.publicLinkHelp}>
+        El botón "Copiar mensaje" copia un mensaje listo para pegar en WhatsApp:
+        link a tu perfil + tu lista de faltantes y repetidas con banderas.
+      </div>
     </div>
   )
 }
