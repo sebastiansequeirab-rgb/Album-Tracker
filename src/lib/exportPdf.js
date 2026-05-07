@@ -1,12 +1,14 @@
-import jsPDF from 'jspdf'
-
-export function exportListPdf({
+// Dynamic import: jsPDF + html2canvas + purify (~400 KB) sólo se cargan
+// cuando el usuario clickea "Exportar PDF". Antes esos chunks se descargaban
+// con el bundle inicial aunque la mayoría de usuarios no exportan PDF.
+export async function exportListPdf({
   items,            // array of { num, name, team, type }
   title,            // string — header del PDF
   subtitle,         // optional string
   username,         // optional — para footer
   publicUrl,        // optional — para footer
 }) {
+  const { default: jsPDF } = await import('jspdf')
   const doc = new jsPDF({ unit: 'pt', format: 'a4' })
   const pageW = doc.internal.pageSize.getWidth()
   const pageH = doc.internal.pageSize.getHeight()
