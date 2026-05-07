@@ -650,21 +650,21 @@ export default function Marketplace({
   const inProgressTrades = tradeRequests.filter(t => t.status === 'accepted')
   const closedTrades    = tradeRequests.filter(t => ['declined','cancelled','completed'].includes(t.status))
 
-  // Sub-tabs limitadas a: Ofertas / Buscar / Favoritos.
-  // Mensajes y Trades viven en el tab Chat (top-level).
-  // Mis Repetidas / Faltantes vive en Perfil.
+  // Mercado: Ofertas / Buscar / Favoritos / Trades.
+  // Chat: Mensajes / Buscar (search apuntado a iniciar conversación).
   const baseSubtabs = [
     { id: 'all',       I: IconBroadcast, l: 'Ofertas' },
     { id: 'search',    I: IconSearch,    l: 'Buscar' },
     { id: 'favorites', I: IconStar,      l: 'Favoritos', b: favoriteIdSet.size },
+    { id: 'inbox',     I: IconHandshake, l: 'Trades',    b: incomingPending.length },
   ]
   // Cuando el tab Chat monta este componente con forceSub='messages',
-  // usamos un toggle Mensajes/Trades en lugar de la subnav normal.
+  // mostramos un toggle Mensajes/Buscar (sin Trades — los Trades viven en Mercado).
   const isChatMode = forceSub === 'messages'
   const subtabs = isChatMode
     ? [
-        { id: 'messages', I: IconChat,      l: 'Mensajes' },
-        { id: 'inbox',    I: IconHandshake, l: 'Trades',    b: incomingPending.length },
+        { id: 'messages', I: IconChat,   l: 'Mensajes' },
+        { id: 'search',   I: IconSearch, l: 'Buscar' },
       ]
     : baseSubtabs
 
@@ -801,12 +801,19 @@ export default function Marketplace({
         </>
       )}
 
-      {/* BUSCAR — encontrar coleccionistas */}
+      {/* BUSCAR — encontrar coleccionistas. Tono distinto según contexto:
+          Chat → "para chatear" / Mercado → "para hacer trade". */}
       {sub === 'search' && (
         <>
-          <SectionHead icon={<IconSearch size={18}/>} title="Buscar coleccionistas" count={searchView.length}/>
+          <SectionHead
+            icon={<IconSearch size={18}/>}
+            title={isChatMode ? 'Iniciar conversación' : 'Buscar coleccionistas'}
+            count={searchView.length}
+          />
           <div className={s.sectionSub}>
-            Encuentra a otros usuarios y revisa sus colecciones
+            {isChatMode
+              ? 'Encuentra a alguien y arrancá un chat'
+              : 'Encuentra a otros usuarios y revisa sus colecciones'}
           </div>
 
           <div className={s.listingFilters}>
@@ -876,12 +883,24 @@ export default function Marketplace({
                     </div>
                   </div>
                   <div className={s.userActions}>
-                    <button onClick={() => openChatWith(p.user_id)} className={s.btnGhost} type="button">
-                      <IconChat size={14}/> <span>Chat</span>
-                    </button>
-                    <button onClick={() => onSelectUser(p.user_id)} className={s.btnPrimary} type="button">
-                      <IconHandshake size={14}/> <span>Trade</span>
-                    </button>
+                    {isChatMode ? (
+                      <button
+                        onClick={() => openChatWith(p.user_id)}
+                        className={s.btnPrimary}
+                        type="button"
+                        style={{ flex: 1 }}>
+                        <IconChat size={14}/> <span>Chatear</span>
+                      </button>
+                    ) : (
+                      <>
+                        <button onClick={() => openChatWith(p.user_id)} className={s.btnGhost} type="button">
+                          <IconChat size={14}/> <span>Chat</span>
+                        </button>
+                        <button onClick={() => onSelectUser(p.user_id)} className={s.btnPrimary} type="button">
+                          <IconHandshake size={14}/> <span>Ver ofertas</span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -966,7 +985,7 @@ export default function Marketplace({
                               <IconChat size={14}/> <span>Chat</span>
                             </button>
                             <button onClick={() => onSelectUser(p.user_id)} className={s.btnPrimary} type="button">
-                              <IconHandshake size={14}/> <span>Trade</span>
+                              <IconHandshake size={14}/> <span>Ver ofertas</span>
                             </button>
                           </div>
                         </div>

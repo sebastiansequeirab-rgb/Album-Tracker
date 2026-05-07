@@ -31,8 +31,9 @@ export default function TypeDonut({ segments = [] }) {
     return arc
   })
 
-  // Legend columns: 2 cols for 8+ types
-  const legendCols = segments.length >= 8 ? '1fr 1fr' : '1fr'
+  // Legend columns: 2 cols for 4+ types — aprovecha el espacio horizontal
+  // tanto en mobile como desktop. 1 col solo cuando son ≤3 tipos.
+  const legendCols = segments.length >= 4 ? '1fr 1fr' : '1fr'
 
   return (
     <div className={s.wrap}>

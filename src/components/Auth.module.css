@@ -49,14 +49,15 @@
   overflow: hidden;
 }
 
-/* Vignette + soft gold halo so the panel feels stage-lit against the rich bg */
+/* Vignette + soft gold halo so the panel feels stage-lit against the rich bg.
+   Halo apunta a la zona baja (donde se sienta la card), no al centro. */
 .wrap::after {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 38% 36% at 50% 44%, rgba(245,200,70,0.10) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 45% at 50% 42%, rgba(0, 0, 0, 0.55) 0%, transparent 70%);
+    radial-gradient(ellipse 38% 36% at 50% 78%, rgba(245,200,70,0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 45% at 50% 76%, rgba(0, 0, 0, 0.55) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -579,11 +580,13 @@
 
 @media (max-width: 768px) {
   .wrap {
-    align-items: flex-start;
-    /* honor safe-area top + dynamic viewport on iPhone */
-    padding-top: max(clamp(40px, 8vh, 80px), env(safe-area-inset-top, 0px));
-    padding-bottom: calc(clamp(120px, 18vh, 180px) + env(safe-area-inset-bottom, 0px));
-    background-position: 50% 30%;
+    align-items: flex-end;
+    /* Card al fondo: dejar respirar la marca del bg arriba.
+       padding-top empuja la card hacia abajo, dejando ~40-50% de viewport
+       libre para que se vea la marca "WC 2026 Collection Tracker" del bg. */
+    padding-top: max(clamp(280px, 42vh, 460px), env(safe-area-inset-top, 0px));
+    padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+    background-position: 50% 0%;
   }
   /* iPhone: panel hugs the available width */
   .stage { max-width: 100%; }

@@ -83,7 +83,7 @@
 .header {
   background: linear-gradient(180deg, rgba(8, 12, 22, 0.96) 0%, rgba(6, 10, 18, 0.92) 100%);
   border-bottom: 1px solid rgba(245, 200, 70, 0.12);
-  padding: 14px var(--sp-4) 12px;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) var(--sp-4) 12px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -1167,7 +1167,7 @@
 
   /* Header compact: smaller logo, tighter spacing, hide email */
   .header {
-    padding: 10px var(--sp-3);
+    padding: calc(10px + env(safe-area-inset-top, 0px)) var(--sp-3) 10px;
   }
   .brandTitle {
     font-size: 18px;
@@ -1327,7 +1327,7 @@
    ============================================================================= */
 @media (max-width: 540px) {
   /* Header: padding más chico, pct más compacto */
-  .header { padding: 12px 0 0; }
+  .header { padding: calc(12px + env(safe-area-inset-top, 0px)) 0 0; }
   .headerInner { padding: 10px 12px 12px; gap: 8px; }
   .headerRow { gap: 10px; }
   .brandTitle { font-size: 16px; letter-spacing: 0.10em; }
