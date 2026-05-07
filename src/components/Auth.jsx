@@ -97,22 +97,6 @@ export default function Auth() {
       <div className={s.stage}>
 
         <div className={s.card}>
-          <span className={`${s.bracket} ${s.tl}`} />
-          <span className={`${s.bracket} ${s.tr}`} />
-          <span className={`${s.bracket} ${s.bl}`} />
-          <span className={`${s.bracket} ${s.br}`} />
-
-          <div className={s.confStrip} aria-hidden="true">
-            <div className={s.dots}>
-              <span className={`${s.dot} ${s.dot1}`} title="CONMEBOL" />
-              <span className={`${s.dot} ${s.dot2}`} title="UEFA" />
-              <span className={`${s.dot} ${s.dot3}`} title="CONCACAF" />
-              <span className={`${s.dot} ${s.dot4}`} title="CAF" />
-              <span className={`${s.dot} ${s.dot5}`} title="AFC" />
-              <span className={`${s.dot} ${s.dot6}`} title="OFC" />
-            </div>
-          </div>
-
           <div className={s.welcome}>
             <span className={s.welcomeIcon}><IconTrophy /></span>
             <span>Bienvenido,</span>

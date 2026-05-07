@@ -1,11 +1,11 @@
 /* =============================================================================
-   Auth — login / signup card. Visual rebuild v3 (broadcast × vault).
-   Background image (login-bg.jpg) provides packs + features bar baked-in.
-   Card overlay is tipográfico-only: no FIFA/Panini imagery is reproduced.
+   Auth — login / signup. Visual rebuild v4 (frame-integrated).
+   El bg trae el frame outline + brand WC2026. El form vive DENTRO del frame
+   sin chrome propio (sin brackets, sin background, sin conf strip duplicada).
+   El bg manda; el form se monta encima como tipografía + inputs.
    ============================================================================= */
 
 .wrap {
-  /* component-scoped tokens (avoid leaking to global) */
   --auth-gold-1:    #FFE9A8;
   --auth-gold-2:    #FFD97A;
   --auth-gold-3:    #F5C842;
@@ -14,50 +14,42 @@
   --auth-text:      #F0F4FF;
   --auth-text-2:    #9AAEC8;
   --auth-text-mute: #5A6B85;
-  --auth-panel-bg:      rgba(6, 10, 22, 0.74);
-  --auth-panel-border:  rgba(245, 200, 70, 0.22);
-  --auth-panel-strong:  rgba(245, 200, 70, 0.50);
-  --auth-field-bg:      rgba(10, 16, 30, 0.78);
-  --auth-field-border:  rgba(245, 200, 70, 0.10);
-  /* spec confederation palette (scoped to login dot strip) */
-  --auth-c-conmebol: #3B82F6;
-  --auth-c-uefa:     #8B5CF6;
-  --auth-c-concacaf: #10B981;
-  --auth-c-caf:      #F97316;
-  --auth-c-afc:      #EF4444;
-  --auth-c-ofc:      #06B6D4;
+  --auth-field-bg:     rgba(10, 16, 30, 0.78);
+  --auth-field-border: rgba(245, 200, 70, 0.18);
+  --auth-field-strong: rgba(245, 200, 70, 0.55);
 
   min-height: 100vh;
-  min-height: 100dvh; /* honor mobile dynamic viewport */
+  min-height: 100dvh;
   display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  /* card sits hacia abajo: bg trae la marca arriba, form abajo.
-     padding-top deja respirar la marca; padding-bottom honra el home indicator. */
-  padding:
-    clamp(140px, 22vh, 280px)
-    var(--sp-5)
-    calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
-  padding-left: max(var(--sp-5), env(safe-area-inset-left, 0px));
-  padding-right: max(var(--sp-5), env(safe-area-inset-right, 0px));
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
   position: relative;
-  background-color: var(--bg);
+  overflow: hidden;
+
+  /* bg dark color matches the empty area inside the frame, así que
+     cualquier extensión por safe-area se ve como continuación natural. */
+  background-color: #06080F;
   background-image: url('/login-bg.jpg');
   background-size: cover;
-  background-position: center center;
+  background-position: 50% 0%;
   background-repeat: no-repeat;
-  overflow: hidden;
+
+  padding-left:  max(var(--sp-5), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--sp-5), env(safe-area-inset-right, 0px));
+  padding-bottom: max(var(--sp-4), env(safe-area-inset-bottom, 0px));
 }
 
-/* Vignette + soft gold halo so the panel feels stage-lit against the rich bg.
-   Halo apunta a la zona baja (donde se sienta la card), no al centro. */
+/* Vignette suave bajo la zona del form para que los inputs lean parejo
+   incluso si el bg subyacente tiene textura. */
 .wrap::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 38% 36% at 50% 78%, rgba(245,200,70,0.10) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 45% at 50% 76%, rgba(0, 0, 0, 0.55) 0%, transparent 70%);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 60%;
+  background: linear-gradient(180deg, transparent 0%, rgba(6, 8, 15, 0.45) 35%, rgba(6, 8, 15, 0.85) 100%);
   pointer-events: none;
   z-index: 0;
 }
@@ -66,55 +58,39 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 470px;
+  max-width: 460px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
 }
 
-/* Mac (≥1440px): panel breathes a touch more without overpowering the
-   baked-in packs/features in the bg image. Stays centered. */
-@media (min-width: 1440px) {
-  .stage { max-width: 510px; }
-  .card  { padding: 44px 44px 34px; }
-  .heroTitle    { font-size: 66px; }
-  .heroSubtitle { font-size: 12px; }
-  .welcome      { margin-bottom: 40px; }
+/* Desktop (≥1024px): bg cropea diferente — la zona vacía queda más al centro,
+   así que centramos el form vertically y bajamos el max-width. */
+@media (min-width: 1024px) {
+  .wrap {
+    justify-content: center;
+    background-position: center center;
+  }
+  .stage { max-width: 480px; }
 }
 
-/* ── Panel ──────────────────────────────────────────────────────────────── */
+/* ── Card (frame-integrated, no chrome propio) ──────────────────────────── */
 
 .card {
   position: relative;
   width: 100%;
-  padding: 38px 38px 30px;
-  background: var(--auth-panel-bg);
-  backdrop-filter: blur(22px) saturate(140%);
-  -webkit-backdrop-filter: blur(22px) saturate(140%);
-  border: 1px solid var(--auth-panel-border);
-  border-radius: 4px;
-  /* chamfered top-right + bottom-left = broadcast graphic signature */
-  clip-path: polygon(
-    0 0,
-    calc(100% - 14px) 0,
-    100% 14px,
-    100% 100%,
-    14px 100%,
-    0 calc(100% - 14px)
-  );
-  box-shadow:
-    0 30px 80px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(245, 200, 70, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  padding: 0;
+  background: transparent;
+  border: 0;
   display: flex;
   flex-direction: column;
   gap: 0;
-  animation: panelIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: panelIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes panelIn {
-  0%   { opacity: 0; transform: translateY(14px) scale(0.985); filter: blur(8px); }
-  100% { opacity: 1; transform: translateY(0)    scale(1);     filter: blur(0); }
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Brackets (4 corners, including chamfered) ──────────────────────────── */
@@ -578,17 +554,14 @@
 
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 
+/* ── Mobile (default flow ya es portrait-first) ────────────────────────── */
+
 @media (max-width: 768px) {
   .wrap {
-    align-items: flex-end;
-    /* Card al fondo: dejar respirar la marca del bg arriba.
-       padding-top empuja la card hacia abajo, dejando ~40-50% de viewport
-       libre para que se vea la marca "WC 2026 Collection Tracker" del bg. */
-    padding-top: max(clamp(280px, 42vh, 460px), env(safe-area-inset-top, 0px));
-    padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
-    background-position: 50% 0%;
+    /* Form vive en el ~45% inferior del viewport: encaja naturalmente
+       con la zona vacía del frame del bg en cualquier iPhone (SE → Pro Max). */
+    padding-top: clamp(320px, 50vh, 540px);
   }
-  /* iPhone: panel hugs the available width */
   .stage { max-width: 100%; }
 }
 
@@ -597,45 +570,46 @@
     padding-left: max(var(--sp-3), env(safe-area-inset-left, 0px));
     padding-right: max(var(--sp-3), env(safe-area-inset-right, 0px));
   }
-  .card { padding: 32px 22px 24px; }
-  .heroTitle { font-size: 46px; gap: 10px; }
-  .heroSubtitle { letter-spacing: 0.34em; }
-  /* Keep welcome on one line; allow ellipsis-free shrinking by tightening gap */
   .welcome {
     gap: 7px;
-    margin-bottom: 28px;
+    margin-bottom: 22px;
     font-size: 13px;
   }
-  /* Inputs: ensure ≥48px touch target (already 52, but enforce on iOS quirks) */
   .inputBox { height: 52px; }
-  /* Slightly larger eye target on mobile */
   .eyeBtn { min-width: 44px; min-height: 44px; }
-  /* CTA touch target ≥56 already; ghost CTA bumped from 48 → 52 */
   .ctaGhost { height: 52px; }
 }
 
-@media (max-width: 414px) {
-  /* iPhone Pro Max (414) and below: panel reaches edges with comfortable padding */
-  .card { padding: 28px 18px 22px; }
-  .heroTitle { font-size: 42px; }
-  /* Safer space below conf-strip dots */
-  .confStrip { margin-bottom: 18px; }
-  .welcome { margin-bottom: 26px; }
+/* iPhone Pro Max y similares (430-414): bg's empty area cae más arriba
+   por aspect ratio; ajustamos padding-top para alinear el form. */
+@media (max-width: 480px) {
+  .wrap { padding-top: clamp(340px, 48vh, 500px); }
+  .welcome { margin-bottom: 20px; }
   .form { gap: 14px; }
 }
 
+/* iPhone 13 mini / SE (375): un poco menos de espacio arriba */
 @media (max-width: 380px) {
-  .card { padding: 26px 16px 22px; }
-  .heroTitle { font-size: 40px; gap: 8px; letter-spacing: 0.04em; }
-  /* Welcome single-line: hide the trophy icon if too tight */
-  .welcome { font-size: 12.5px; }
+  .wrap { padding-top: clamp(300px, 44vh, 420px); }
+  .welcome { font-size: 12.5px; margin-bottom: 18px; }
+  .form { gap: 12px; }
 }
 
+/* Devices ultra-narrow: comprimir agresivo */
 @media (max-width: 340px) {
-  .heroTitle { font-size: 36px; }
-  .heroSubtitle { letter-spacing: 0.26em; font-size: 10px; }
-  /* Last-resort: allow welcome to wrap if device is super narrow */
-  .welcome { flex-wrap: wrap; gap: 4px 6px; }
+  .wrap { padding-top: clamp(260px, 38vh, 380px); }
+  .welcome { flex-wrap: wrap; gap: 4px 6px; font-size: 12px; }
+}
+
+/* Landscape mobile: bg's brand puede no entrar — caer a fallback */
+@media (max-height: 540px) and (orientation: landscape) {
+  .wrap {
+    background-size: contain;
+    background-position: top right;
+    background-color: #06080F;
+    padding-top: clamp(40px, 8vh, 80px);
+    justify-content: center;
+  }
 }
 
 /* Reduce-motion: respect user pref for the brackets + dot pulse + panel-in */

@@ -89,6 +89,68 @@
   z-index: 100;
   backdrop-filter: blur(12px) saturate(140%);
   -webkit-backdrop-filter: blur(12px) saturate(140%);
+  transition:
+    padding 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.32s ease,
+    box-shadow 0.32s ease;
+}
+
+/* Compact mode: header se reduce en scroll-down. La row con TU LINK
+   se colapsa, el título se achica, queda una barra slim sticky. */
+.header.headerCompact {
+  padding: calc(6px + env(safe-area-inset-top, 0px)) var(--sp-4) 6px;
+  border-bottom-color: rgba(245, 200, 70, 0.22);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+}
+.header.headerCompact .brandTitle {
+  font-size: 18px;
+  letter-spacing: 0.14em;
+}
+.header.headerCompact .brandSub {
+  display: none;
+}
+.header.headerCompact .pctValue {
+  font-size: 22px;
+}
+.header.headerCompact .pctLabel {
+  display: none;
+}
+.header.headerCompact .iconBtn {
+  transform: scale(0.92);
+}
+.header.headerCompact .headerRow {
+  margin-bottom: 0;
+}
+/* Esconder brandShareRow al colapsar — slide-up + fade */
+.header.headerCompact .brandShareRow {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+/* Estado expandido: la row se mide para que la transición sea suave */
+.brandShareRow {
+  transition:
+    max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.22s ease,
+    margin 0.32s ease,
+    padding 0.32s ease;
+  max-height: 80px;
+}
+/* Transiciones del title/pct para movimiento parejo */
+.brandTitle,
+.brandSub,
+.pctValue,
+.pctLabel,
+.iconBtn {
+  transition:
+    font-size 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    letter-spacing 0.28s ease,
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.22s ease;
 }
 .headerInner {
   max-width: var(--container-max);

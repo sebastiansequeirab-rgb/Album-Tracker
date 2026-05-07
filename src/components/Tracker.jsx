@@ -121,6 +121,31 @@ export default function Tracker({
   const [showReset, setShowReset] = useState(false)
   const [myProfile, setMyProfile] = useState(null)
   const [unread,    setUnread]    = useState(0)
+  const [headerCompact, setHeaderCompact] = useState(false)
+
+  // Header dinámico: colapsa en scroll-down (>72px), expande en scroll-up
+  // o cerca del top. Threshold con histéresis para evitar flicker.
+  useEffect(() => {
+    let lastY = window.scrollY
+    let raf = 0
+    const onScroll = () => {
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        const y = window.scrollY
+        const dy = y - lastY
+        if (y < 24) setHeaderCompact(false)
+        else if (dy > 4 && y > 72) setHeaderCompact(true)
+        else if (dy < -4) setHeaderCompact(false)
+        lastY = y
+        raf = 0
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [])
 
   // Auth errors (JWT expired/invalid) — try refresh, else sign out so user re-logins
   const handleAuthError = async (err) => {
@@ -416,8 +441,8 @@ export default function Tracker({
         </div>
       )}
 
-      {/* Header */}
-      <header className={s.header}>
+      {/* Header dinámico — colapsa en scroll */}
+      <header className={`${s.header} ${headerCompact ? s.headerCompact : ''}`}>
         <div className={s.headerInner}>
           <div className={s.headerRow}>
             <div className={s.brand}>

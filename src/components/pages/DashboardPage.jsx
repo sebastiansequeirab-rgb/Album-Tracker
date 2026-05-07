@@ -4,7 +4,6 @@ import Flag from '../Flag'
 import ConfBadge from '../ui/ConfBadge'
 import ProgressBar from '../ui/ProgressBar'
 import TypeDonut from '../ui/TypeDonut'
-import TeamCard from '../ui/TeamCard'
 import s from './DashboardPage.module.css'
 
 const IconArrow = (p) => (
@@ -60,12 +59,6 @@ export default function DashboardPage({
       .filter(t => t.pct > 0 && t.pct < 100)
       .sort((a, b) => (b.pct - a.pct) || (b.have - a.have))
       .slice(0, 8)
-  }, [teamStats])
-
-  const missing = useMemo(() => {
-    return [...teamStats]
-      .sort((a, b) => (b.tot - b.have) - (a.tot - a.have))
-      .slice(0, 12)
   }, [teamStats])
 
   return (
@@ -215,27 +208,6 @@ export default function DashboardPage({
         </section>
       )}
 
-      {/* ── 02 Equipos con más Faltantes ─────────────────────────────────── */}
-      <section className={s.missingTeamsSection}>
-        <header className={s.sectionHead}>
-          <h3 className={s.sectionTitle}>Equipos con más Faltantes</h3>
-          <span className={s.sectionRule} aria-hidden="true" />
-          <button type="button" onClick={() => { setFTeam?.('all'); setTab('cards') }} className={s.sectionLink}>
-            Ver todos →
-          </button>
-        </header>
-        <div className={s.missingTeamsGrid}>
-          {missing.map(t => (
-            <TeamCard
-              key={t.id}
-              team={{ ...t, confederation: t.conf }}
-              have={t.have}
-              total={t.tot}
-              onClick={() => { setFTeam?.(t.name); setTab('cards') }}
-            />
-          ))}
-        </div>
-      </section>
     </div>
   )
 }
