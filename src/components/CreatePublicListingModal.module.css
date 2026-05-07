@@ -51,6 +51,30 @@
   animation: cplScaleIn 0.20s var(--ease-out);
 }
 
+/* Bottom-sheet en mobile — más espacio útil, padding-bottom respeta home indicator */
+@media (max-width: 540px) {
+  .backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .card {
+    max-width: 100%;
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 18px 18px 0 0;
+    clip-path: none;
+    padding: 20px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    gap: 14px;
+    animation: cplSlide 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .bracket { display: none; }
+}
+
+@keyframes cplSlide {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes cplScaleIn {
   from { opacity: 0; transform: scale(0.97); filter: blur(6px); }
   to   { opacity: 1; transform: scale(1);    filter: blur(0); }

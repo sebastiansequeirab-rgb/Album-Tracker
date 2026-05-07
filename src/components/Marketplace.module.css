@@ -410,17 +410,91 @@
 .detailHead {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: var(--sp-4);
+  flex-direction: column;
+  gap: var(--sp-3);
   margin-bottom: var(--sp-4);
   background: linear-gradient(180deg, rgba(22, 33, 58, 0.78) 0%, rgba(8, 12, 22, 0.92) 100%);
   border: 1px solid rgba(245, 200, 70, 0.22);
   border-radius: 3px;
-  padding: 22px;
+  padding: 18px;
   clip-path: polygon(
     0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px)
   );
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(245, 200, 70, 0.05);
+}
+.detailHeadTop {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+/* ──── Propose Trade section (top of drill-down) ──────────────── */
+.proposeSection {
+  position: relative;
+  background: linear-gradient(180deg, rgba(245, 200, 70, 0.05) 0%, rgba(8, 12, 22, 0.65) 100%);
+  border: 1px solid rgba(245, 200, 70, 0.20);
+  border-left: 3px solid var(--gold-3);
+  border-radius: 4px;
+  padding: 16px 14px 14px;
+  margin-bottom: var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.proposeHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.proposeTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.20em;
+  color: var(--gold-1);
+  margin: 0;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+.proposeTitle svg { color: var(--gold-2); flex-shrink: 0; }
+.proposeSub {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+.proposeCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 12px 18px;
+  background: linear-gradient(180deg, #FFE9A8 0%, #F5C842 30%, #E6A817 70%, #C88A00 100%);
+  color: #1a1305;
+  border: 0;
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 48px;
+  box-shadow:
+    0 8px 22px rgba(230, 168, 23, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  transition: filter var(--t-fast), transform var(--t-fast);
+}
+.proposeCta:hover { filter: brightness(1.06); }
+.proposeCta:active { transform: translateY(1px); }
+.proposeCta:disabled {
+  background: rgba(245, 200, 70, 0.10);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* Brackets (4 corners, gold-2, staggered shimmer) */

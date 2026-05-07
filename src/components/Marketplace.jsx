@@ -510,7 +510,6 @@ export default function Marketplace({
     const theirMissingSet = new Set(
       selCol ? ALL_ITEMS.filter(c => (selCol[c.id] || 'missing') === 'missing').map(c => c.id) : []
     )
-    // Mis duplicates que el otro tiene como missing (matches) + el resto de mis duplicates
     const myDupsList = ALL_ITEMS.filter(c => myCol[c.id] === 'duplicate')
 
     const theirsList = onlyMatches
@@ -523,7 +522,6 @@ export default function Marketplace({
     const theirCount = selCol ? Object.values(selCol).filter(v => v !== 'missing').length : 0
     const theirPct   = totalItems ? Math.round((theirCount / totalItems) * 100) : 0
 
-    // Build TypeDonut segments for the other user — same logic as Tracker.
     const TM = cfg.TM || {}
     const theirSegments = selCol
       ? Object.entries(TM)
@@ -537,7 +535,10 @@ export default function Marketplace({
           })
       : []
 
+    const canPropose = selCol && (pickedTheirs.size > 0 || pickedMine.size > 0)
+
     return (
+      <>
       <div className={s.wrap}>
         <button
           onClick={() => { setSelUserId(null); setSelCol(null); setSelProfile(null) }}
@@ -546,58 +547,30 @@ export default function Marketplace({
           <IconArrowLeft size={14}/> Volver al Marketplace
         </button>
 
-        <div className={s.detailHead}>
-          <Brackets/>
-          <div className={s.detailAvatar}><Avatar profile={prof} size={64} /></div>
-          <div className={s.detailBody}>
-            <div className={s.detailName}>{prof?.display_name || 'Coleccionista'}</div>
-            <div className={s.detailSub}>
-              {selCol ? `${theirCount}/${totalItems} cartas · ${theirPct}%` : 'Cargando…'}
-              {prof?.trades_completed > 0 && (
-                <span className={s.detailTradesBadge}>· {prof.trades_completed} trades</span>
-              )}
-            </div>
-            <div className={s.detailActions}>
-              <button onClick={() => onToggleFavorite(selUserId)} className={isFav ? s.btnPrimary : s.btnAccent} type="button">
-                {isFav ? <StarFilled/> : <IconStar/>}
-                <span>{isFav ? 'Favorito' : 'Favoritear'}</span>
-              </button>
-              <button onClick={() => openChatWith(selUserId)} className={s.btnGhost} type="button">
-                <IconChat/> <span>Chat</span>
-              </button>
-              <button
-                onClick={openTradeModalFromDrillDown}
-                disabled={!selCol}
-                className={s.btnGhost}
-                type="button">
-                <IconHandshake/> <span>Proponer cambio</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {!selCol && <div className={s.emptyText}>Cargando colección…</div>}
-
-        {selCol && theirSegments.length > 0 && (
-          <div className={s.detailDonut}>
-            <TypeDonut segments={theirSegments} />
-          </div>
-        )}
-
+        {/* ═══ 01. PROPONER TRADE (arriba) ═══════════════════════════ */}
         {selCol && (
-          <>
+          <section className={s.proposeSection}>
+            <header className={s.proposeHead}>
+              <h3 className={s.proposeTitle}>
+                <IconHandshake/> <span>Proponer trade con {prof?.display_name || 'coleccionista'}</span>
+              </h3>
+              <p className={s.proposeSub}>
+                Tocá para elegir lo que pides y lo que ofreces. Cuando cierre tap "Proponer".
+              </p>
+            </header>
+
             <div className={s.drillTabs}>
               <button
                 onClick={() => setDrillTab('theirs')}
                 className={`${s.drillTab} ${drillTab === 'theirs' ? s.drillTabActive : ''}`}
                 type="button">
-                Sus duplicates <span className={s.matchCount}>{theirsList.length}</span>
+                Le pides <span className={s.matchCount}>{pickedTheirs.size}/{theirsList.length}</span>
               </button>
               <button
                 onClick={() => setDrillTab('mine')}
                 className={`${s.drillTab} ${drillTab === 'mine' ? s.drillTabActive : ''}`}
                 type="button">
-                Mis duplicates <span className={s.matchCount}>{mineList.length}</span>
+                Le ofreces <span className={s.matchCount}>{pickedMine.size}/{mineList.length}</span>
               </button>
             </div>
 
@@ -607,14 +580,8 @@ export default function Marketplace({
                 checked={onlyMatches}
                 onChange={e => setOnlyMatches(e.target.checked)}
               />
-              <span>Solo mostrar matches (lo que cierra el trade)</span>
+              <span>Solo matches (lo que cierra el trade)</span>
             </label>
-
-            <div className={s.pickCounter}>
-              <span><strong>{pickedTheirs.size}</strong> pides</span>
-              <span className={s.pickDot}>·</span>
-              <span><strong>{pickedMine.size}</strong> ofreces</span>
-            </div>
 
             {drillTab === 'theirs' && (
               <DrillList
@@ -635,12 +602,85 @@ export default function Marketplace({
                 matchHighlightSet={theirMissingSet}
               />
             )}
-          </>
+
+            <button
+              onClick={openTradeModalFromDrillDown}
+              disabled={!canPropose}
+              className={s.proposeCta}
+              type="button">
+              <IconHandshake/>
+              <span>{canPropose ? `Proponer (${pickedTheirs.size + pickedMine.size} cartas)` : 'Elegí cartas para proponer'}</span>
+            </button>
+          </section>
         )}
 
-        {/* TradeRequestModal vive en el render principal, no acá adentro,
-            para que no se desmonte cuando openChatWith limpia selUserId */}
+        {/* ═══ 02. PERFIL DEL USUARIO (abajo, integrado con su gráfica) ═══ */}
+        <div className={s.detailHead}>
+          <Brackets/>
+          <div className={s.detailHeadTop}>
+            <div className={s.detailAvatar}><Avatar profile={prof} size={64} /></div>
+            <div className={s.detailBody}>
+              <div className={s.detailName}>{prof?.display_name || 'Coleccionista'}</div>
+              <div className={s.detailSub}>
+                {selCol ? `${theirCount}/${totalItems} cartas · ${theirPct}%` : 'Cargando…'}
+                {prof?.trades_completed > 0 && (
+                  <span className={s.detailTradesBadge}>· {prof.trades_completed} trades</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {selCol && theirSegments.length > 0 && (
+            <div className={s.detailDonut}>
+              <TypeDonut segments={theirSegments} />
+            </div>
+          )}
+
+          <div className={s.detailActions}>
+            <button onClick={() => onToggleFavorite(selUserId)} className={isFav ? s.btnPrimary : s.btnAccent} type="button">
+              {isFav ? <StarFilled/> : <IconStar/>}
+              <span>{isFav ? 'Favorito' : 'Favoritear'}</span>
+            </button>
+            <button onClick={() => openChatWith(selUserId)} className={s.btnGhost} type="button">
+              <IconChat/> <span>Chat</span>
+            </button>
+          </div>
+        </div>
+
+        {!selCol && <div className={s.emptyText}>Cargando colección…</div>}
       </div>
+
+      {/* Modales SIEMPRE renderizados — antes vivían solo en la list view
+          y nunca montaban en drill-down (causa del bug "Proponer no hace nada"). */}
+      <CreatePublicListingModal
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={onListingCreated}
+        myId={myId}
+        albumType={albumType}
+        myCol={myCol}
+        allItems={ALL_ITEMS}
+        myProfile={myProfile}
+        flash={flash}
+      />
+      <TradeRequestModal
+        open={showTrade}
+        onClose={() => { setShowTrade(false); setTradeCtx(null) }}
+        onSent={onTradeSent}
+        myId={myId}
+        targetProfile={tradeCtx?.targetProfile}
+        albumType={albumType}
+        itemsById={ITEMS_BY_ID}
+        allItems={ALL_ITEMS}
+        myCol={myCol}
+        targetCol={tradeCtx?.targetCol || {}}
+        prefillOfferedIds={tradeCtx?.offered || []}
+        prefillWantedIds={tradeCtx?.wanted || []}
+        prefillMeetingPoint={tradeCtx?.meetingPoint || ''}
+        prefillMeetingTime={tradeCtx?.meetingTime || ''}
+        flash={flash}
+      />
+      </>
     )
   }
 
@@ -650,13 +690,13 @@ export default function Marketplace({
   const inProgressTrades = tradeRequests.filter(t => t.status === 'accepted')
   const closedTrades    = tradeRequests.filter(t => ['declined','cancelled','completed'].includes(t.status))
 
-  // Mercado: Ofertas / Buscar / Favoritos / Trades.
+  // Mercado: Ofertas / Trades / Favoritos / Buscar.
   // Chat: Mensajes / Buscar (search apuntado a iniciar conversación).
   const baseSubtabs = [
     { id: 'all',       I: IconBroadcast, l: 'Ofertas' },
-    { id: 'search',    I: IconSearch,    l: 'Buscar' },
-    { id: 'favorites', I: IconStar,      l: 'Favoritos', b: favoriteIdSet.size },
     { id: 'inbox',     I: IconHandshake, l: 'Trades',    b: incomingPending.length },
+    { id: 'favorites', I: IconStar,      l: 'Favoritos', b: favoriteIdSet.size },
+    { id: 'search',    I: IconSearch,    l: 'Buscar' },
   ]
   // Cuando el tab Chat monta este componente con forceSub='messages',
   // mostramos un toggle Mensajes/Buscar (sin Trades — los Trades viven en Mercado).

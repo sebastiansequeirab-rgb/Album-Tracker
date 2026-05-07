@@ -13,7 +13,10 @@ const STATUS_PILL = {
   have:      'Tengo',
   duplicate: 'Repetidas',
 }
-const LIMIT = 420
+// LIMIT alto para que todas las cartas (980 stickers / 633 Adrenalyn) entren
+// sin necesidad de filtrar. Si en algún device la perf sufre, virtualizar con
+// react-window. Por ahora 1000 cubre ambos álbumes con margen.
+const LIMIT = 1000
 
 /* ── Inline SVGs (NO emojis except country flags from Flag/data) ─────── */
 

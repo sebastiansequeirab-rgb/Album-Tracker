@@ -30,7 +30,7 @@ export const ALBUM_TABLE = {
 export const ALBUM_CONFIG = {
   [ALBUM_ADRENALYN]: {
     label:        'Adrenalyn XL',
-    subtitle:     'FIFA WORLD CUP 2026™ · COLLECTION TRACKER',
+    subtitle:     'FIFA WC 2026 · TRADING CARDS',
     icon:         '⚽',
     accent:       '#FCD34D',
     buildItems:   buildCards,
@@ -47,7 +47,7 @@ export const ALBUM_CONFIG = {
   },
   [ALBUM_STICKER]: {
     label:        'Álbum de Stickers',
-    subtitle:     'PANINI WORLD CUP 2026 · STICKER COLLECTION',
+    subtitle:     'PANINI WC 2026 · STICKERS',
     icon:         '📖',
     accent:       '#10B981',
     buildItems:   buildStickers,
