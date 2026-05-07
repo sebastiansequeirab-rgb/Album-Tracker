@@ -1,7 +1,24 @@
 # Adrenalyn Tracker — Estado actual del proyecto
 
 > Brief para una sesión nueva. Lee esto antes de tocar nada.
-> Última actualización: 2026-05-07 (cierre pre-Mundial: 980 nombres reales + multi-dups + Profile 2 secs + Mapa Colección).
+> Última actualización: 2026-05-07 (banner solo en Home + modales fix + Registrar outlined + reset password funcional).
+
+---
+
+## 🔥 Próxima tarea (open issue para nueva sesión)
+
+**Banner-less pages se ven "descuadradas y sin terminar"**: el header del Tracker ahora se oculta en Cartas/Mercado/Chat/Perfil (`{tab === 'dashboard' && (...)}`). El espacio se libera pero las páginas se ven sin marco/cierre visual. Falta:
+
+- Algún elemento de "frame" visual en el top de cada página no-Home (¿un thin gold rule? ¿un mini-header con el nombre del tab? ¿un brand strip slim?).
+- Verificar que el `mainNoHeader` padding-top respeta safe-area pero no se siente vacío.
+- El subnav del Mercado ya se sticky a `top: env(safe-area-inset-top)` — buen comienzo. Las otras tabs no tienen ese mismo elemento de cierre.
+- Idea: **slim brand bar fijo** (40-48px alto) con solo el album label + count + SALIR icon. Diferenciado del banner full de Home pero presente en todas las tabs para dar "marco".
+
+**Files involved:**
+- `src/components/Tracker.jsx` líneas ~528-603 (header conditional + main padding).
+- `src/components/Tracker.module.css` `.header`, `.headerCompact`, `.mainNoHeader`.
+
+---
 
 ---
 
@@ -312,14 +329,51 @@ git push          # auto-deploy Vercel ~30s
 
 ## Commits recientes
 ```
+8fcafe8 feat(ui): Registrar Movimiento outlined + URL row +20% altura
+259999a fix(auth): inline recovery-code guard en index.html
+66497a4 feat(ux): banner solo en Home + tabs compactas + email templates
+94fa272 fix(mercado): bug Proponer/Chat + drill-down redesign + tabs reorder
+7b62a60 docs: refresh PROJECT_STATE.md — cierre pre-Mundial
 0502b83 fix(banner): TU URL row aún más compacto
 c93b7cd fix(banner): TU URL row solo en Home + tamaño mitad
 f2c8966 fix(ux): recovery + UX combo (modal mobile, banner, perfil, pills, label)
 ac43f9f feat(ux): mapa países + StickerCard premium + Profile 3 secciones + más
 bedf363 feat(ux): múltiples duplicadas + perfil simplificado + ajustes UX
 8c9d909 feat(stickers): import lista oficial Panini WC 2026 (980 stickers)
-8df03b7 chore: update URL → wc2026albumtracker.vercel.app
-c24af5b feat: Mercado offers colapsadas + página reset password
-99c1570 perf(scale): RLS optim + FK indexes + bundle code-split
-d34a20f fix(ux): banner pegado al notch + bannerCard compacto + AlbumSwitcher siempre
 ```
+
+---
+
+## 🆕 Cambios desde la última sesión grande (handoff notes)
+
+**Banner condicional**:
+- Header solo en Home (`tab === 'dashboard'`). En otras tabs no aparece.
+- Botón "Cerrar sesión" agregado al final de Profile (rojo sutil).
+- `.mainNoHeader` clase con `padding-top: calc(var(--sp-3) + env(safe-area-inset-top))`.
+
+**Modales hoisted en drill-down de Mercado**:
+- Bug crítico: TradeRequestModal/CreatePublicListingModal vivían solo en list view → drill-down early return los desmontaba → "Proponer" no funcionaba. Fix: ambos modales ahora se renderean también dentro del fragment del drill-down.
+- Drill-down redesign: PROPONER TRADE arriba con CTA gold, perfil con TypeDonut integrada abajo.
+
+**Mercado tabs orden nuevo**: `Ofertas / Trades / Favoritos / Buscar`.
+
+**Cards LIMIT 420 → 1000**: todas las cartas visibles sin "filtrar para refinar".
+
+**Compactación**: CardsPage filter bar / status pills / flag bar / summary head + Mercado subnav / sectionHead / listingFilters todos con padding/font reducidos ~30-40%.
+
+**Recovery password**:
+- ResetPassword.jsx maneja BOTH PKCE (`?code=`) e implicit (`#access_token=&type=recovery`).
+- `index.html` tiene script SYNC pre-React que detecta `?code=` o `#type=recovery` en path != `/reset-password` y redirige (defensa contra Site URL fallback).
+- Pendiente manual: agregar `https://wc2026albumtracker.vercel.app/reset-password` en Auth → URL Configuration → Redirect URLs.
+
+**Email templates**: `email-templates/recover-password.html` + `confirm-signup.html` + `README.md`. Pegar en Supabase Dashboard → Auth → Email Templates.
+
+**Registrar Movimiento outlined**: dark vault style con border gold + glow exterior (era gold-filled). Mobile 74px, desktop 84px.
+
+**TU URL row +20%**: padding 3×7→4×9, fonts label 9→10.5/url 10.5→12/btn 9.5→11.
+
+**Subtitles más cortos**:
+- Adrenalyn: `'FIFA WC 2026 · TRADING CARDS'`
+- Sticker: `'PANINI WC 2026 · STICKERS'`
+
+**Modales bottom-sheet en mobile (≤540px)**: CreatePublicListingModal + TradeRequestModal + QuickUpdateModal todos con `align-items: flex-end`, `max-height: 92dvh`, `border-radius: 18px arriba`, slide-up animation, padding-bottom safe-area.
