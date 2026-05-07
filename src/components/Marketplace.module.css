@@ -1888,9 +1888,11 @@
     margin-right: calc(var(--sp-3) * -1);
     padding-left: var(--sp-3);
     padding-right: var(--sp-3);
-    /* Subnav stays sticky but anchored under the smaller mobile header.
-       Tracker mobile header is ~48px, plus iPhone notch safe-area. */
-    top: calc(48px + env(safe-area-inset-top, 0px));
+    /* Sin header en mobile (Mercado/Chat/Cartas/Perfil) — el subnav se
+       queda sticky pegado al safe-area del notch. Antes había un offset
+       de 48px (asumiendo header presente) que dejaba un gap arriba donde
+       se colaba el SectionHead al scrollear. */
+    top: env(safe-area-inset-top, 0px);
   }
   .modalBackdrop {
     align-items: flex-end;
