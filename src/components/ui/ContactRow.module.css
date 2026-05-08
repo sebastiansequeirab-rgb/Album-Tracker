@@ -1,0 +1,65 @@
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.row.compact {
+  margin-top: 8px;
+  gap: 6px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-family: 'Bebas Neue', 'DM Sans', sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: filter 0.15s ease, transform 0.10s ease;
+  white-space: nowrap;
+}
+
+.pill:hover { filter: brightness(1.10); }
+.pill:active { transform: translateY(1px); }
+
+.compact .pill {
+  padding: 7px 11px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.label {
+  display: inline-block;
+}
+
+/* WhatsApp — verde marca */
+.wa {
+  background: #1faf38;
+  color: #fff;
+  border-color: #169728;
+  box-shadow: 0 4px 12px rgba(31, 175, 56, 0.25);
+}
+
+/* Instagram — gradiente IG */
+.ig {
+  background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  color: #fff;
+  border-color: rgba(0, 0, 0, 0.20);
+  box-shadow: 0 4px 12px rgba(220, 39, 67, 0.25);
+}
+
+/* Email — neutral con tinte dorado */
+.email {
+  background: rgba(245, 200, 70, 0.10);
+  color: #FCD34D;
+  border-color: rgba(245, 200, 70, 0.40);
+}
+.email:hover { background: rgba(245, 200, 70, 0.16); }

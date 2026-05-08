@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { createTradeRequest } from '../lib/marketplace'
+import { buildTradeWhatsappText, whatsappHrefForNumber, cleanPhoneNumber } from '../lib/shareMessage'
 import s from './TradeRequestModal.module.css'
 
 /* ── Inline SVG icons (no emojis in chrome) ──────────────────────────── */
@@ -57,6 +58,7 @@ export default function TradeRequestModal({
   onClose,
   onSent,
   myId,
+  myProfile,
   targetProfile,
   albumType,
   itemsById,
@@ -69,6 +71,11 @@ export default function TradeRequestModal({
   prefillMeetingTime = '',
   flash,
 }) {
+  // ¿El target tiene WhatsApp? Si sí, ofrecemos también disparar wa.me junto
+  // con la solicitud al chat interno. El chat se manda SIEMPRE — el toggle solo
+  // controla si además abrimos WhatsApp.
+  const targetWaClean = cleanPhoneNumber(targetProfile?.contact?.whatsapp || '')
+  const [alsoWhatsapp, setAlsoWhatsapp] = useState(true)
   // ────────── Estado interno (controlado dentro del modal, editable) ──────────
   const [offered, setOffered] = useState(() => new Set(prefillOfferedIds))
   const [wanted,  setWanted]  = useState(() => new Set(prefillWantedIds))
@@ -98,9 +105,11 @@ export default function TradeRequestModal({
       setMessage('')
       setErr('')
       setSending(false)
+      // Default ON cuando el target tiene WhatsApp; OFF si no.
+      setAlsoWhatsapp(!!targetWaClean)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
+  }, [open, targetWaClean])
 
   const targetPoints = Array.isArray(targetProfile?.meeting_points) ? targetProfile.meeting_points : []
 
@@ -202,7 +211,34 @@ export default function TradeRequestModal({
         message: message.trim() || null,
       }
       const created = await createTradeRequest(payload)
-      flash?.('Solicitud enviada — abriendo chat…', '#FCD34D')
+
+      // Si el usuario quiso también avisar por WhatsApp y el target tiene
+      // número, abrimos wa.me con el resumen. Esto es ADICIONAL al chat
+      // interno — la solicitud ya quedó creada y guardada en DB pase lo que
+      // pase con el window.open.
+      if (alsoWhatsapp && targetWaClean) {
+        const theyGiveMe = allItems.filter(c => wanted.has(c.id))
+        const iGiveThem  = allItems.filter(c => offered.has(c.id))
+        const waText = buildTradeWhatsappText({
+          myName:       myProfile?.display_name || '',
+          targetName:   targetProfile?.display_name || '',
+          theyGiveMe,
+          iGiveThem,
+          meetingPoint: meeting_point || '',
+          meetingTime:  meeting_time_label || '',
+        })
+        const waHref = whatsappHrefForNumber(targetWaClean, waText)
+        if (waHref && typeof window !== 'undefined') {
+          window.open(waHref, '_blank', 'noopener,noreferrer')
+        }
+      }
+
+      flash?.(
+        alsoWhatsapp && targetWaClean
+          ? 'Solicitud enviada al chat — abriendo WhatsApp…'
+          : 'Solicitud enviada — abriendo chat…',
+        '#FCD34D'
+      )
       onSent?.(created)
       onClose?.()
     } catch (e) {
@@ -439,6 +475,24 @@ export default function TradeRequestModal({
               <span>OFRECES</span>
             </span>
           </div>
+
+          {/* Checkbox extra: también disparar WhatsApp con el resumen.
+              Solo aparece cuando el target dejó número en su perfil. */}
+          {targetWaClean && (
+            <label className={s.waToggle}>
+              <span className={`${s.checkbox} ${alsoWhatsapp ? s.checkboxOn : ''}`} aria-hidden="true">
+                {alsoWhatsapp && <IconCheck />}
+              </span>
+              <input
+                type="checkbox"
+                checked={alsoWhatsapp}
+                onChange={e => setAlsoWhatsapp(e.target.checked)}
+                className={s.checkboxInput}
+              />
+              <span className={s.waToggleLabel}>También avisar por WhatsApp</span>
+            </label>
+          )}
+
           <button onClick={onSend} disabled={sending} className={s.cta}>
             {sending ? 'ENVIANDO…' : 'ENVIAR SOLICITUD'}
           </button>

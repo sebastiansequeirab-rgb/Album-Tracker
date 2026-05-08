@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { ALBUM_CONFIG, ALBUM_STICKER } from '../data'
+import ContactRow from './ui/ContactRow'
 
 export default function PublicProfile() {
   const { slug } = useParams()
@@ -60,7 +61,7 @@ export default function PublicProfile() {
   const pct = total ? Math.round(have / total * 100) : 0
 
   const tradeHref = profile.user_id
-    ? `/?openUser=${encodeURIComponent(profile.user_id)}`
+    ? `/?openUser=${encodeURIComponent(profile.user_id)}&propose=1`
     : '/'
 
   return (
@@ -99,6 +100,9 @@ export default function PublicProfile() {
             <div style={pctNum}>{pct}%</div>
           </div>
         </header>
+
+        {/* ── CONTACTO (si el dueño dejó algún canal) ────────────── */}
+        <ContactRow profile={profile} />
 
         {/* ── DESPLEGABLE: FALTANTES ─────────────────────────────── */}
         <Disclosure

@@ -14,6 +14,8 @@ import CreatePublicListingModal from './CreatePublicListingModal'
 import ChatPanel from './ChatPanel'
 import TypeDonut from './ui/TypeDonut'
 import Avatar from './ui/Avatar'
+import ContactRow from './ui/ContactRow'
+import { buildTradeWhatsappText } from '../lib/shareMessage'
 import { exportListPdf } from '../lib/exportPdf'
 import s from './Marketplace.module.css'
 
@@ -91,6 +93,7 @@ export default function Marketplace({
   onCompleteTrade,
   forceSub = null,
   initialOpenUserId = null,
+  initialProposeTrade = false,
   onGoToChat = null,
   flash,
 }) {
@@ -178,12 +181,53 @@ export default function Marketplace({
 
   // Si arrancamos con ?openUser=<id>, intentamos cargar el drill-down de ese
   // usuario una vez que `loading` termine.
+  // Si además llegó con ?propose=1 (deep-link desde un perfil público para
+  // "Hacer trade"), pre-llenamos los matches mutuos y abrimos el modal de
+  // TradeRequest una vez que selCol/selProfile estén cargados.
+  const [pendingPropose, setPendingPropose] = useState(false)
   useEffect(() => {
     if (!initialOpenUserId || loading) return
     if (initialOpenUserId === myId) return
+    if (initialProposeTrade) setPendingPropose(true)
     onSelectUser(initialOpenUserId)
     /* eslint-disable-next-line */
   }, [initialOpenUserId, loading])
+
+  // Cuando termine de cargar la colección del target tras un deep-link de
+  // propose, armamos el modal con matches mutuos y lo abrimos. Si no hay
+  // matches mutuos, abrimos el drill-down vacío y avisamos por flash para que
+  // el usuario seleccione manualmente.
+  useEffect(() => {
+    if (!pendingPropose) return
+    if (!selUserId || !selCol || !selProfile) return
+    if (selUserId !== initialOpenUserId) return
+    setPendingPropose(false)
+
+    const wantedMatches = ALL_ITEMS
+      .filter(c => selCol[c.id] === 'duplicate' && (myCol[c.id] || 'missing') === 'missing')
+      .map(c => c.id)
+    const offeredMatches = ALL_ITEMS
+      .filter(c => myCol[c.id] === 'duplicate' && (selCol[c.id] || 'missing') === 'missing')
+      .map(c => c.id)
+
+    if (wantedMatches.length === 0 && offeredMatches.length === 0) {
+      flash?.('Sin matches mutuos automáticos — seleccioná manualmente lo que quieras pedir/ofrecer.', '#FCD34D')
+      return
+    }
+
+    setPickedTheirs(new Set(wantedMatches))
+    setPickedMine(new Set(offeredMatches))
+    setTradeCtx({
+      targetProfile: selProfile,
+      targetCol:     selCol,
+      offered:       offeredMatches,
+      wanted:        wantedMatches,
+      meetingPoint:  '',
+      meetingTime:   '',
+    })
+    setShowTrade(true)
+    /* eslint-disable-next-line */
+  }, [pendingPropose, selUserId, selCol, selProfile])
 
   const favoriteIdSet = useMemo(() => new Set(favorites.map(f => f.target_id)), [favorites])
 
@@ -645,6 +689,31 @@ export default function Marketplace({
               <IconChat/> <span>Chat</span>
             </button>
           </div>
+
+          {/* Contacto del coleccionista (WhatsApp / Instagram / Email).
+              El WhatsApp pre-llena el chat con el draft del trade en curso
+              (lo que el usuario tenga seleccionado en pickedTheirs/Mine).
+              Si no hay nada seleccionado, manda un saludo genérico. */}
+          {prof && (() => {
+            const theyGiveMe = ALL_ITEMS.filter(c => pickedTheirs.has(c.id))
+            const iGiveThem  = ALL_ITEMS.filter(c => pickedMine.has(c.id))
+            const tradeDraft = (theyGiveMe.length || iGiveThem.length)
+              ? buildTradeWhatsappText({
+                  myName: myProfile?.display_name || '',
+                  targetName: prof.display_name || '',
+                  theyGiveMe,
+                  iGiveThem,
+                  appUrl: typeof window !== 'undefined' ? window.location.origin : '',
+                })
+              : ''
+            return (
+              <ContactRow
+                profile={prof}
+                myName={myProfile?.display_name || ''}
+                tradeDraft={tradeDraft}
+              />
+            )
+          })()}
         </div>
 
         {!selCol && <div className={s.emptyText}>Cargando colección…</div>}
@@ -668,6 +737,7 @@ export default function Marketplace({
         onClose={() => { setShowTrade(false); setTradeCtx(null) }}
         onSent={onTradeSent}
         myId={myId}
+        myProfile={myProfile}
         targetProfile={tradeCtx?.targetProfile}
         albumType={albumType}
         itemsById={ITEMS_BY_ID}
@@ -1292,6 +1362,7 @@ export default function Marketplace({
         onClose={() => { setShowTrade(false); setTradeCtx(null) }}
         onSent={onTradeSent}
         myId={myId}
+        myProfile={myProfile}
         targetProfile={tradeCtx?.targetProfile}
         albumType={albumType}
         itemsById={ITEMS_BY_ID}

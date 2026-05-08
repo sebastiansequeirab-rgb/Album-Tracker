@@ -6,7 +6,7 @@ import {
   ensureMyProfile, loadUnreadCount, subscribeToInbox,
   recordTradeHistory, updateTradeRequestStatus,
 } from '../lib/marketplace'
-import { buildShareMessage, copyShareMessage, whatsappHref } from '../lib/shareMessage'
+import { buildShareMessage, buildShareLinkOnly, copyShareMessage, whatsappHref } from '../lib/shareMessage'
 import { useLocalStorageState } from '../lib/useLocalStorageState'
 import AlbumSwitcher from './AlbumSwitcher'
 import Flag from './Flag'
@@ -93,9 +93,15 @@ export default function Tracker({
   const MAX_EXTRAS = 2   // cap: hasta 3 dups (×2, ×3, ×4). Después loop a missing.
 
   // Si la URL tiene ?openUser=<id>, abrimos directo el Marketplace > drill-down.
+  // Y si además trae &propose=1 (vínculo desde un perfil público), pre-cargamos
+  // los matches mutuos y abrimos el modal de TradeRequest automáticamente.
   const initialOpenUser = useMemo(() => {
     if (typeof window === 'undefined') return null
     try { return new URL(window.location.href).searchParams.get('openUser') } catch { return null }
+  }, [])
+  const initialProposeTrade = useMemo(() => {
+    if (typeof window === 'undefined') return false
+    try { return new URL(window.location.href).searchParams.get('propose') === '1' } catch { return false }
   }, [])
   const [tab,       setTab]       = useLocalStorageState(
     'adrenalyn:lastTab',
@@ -109,6 +115,7 @@ export default function Tracker({
     if (initialOpenUser && typeof window !== 'undefined') {
       const url = new URL(window.location.href)
       url.searchParams.delete('openUser')
+      url.searchParams.delete('propose')
       window.history.replaceState({}, '', url.toString())
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -139,6 +146,26 @@ export default function Tracker({
   const [myProfile, setMyProfile] = useState(null)
   const [unread,    setUnread]    = useState(0)
   const [headerCompact, setHeaderCompact] = useState(false)
+  // Popover de share — null | 'copy' | 'wa'. Solo uno abierto a la vez.
+  const [shareMenu, setShareMenu] = useState(null)
+  const shareMenuRef = useRef(null)
+  // Click-fuera + Escape cierran el popover.
+  useEffect(() => {
+    if (!shareMenu) return
+    const onDoc = (e) => {
+      if (!shareMenuRef.current) return
+      if (!shareMenuRef.current.contains(e.target)) setShareMenu(null)
+    }
+    const onKey = (e) => { if (e.key === 'Escape') setShareMenu(null) }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('touchstart', onDoc, { passive: true })
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('touchstart', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [shareMenu])
 
   // Header dinámico: colapsa en scroll-down (>72px), expande en scroll-up
   // o cerca del top. Threshold con histéresis para evitar flicker.
@@ -560,42 +587,95 @@ export default function Tracker({
           {/* TU LINK row — solo en Home (dashboard). En las otras tabs se libera
               el espacio para que el banner sea más compacto. */}
           {tab === 'dashboard' && myProfile?.slug && myProfile?.marketplace_visible && (() => {
-            const buildMsg = () => buildShareMessage({
+            const albumLabel = cfg.label === 'Álbum de Stickers' ? 'Álbum Panini WC 2026' : cfg.label
+            const totalLabel = cfg.label === 'Álbum de Stickers' ? 'stickers' : 'cartas'
+            const buildFull = () => buildShareMessage({
               profile: myProfile,
               items: ALL_ITEMS,
               col,
               extras,
-              albumLabel: cfg.label === 'Álbum de Stickers' ? 'Álbum Panini WC 2026' : cfg.label,
-              totalLabel: cfg.label === 'Álbum de Stickers' ? 'stickers' : 'cartas',
+              albumLabel,
+              totalLabel,
             })
+            const buildLink = () => buildShareLinkOnly({ profile: myProfile, albumLabel })
             const url = `${window.location.origin}/u/${myProfile.slug}`
+
+            const handleCopy = (kind) => {
+              const msg = kind === 'link' ? buildLink() : buildFull()
+              copyShareMessage(msg).then(
+                () => flash(kind === 'link' ? '🔗 Link copiado' : '📋 Mensaje copiado · pegalo en WhatsApp', '#FCD34D'),
+                () => flash('No se pudo copiar', '#F87171')
+              )
+              setShareMenu(null)
+            }
+            const handleWa = (kind) => {
+              const msg = kind === 'link' ? buildLink() : buildFull()
+              window.open(whatsappHref(msg), '_blank', 'noopener,noreferrer')
+              setShareMenu(null)
+            }
+
             return (
               <div className={s.brandShareRow}>
                 <span className={s.brandShareLabel}>TU LINK</span>
                 <code className={s.brandShareUrl}>{url}</code>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const msg = buildMsg()
-                    copyShareMessage(msg).then(
-                      () => flash('📋 Mensaje copiado · pegalo en WhatsApp', '#FCD34D'),
-                      () => flash('No se pudo copiar', '#F87171')
-                    )
-                  }}
-                  className={s.brandShareBtn}
-                  title="Copia un mensaje completo con tu lista para pegarlo en WhatsApp"
+
+                {/* Split-button: COPIAR ▾ */}
+                <span
+                  className={s.shareSplit}
+                  ref={shareMenu === 'copy' ? shareMenuRef : null}
                 >
-                  Copiar
-                </button>
-                <a
-                  href={whatsappHref(buildMsg())}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={s.brandShareWa}
-                  title="Abrir WhatsApp con el mensaje listo"
+                  <button
+                    type="button"
+                    onClick={() => setShareMenu(shareMenu === 'copy' ? null : 'copy')}
+                    className={`${s.brandShareBtn} ${s.shareSplitBtn}`}
+                    aria-haspopup="menu"
+                    aria-expanded={shareMenu === 'copy'}
+                    title="Copiar — elegí entre solo el link o el mensaje completo"
+                  >
+                    Copiar <span className={s.shareSplitBtnCaret} aria-hidden>▾</span>
+                  </button>
+                  {shareMenu === 'copy' && (
+                    <div className={s.shareMenu} role="menu">
+                      <button type="button" role="menuitem" className={s.shareMenuItem} onClick={() => handleCopy('link')}>
+                        <span className={s.shareMenuIcon} aria-hidden>🔗</span>
+                        <span className={s.shareMenuTxt}>Solo el link</span>
+                      </button>
+                      <button type="button" role="menuitem" className={s.shareMenuItem} onClick={() => handleCopy('full')}>
+                        <span className={s.shareMenuIcon} aria-hidden>📝</span>
+                        <span className={s.shareMenuTxt}>Mensaje completo</span>
+                      </button>
+                    </div>
+                  )}
+                </span>
+
+                {/* Split-button: WHATSAPP ▾ */}
+                <span
+                  className={s.shareSplit}
+                  ref={shareMenu === 'wa' ? shareMenuRef : null}
                 >
-                  WhatsApp
-                </a>
+                  <button
+                    type="button"
+                    onClick={() => setShareMenu(shareMenu === 'wa' ? null : 'wa')}
+                    className={`${s.brandShareWa} ${s.shareSplitBtn}`}
+                    aria-haspopup="menu"
+                    aria-expanded={shareMenu === 'wa'}
+                    title="Compartir en WhatsApp — elegí entre solo el link o el mensaje completo"
+                  >
+                    WhatsApp <span className={s.shareSplitBtnCaret} aria-hidden>▾</span>
+                  </button>
+                  {shareMenu === 'wa' && (
+                    <div className={s.shareMenu} role="menu">
+                      <button type="button" role="menuitem" className={s.shareMenuItem} onClick={() => handleWa('link')}>
+                        <span className={s.shareMenuIcon} aria-hidden>🔗</span>
+                        <span className={s.shareMenuTxt}>Solo el link</span>
+                      </button>
+                      <button type="button" role="menuitem" className={s.shareMenuItem} onClick={() => handleWa('full')}>
+                        <span className={s.shareMenuIcon} aria-hidden>📝</span>
+                        <span className={s.shareMenuTxt}>Mensaje completo</span>
+                      </button>
+                    </div>
+                  )}
+                </span>
               </div>
             )
           })()}
@@ -694,6 +774,7 @@ export default function Tracker({
               myCol={col}
               myProfile={myProfile}
               initialOpenUserId={initialOpenUser}
+              initialProposeTrade={initialProposeTrade}
               onGoToProfile={() => setTab('profile')}
               onGoToChat={() => setTab('chat')}
               onUnreadChange={() => {

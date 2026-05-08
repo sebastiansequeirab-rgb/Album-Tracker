@@ -108,3 +108,92 @@ export function copyShareMessage(text) {
 export function whatsappHref(text) {
   return `https://wa.me/?text=${encodeURIComponent(text)}`
 }
+
+/* Mensaje minimal — solo el link al perfil + invitación corta. Para cuando el
+   usuario solo quiere mandar el link sin la lista enorme. */
+export function buildShareLinkOnly({
+  profile,
+  albumLabel = 'Álbum Panini WC 2026',
+} = {}) {
+  const url = profile?.slug
+    ? `${APP_URL}/u/${profile.slug}`
+    : APP_URL
+  const name = profile?.display_name || 'Mi álbum'
+  return `⚽ ${name} · ${albumLabel}\n${url}\n\n¿Cambiamos? 🤝`
+}
+
+/* Limpia un teléfono a solo dígitos para wa.me/<num>. Tolerante con +, espacios,
+   paréntesis y guiones. Devuelve '' si quedó vacío para que el caller decida. */
+export function cleanPhoneNumber(raw) {
+  if (!raw) return ''
+  return String(raw).replace(/[^\d]/g, '')
+}
+
+/* Link wa.me con número (chat directo) y texto pre-cargado. Si number está
+   vacío, retorna null — el caller decide si mostrar el botón. */
+export function whatsappHrefForNumber(number, text) {
+  const clean = cleanPhoneNumber(number)
+  if (!clean) return null
+  const t = text ? `?text=${encodeURIComponent(text)}` : ''
+  return `https://wa.me/${clean}${t}`
+}
+
+/* Mensaje WhatsApp para un trade 1:1 — resumen compacto con lo que pides y lo
+   que ofreces, agrupado por país. Pensado para el botón "WhatsApp" del modal
+   de trade y para el botón de contacto en el perfil del coleccionista. */
+export function buildTradeWhatsappText({
+  myName,
+  targetName,
+  theyGiveMe = [],   // items que les pido (sus dups que me faltan)
+  iGiveThem = [],    // items que les ofrezco (mis dups que les faltan)
+  meetingPoint = '',
+  meetingTime = '',
+  appUrl = APP_URL,
+} = {}) {
+  const out = []
+  out.push(`🤝  *Trade · Panini WC 2026*`)
+  out.push('')
+  out.push(`Hola ${targetName || 'coleccionista'}, soy ${myName || 'un coleccionista'} desde WC Album Tracker.`)
+
+  if (theyGiveMe.length) {
+    out.push('')
+    out.push(`📥 *Me interesan tus repetidas* (${theyGiveMe.length})`)
+    appendTradeGroups(out, theyGiveMe)
+  }
+  if (iGiveThem.length) {
+    out.push('')
+    out.push(`📤 *Te ofrezco mis repetidas* (${iGiveThem.length})`)
+    appendTradeGroups(out, iGiveThem)
+  }
+  if (!theyGiveMe.length && !iGiveThem.length) {
+    out.push('')
+    out.push('Quería coordinar un cambio. Te paso el detalle por acá o por la app.')
+  }
+
+  if (meetingPoint || meetingTime) {
+    out.push('')
+    out.push(`📍 ${[meetingPoint, meetingTime].filter(Boolean).join(' · ')}`)
+  }
+
+  out.push('')
+  out.push(`Te dejé el detalle en el chat de la app: ${appUrl}`)
+  return out.join('\n')
+}
+
+function appendTradeGroups(out, items) {
+  const groups = new Map()
+  for (const it of items) {
+    const key = it.team || 'Otros'
+    if (!groups.has(key)) groups.set(key, { flag: it.flag || '🏳️', items: [] })
+    groups.get(key).items.push(it)
+  }
+  const sorted = [...groups.entries()].sort((a, b) => b[1].items.length - a[1].items.length)
+  for (const [team, g] of sorted) {
+    const nums = g.items
+      .slice()
+      .sort((a, b) => (a.num ?? 0) - (b.num ?? 0))
+      .map(c => c.num)
+      .join(', ')
+    out.push(`${g.flag} ${team} (${g.items.length}): ${nums}`)
+  }
+}
