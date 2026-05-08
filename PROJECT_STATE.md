@@ -1,11 +1,68 @@
 # Adrenalyn Tracker — Estado actual del proyecto
 
 > Brief para una sesión nueva. Lee esto antes de tocar nada.
-> Última actualización: 2026-05-08 (orden custom 48 equipos + FWC museum al frente + collapsibles Cartas + body safe-area fix).
+> Última actualización: 2026-05-08 PM (share popovers, trade auto-propose desde link público, contacto + WhatsApp dual-channel, seed colección Manu).
 
 ---
 
-## ✅ Cerrado en la última sesión (2026-05-07/08)
+## ✅ Cerrado en la última sesión (2026-05-08 PM)
+
+### Share split-buttons (Copiar / WhatsApp)
+- Cada botón en la fila TU LINK ahora abre un mini-popover con 2 opciones: **🔗 Solo el link** / **📝 Mensaje completo**.
+- Click fuera + Escape cierran. Solo un popover abierto a la vez.
+- **Trampa que costó un fix**: `.brandShareRow` tiene `clip-path: polygon(...)` que clipea descendientes invisibles. Solución: popover renderizado vía `createPortal(node, document.body)` con `position: fixed` y coordenadas computadas del `getBoundingClientRect()` del botón ancla. Refs separadas en cada botón + popover; click-fuera chequea las 3 antes de cerrar; `setTimeout(0)` antes de adjuntar el listener de mousedown para no capturar el mismo click que abrió.
+
+### Trade auto-propose desde link público
+- `PublicProfile.jsx`: `tradeHref` cambió a `/?openUser=<id>&propose=1`.
+- `Tracker.jsx` lee `propose` del query string y lo pasa al `Marketplace` como `initialProposeTrade`.
+- `Marketplace.jsx` calcula matches mutuos (sus dups que me faltan + mis dups que les faltan), pre-llena `pickedTheirs`/`pickedMine`, arma `tradeCtx` y abre el `TradeRequestModal` automático.
+- Si NO hay matches mutuos → drill-down vacío con flash "seleccioná manualmente".
+- Limpieza del query string (`openUser` y `propose`) después del primer read para que un refresh no re-dispare.
+
+### ContactRow component (nuevo `src/components/ui/ContactRow.{jsx,module.css}`)
+- Pills WhatsApp / Instagram / Email — render condicional, solo aparecen los campos que existan.
+- WhatsApp pre-llena el chat con `tradeDraft` (resumen del trade en draft) o saludo genérico si no hay nada seleccionado.
+- Instagram: strip de `@`, link a `instagram.com/<user>`.
+- Inyectado en:
+  - **PublicProfile**: debajo del hero, sin tradeDraft (saludo genérico).
+  - **Marketplace drill-down**: dentro del `detailHead`, con `tradeDraft` armado de `pickedTheirs`/`pickedMine` actuales.
+
+### Dual-channel send (chat interno + WhatsApp simultáneo)
+- `TradeRequestModal.jsx`: toggle verde **"También avisar por WhatsApp"** en el footer.
+- Default ON cuando `targetProfile.contact.whatsapp` existe; oculto si no.
+- En `onSend()`: SIEMPRE crea la trade request (chat interno via `createTradeRequest`). Si el toggle está prendido + hay número, ADEMÁS abre `wa.me/<num>?text=<resumen>` en pestaña nueva con el mensaje pre-cargado (lista compacta de pides/ofreces + meeting point/hora).
+- Mensaje WhatsApp armado con `buildTradeWhatsappText({ myName, targetName, theyGiveMe, iGiveThem, meetingPoint, meetingTime })`.
+
+### Helpers nuevos en `src/lib/shareMessage.js`
+- `buildShareLinkOnly({ profile, albumLabel })` — mini-mensaje 1-línea con solo el link.
+- `buildTradeWhatsappText({...})` — resumen 1:1 agrupado por país.
+- `whatsappHrefForNumber(num, text)` — `wa.me/<digits>?text=<encoded>`.
+- `cleanPhoneNumber(raw)` — strip a solo dígitos (tolerante con `+`, espacios, paréntesis, guiones).
+
+### Seed colección Manu (manu1704mr@gmail.com)
+- 980 stickers en `sticker_collections`: **493 have / 210 duplicate / 277 missing** (50.3% completo).
+- FWC interpretado por código numérico: `FWC-N` → `INT-(N+1)` para N=1..8 y `MUS-(N-8)` para N=9..19.
+- Spot-check pasó en 11 stickers verificados (escudos, jugadores, plantel, museum).
+- Repetidas asumidas con extras=0 (1 dup → 2 copias totales). Si alguna tiene 2+ extras, se ajusta el `extras` jsonb manualmente.
+
+---
+
+## 🔥 Próxima tarea (open issue para nueva sesión)
+
+**Continuar con bugs / mejoras pendientes**. La rama `main` está limpia y deployada en prod. Cualquier reporte nuevo de bug o feature request entra acá.
+
+Ideas en backlog (no bloqueantes):
+- Avatar crop tool al subir.
+- Notificaciones push del navegador.
+- OG image dinámica por usuario en `/u/:slug`.
+- Onboarding tour de 3 pasos primera vez.
+- Vercel Analytics (gratis).
+- Trade history en perfil ajeno (no solo contador).
+- Seed random a otra cuenta de testing (patrón documentado abajo).
+
+---
+
+## ✅ Cerrado en sesión previa (2026-05-07/08)
 
 ### UX — top de tabs
 - **Banner solo en Home** (`tab === 'dashboard'`). Otras tabs liberan todo el espacio.
@@ -35,18 +92,24 @@
 
 ---
 
-## 🔥 Próxima tarea (open issue para nueva sesión)
+## Patrón: seedear data a otra cuenta (referencia para sesiones futuras)
 
-**Seedear data random a otra cuenta de testing**. Quiero darle a otro usuario (otro email) un set inicial de stickers similar al que tengo yo (~75% completado, con repetidas mixtas).
-
-**Cómo lo hicimos para `sebastiansequeirab@gmail.com`** (ejemplo de referencia):
+**Random seed (~75% completo)** — para una cuenta de testing nueva:
 1. SQL en Supabase project `xawgomhknzdnhkxcegqi`, tabla `sticker_collections`.
 2. Generar los 980 sticker IDs vía CTE: 9 intro (`INT-1..9`) + 11 museum (`MUS-1..11`) + 48 teams × 20 (`<T>-C/-P01..P18/-G`).
 3. UPDATE con `random() < 0.75` por sticker → `have` o `missing`.
 4. Para repetidas: SELECT 200 random de los `have`, mover a `duplicate` con extras random 0/1/2 (×2/×3/×4).
 5. **Trampa importante**: poner `random()` DIRECTO dentro de `jsonb_object_agg(id, expr)` — si lo computás en un CTE materializado intermedio, el planner lo hoist y todas las filas reciben el mismo valor.
 
-**Para la nueva sesión**: el user te va a dar un email destino. Buscás `user_id` en `auth.users WHERE email = '<x>'`, y corres el mismo SQL ajustando el `user_id`.
+**Seed por lista explícita (faltantes + repetidas)** — usado para Manu (2026-05-08):
+- Recibir lista del usuario en formato `<TEAM> → <pos>, <pos>, ...` para faltantes y repetidas.
+- Mapeo posición → ID:
+  - Pos 1 → `<T>-C` (escudo)
+  - Pos 2..12 → `<T>-P01..P11` (jugadores 1-11)
+  - Pos 13 → `<T>-G` (plantel)
+  - Pos 14..20 → `<T>-P12..P18` (jugadores 12-18)
+- FWC stickers: `FWC-N` → `INT-(N+1)` para N=1..8; `FWC-N` → `MUS-(N-8)` para N=9..19. Sticker `00` → `INT-1`.
+- SQL: dos arrays (missing_set, dup_set) + UNNEST + JOIN contra los 980 keys del jsonb existente. Default `have` para los no listados. Ver commit anterior con email `manu1704mr@gmail.com` para template.
 
 ---
 
@@ -136,11 +199,29 @@ Cada usuario marca cartas como `missing → have → duplicate (×2/×3/×4)` y 
 - `.subnav` (Marketplace.module.css) sticky `top: var(--safe-top)`.
 - `viewport-fit=cover` en index.html viewport meta es prerequisito.
 
+### Popovers/dropdowns — portal a body si el padre tiene clip-path (CLAVE)
+- `.brandShareRow` tiene `clip-path: polygon(...)` para el corte diagonal. Cualquier descendiente que sale del bounding box (popover absoluto debajo del row, etc.) queda **clipeado e invisible**.
+- Patrón: refs separadas en cada botón ancla + ref en el popover; popover renderizado vía `createPortal(node, document.body)` con `position: fixed; top/right` calculados del `getBoundingClientRect()` del botón.
+- Click-fuera: chequea las 3 refs (botón1, botón2, popover) antes de cerrar.
+- `setTimeout(0)` antes de `addEventListener('mousedown', ...)` para no capturar el mismo click que abrió el popover.
+- Aplicado en `Tracker.jsx` (TU LINK row, share popovers Copiar/WhatsApp).
+
+### Trade flow — auto-propose desde link público
+- Query string `?openUser=<id>&propose=1` desde `PublicProfile.jsx` (botón "Hacer trade").
+- `Tracker.jsx` parsea ambos y los pasa a `<Marketplace initialOpenUserId={...} initialProposeTrade={...}/>`.
+- Marketplace dispara `onSelectUser(id)` → cuando carga `selCol`/`selProfile`, calcula matches mutuos (`selCol[id]==='duplicate' && myCol[id]||'missing'==='missing'` para wanted; espejo para offered) → arma `tradeCtx` y `setShowTrade(true)`.
+- Si arrays vacíos → flash "seleccioná manualmente" y queda el drill-down disponible.
+
+### Contact + dual-channel send
+- `ContactRow` (`src/components/ui/ContactRow.jsx`) lee `profile.contact.{whatsapp,instagram,email}` y solo renderiza pills para los campos que existan. Acepta `tradeDraft` opcional para pre-llenar el chat de WhatsApp.
+- `TradeRequestModal` toggle "También avisar por WhatsApp" — default ON cuando hay número. `onSend()` siempre crea trade request (chat); si toggle ON, además `window.open(wa.me/<num>?text=<resumen>)`. El chat NUNCA falla por no abrirse WhatsApp (popup blocker, etc.) — ya quedó en DB.
+
 ---
 
-## Cuenta de testing
-- **Diego**: `Diegobuenano0808@gmail.com` / `Diego04`
-- **Sebastian (owner)**: `sebastiansequeirab@gmail.com` — actualmente en 74.29% completado con 200 repetidas random distribuidas (528 have / 200 dup / 252 miss / 70×2 + 67×3 + 63×4).
+## Cuentas de testing
+- **Diego**: `Diegobuenano0808@gmail.com` / `Diego04`.
+- **Sebastian (owner)**: `sebastiansequeirab@gmail.com` — 74.29% (528 have / 200 dup / 252 miss).
+- **Manu**: `manu1704mr@gmail.com` (user_id `9e83b82e-6df2-4a91-80d5-aaf008f4921d`) — 50.3% (493 have / 210 dup / 277 miss). Seedeado el 2026-05-08 desde lista explícita de faltantes + repetidas.
 
 ---
 
@@ -169,15 +250,19 @@ git push          # auto-deploy Vercel ~30s
 - Vercel Analytics (gratis).
 - Trade history en perfil ajeno (no solo contador).
 
-### Lecciones de la última sesión
+### Lecciones acumuladas
 - ⚠️ **Body safe-area padding es load-bearing en iOS PWA**. Sin `body { padding-top: env(...) }`, el env() retorna 0 para descendientes en standalone aunque la meta tag `viewport-fit=cover` esté en place.
 - ⚠️ **Vercel free tier deploy cap es 100/día**. NO correr `vercel --prod --yes` manual salvo evidencia clara de webhook caído — duplica el conteo (webhook + CLI).
 - ⚠️ **Postgres `random()` se hoist** cuando se usa en CTE intermedio + `jsonb_object_agg`. Ponerlo DIRECTO dentro del agregado: `jsonb_object_agg(id, floor(random() * 3)::int)`.
+- ⚠️ **`clip-path` (o `overflow: hidden`) en padre clipea descendientes invisibles**. Si un popover/dropdown sale del bounding box, portalealo a `document.body` con `position: fixed` desde el inicio. Refactor después es feo.
 
 ---
 
-## Commits recientes (sesión 2026-05-08)
+## Commits recientes
 ```
+35843c9 fix(share): portal share popover a body — clip-path del brandShareRow lo cortaba
+45d16be feat(share+trade): popover link/full, auto-propose desde link público, contacto + WhatsApp dual-channel
+9f04eea docs: PROJECT_STATE.md handoff sesión 2026-05-08 + gitignore mockups
 f133a8c fix(layout): aplicar safe-area padding al body (recetas iOS PWA)
 1297607 fix(layout): remover mancha negra en standalone — vuelta a lo mínimo
 ce5176a fix(layout): JS detection + barra opaca para standalone (definitivo)
@@ -185,7 +270,4 @@ ce5176a fix(layout): JS detection + barra opaca para standalone (definitivo)
 45140db fix(layout): unificar top padding entre browser y standalone
 e97319a ux(mercado): tighten top region (-23px entre subnav y listings)
 d1beade fix(mercado/chat): subnav sticky flush al notch (sin gap de 48px)
-419e310 feat(ux): tabs flush con safe-area + cleanup top de Cartas/Mercado
-6107ca8 feat(stickers): reorder teams 1-48 (custom album) + FWC museum al frente
-66f3a31 feat(cards): collapsible team groups + fix standalone bookmark padding
 ```
