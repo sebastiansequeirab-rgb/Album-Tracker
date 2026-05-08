@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '../supabaseClient'
 import { MOMENTUM, ALBUM_CONFIG, ALBUM_ADRENALYN, ALBUM_TYPES } from '../data'
@@ -147,23 +148,60 @@ export default function Tracker({
   const [unread,    setUnread]    = useState(0)
   const [headerCompact, setHeaderCompact] = useState(false)
   // Popover de share — null | 'copy' | 'wa'. Solo uno abierto a la vez.
-  const [shareMenu, setShareMenu] = useState(null)
-  const shareMenuRef = useRef(null)
-  // Click-fuera + Escape cierran el popover.
+  // Lo portamos a document.body porque el .brandShareRow tiene clip-path que
+  // recortaría el popover si quedara como descendiente del row. Posicionamos
+  // con position:fixed + getBoundingClientRect del botón ancla.
+  const [shareMenu,    setShareMenu]    = useState(null)
+  const [shareMenuPos, setShareMenuPos] = useState(null)   // { top, right } en px (viewport)
+  const shareMenuRef   = useRef(null)
+  const copyBtnRef     = useRef(null)
+  const waBtnRef       = useRef(null)
+
+  const openShareMenu = (kind) => {
+    if (shareMenu === kind) {
+      setShareMenu(null)
+      setShareMenuPos(null)
+      return
+    }
+    const ref = kind === 'copy' ? copyBtnRef : waBtnRef
+    const rect = ref.current?.getBoundingClientRect()
+    if (rect) {
+      setShareMenuPos({
+        top:   rect.bottom + 6,
+        right: Math.max(8, window.innerWidth - rect.right),
+      })
+    }
+    setShareMenu(kind)
+  }
+  const closeShareMenu = () => {
+    setShareMenu(null)
+    setShareMenuPos(null)
+  }
+
+  // Click-fuera + Escape cierran el popover. El target puede estar dentro del
+  // popover (portal) o de los botones ancla — ninguno cierra. Cualquier otro
+  // click cierra.
   useEffect(() => {
     if (!shareMenu) return
     const onDoc = (e) => {
-      if (!shareMenuRef.current) return
-      if (!shareMenuRef.current.contains(e.target)) setShareMenu(null)
+      const t = e.target
+      if (shareMenuRef.current?.contains(t)) return
+      if (copyBtnRef.current?.contains(t))   return
+      if (waBtnRef.current?.contains(t))     return
+      closeShareMenu()
     }
-    const onKey = (e) => { if (e.key === 'Escape') setShareMenu(null) }
-    document.addEventListener('mousedown', onDoc)
-    document.addEventListener('touchstart', onDoc, { passive: true })
-    document.addEventListener('keydown', onKey)
+    const onKey = (e) => { if (e.key === 'Escape') closeShareMenu() }
+    // Defer 1 tick para no capturar el click que abrió el menú.
+    const id = setTimeout(() => {
+      document.addEventListener('mousedown', onDoc)
+      document.addEventListener('touchstart', onDoc, { passive: true })
+      document.addEventListener('keydown',    onKey)
+    }, 0)
     return () => {
+      clearTimeout(id)
       document.removeEventListener('mousedown', onDoc)
       document.removeEventListener('touchstart', onDoc)
-      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('keydown',    onKey)
     }
   }, [shareMenu])
 
@@ -606,12 +644,12 @@ export default function Tracker({
                 () => flash(kind === 'link' ? '🔗 Link copiado' : '📋 Mensaje copiado · pegalo en WhatsApp', '#FCD34D'),
                 () => flash('No se pudo copiar', '#F87171')
               )
-              setShareMenu(null)
+              closeShareMenu()
             }
             const handleWa = (kind) => {
               const msg = kind === 'link' ? buildLink() : buildFull()
               window.open(whatsappHref(msg), '_blank', 'noopener,noreferrer')
-              setShareMenu(null)
+              closeShareMenu()
             }
 
             return (
@@ -619,63 +657,67 @@ export default function Tracker({
                 <span className={s.brandShareLabel}>TU LINK</span>
                 <code className={s.brandShareUrl}>{url}</code>
 
-                {/* Split-button: COPIAR ▾ */}
-                <span
-                  className={s.shareSplit}
-                  ref={shareMenu === 'copy' ? shareMenuRef : null}
+                <button
+                  type="button"
+                  ref={copyBtnRef}
+                  onClick={() => openShareMenu('copy')}
+                  className={`${s.brandShareBtn} ${s.shareSplitBtn}`}
+                  aria-haspopup="menu"
+                  aria-expanded={shareMenu === 'copy'}
+                  title="Copiar — elegí entre solo el link o el mensaje completo"
                 >
-                  <button
-                    type="button"
-                    onClick={() => setShareMenu(shareMenu === 'copy' ? null : 'copy')}
-                    className={`${s.brandShareBtn} ${s.shareSplitBtn}`}
-                    aria-haspopup="menu"
-                    aria-expanded={shareMenu === 'copy'}
-                    title="Copiar — elegí entre solo el link o el mensaje completo"
-                  >
-                    Copiar <span className={s.shareSplitBtnCaret} aria-hidden>▾</span>
-                  </button>
-                  {shareMenu === 'copy' && (
-                    <div className={s.shareMenu} role="menu">
-                      <button type="button" role="menuitem" className={s.shareMenuItem} onClick={() => handleCopy('link')}>
-                        <span className={s.shareMenuIcon} aria-hidden>🔗</span>
-                        <span className={s.shareMenuTxt}>Solo el link</span>
-                      </button>
-                      <button type="button" role="menuitem" className={s.shareMenuItem} onClick={() => handleCopy('full')}>
-                        <span className={s.shareMenuIcon} aria-hidden>📝</span>
-                        <span className={s.shareMenuTxt}>Mensaje completo</span>
-                      </button>
-                    </div>
-                  )}
-                </span>
+                  Copiar <span className={s.shareSplitBtnCaret} aria-hidden>▾</span>
+                </button>
 
-                {/* Split-button: WHATSAPP ▾ */}
-                <span
-                  className={s.shareSplit}
-                  ref={shareMenu === 'wa' ? shareMenuRef : null}
+                <a
+                  type="button"
+                  ref={waBtnRef}
+                  onClick={(e) => { e.preventDefault(); openShareMenu('wa') }}
+                  href="#"
+                  className={`${s.brandShareWa} ${s.shareSplitBtn}`}
+                  aria-haspopup="menu"
+                  aria-expanded={shareMenu === 'wa'}
+                  title="Compartir en WhatsApp — elegí entre solo el link o el mensaje completo"
                 >
-                  <button
-                    type="button"
-                    onClick={() => setShareMenu(shareMenu === 'wa' ? null : 'wa')}
-                    className={`${s.brandShareWa} ${s.shareSplitBtn}`}
-                    aria-haspopup="menu"
-                    aria-expanded={shareMenu === 'wa'}
-                    title="Compartir en WhatsApp — elegí entre solo el link o el mensaje completo"
+                  WhatsApp <span className={s.shareSplitBtnCaret} aria-hidden>▾</span>
+                </a>
+
+                {/* Popover portaleado a body para que el clip-path del row no
+                    lo recorte. Posición fija calculada desde el bounding rect
+                    del botón ancla. */}
+                {shareMenu && shareMenuPos && createPortal(
+                  <div
+                    ref={shareMenuRef}
+                    className={s.shareMenu}
+                    role="menu"
+                    style={{
+                      position: 'fixed',
+                      top:   `${shareMenuPos.top}px`,
+                      right: `${shareMenuPos.right}px`,
+                      zIndex: 9999,
+                    }}
                   >
-                    WhatsApp <span className={s.shareSplitBtnCaret} aria-hidden>▾</span>
-                  </button>
-                  {shareMenu === 'wa' && (
-                    <div className={s.shareMenu} role="menu">
-                      <button type="button" role="menuitem" className={s.shareMenuItem} onClick={() => handleWa('link')}>
-                        <span className={s.shareMenuIcon} aria-hidden>🔗</span>
-                        <span className={s.shareMenuTxt}>Solo el link</span>
-                      </button>
-                      <button type="button" role="menuitem" className={s.shareMenuItem} onClick={() => handleWa('full')}>
-                        <span className={s.shareMenuIcon} aria-hidden>📝</span>
-                        <span className={s.shareMenuTxt}>Mensaje completo</span>
-                      </button>
-                    </div>
-                  )}
-                </span>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={s.shareMenuItem}
+                      onClick={() => shareMenu === 'copy' ? handleCopy('link') : handleWa('link')}
+                    >
+                      <span className={s.shareMenuIcon} aria-hidden>🔗</span>
+                      <span className={s.shareMenuTxt}>Solo el link</span>
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={s.shareMenuItem}
+                      onClick={() => shareMenu === 'copy' ? handleCopy('full') : handleWa('full')}
+                    >
+                      <span className={s.shareMenuIcon} aria-hidden>📝</span>
+                      <span className={s.shareMenuTxt}>Mensaje completo</span>
+                    </button>
+                  </div>,
+                  document.body
+                )}
               </div>
             )
           })()}
